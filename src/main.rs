@@ -3,6 +3,9 @@ use bevy::prelude::*;
 const TITLE: &'static str = "My Title";
 const CLEAR_COLOR: Color = Color::AQUAMARINE;
 
+mod player;
+mod math;
+
 fn main() {
     // Hot reload assets
     #[cfg(feature = "debug_mode")]
@@ -36,7 +39,8 @@ fn main() {
     app.add_startup_system(spawn_camera);
 
     // UI systems
-    app.add_system(bevy::window::close_on_esc);
+    app.add_system(bevy::window::close_on_esc)
+		.add_system(player::Player::player_movement);
 
     app.run();
 }
