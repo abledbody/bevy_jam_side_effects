@@ -1,1 +1,9 @@
+# Asset source files
+*.aseprite
+
+# IDE metadata
+.idea
+.vscode
+
+# Build output
 /target

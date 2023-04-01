@@ -3,7 +3,18 @@ name = "bevy_jam_side_effects"
 version = "0.1.0"
 edition = "2021"
 
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+[features]
+default = []
+debug_mode = []
+
+[profile.dev]
+opt-level = 1
+
+[profile.dev.package."*"]
+opt-level = 3
 
 [dependencies]
-bevy = "0.10.1"
+bevy-inspector-egui = "0.18"
+bevy_rapier2d = { version = "0.21", features = ["debug-render-2d"] }
+rand = "0.8"
+bevy = "0.10"
