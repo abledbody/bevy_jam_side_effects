@@ -1,6 +1,6 @@
 use bevy::prelude::*;
 
-use crate::mob::*;
+use super::MobInputs;
 
 #[derive(Component, Reflect)]
 pub struct Player;

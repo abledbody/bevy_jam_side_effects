@@ -7,10 +7,10 @@ use bevy_inspector_egui::quick::WorldInspectorPlugin;
 use bevy_rapier2d::prelude::*;
 
 use crate::asset::Handles;
+use crate::mob::player::Player;
 use crate::mob::Health;
 use crate::mob::Mob;
 use crate::mob::MobInputs;
-use crate::player::Player;
 
 const TOGGLE_KEY: KeyCode = KeyCode::F3;
 

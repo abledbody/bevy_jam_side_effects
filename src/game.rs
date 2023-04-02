@@ -8,10 +8,10 @@ use bevy_rapier2d::prelude::*;
 use crate::asset::Handles;
 use crate::asset::ImageKey;
 use crate::debug::DebugPlugin;
+use crate::mob::player::Player;
 use crate::mob::Health;
 use crate::mob::Mob;
 use crate::mob::MobInputs;
-use crate::player::Player;
 
 const TITLE: &'static str = "My Title";
 const CLEAR_COLOR: Color = Color::DARK_GRAY;

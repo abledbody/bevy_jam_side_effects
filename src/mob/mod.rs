@@ -4,6 +4,9 @@ use bevy_rapier2d::prelude::*;
 use crate::game::TIME_STEP;
 use crate::math::MoveTowards;
 
+pub mod enemy;
+pub mod player;
+
 #[derive(Component, Reflect)]
 pub struct Health(pub f32);
 
