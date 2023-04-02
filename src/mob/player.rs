@@ -7,6 +7,7 @@ use super::{Health, Mob, MobBundle, MobInputs};
 use crate::{
     animation::{Offset, WalkAnimation},
     asset::{Handles, ImageKey},
+    vfx,
 };
 
 #[derive(Component, Reflect)]
@@ -64,16 +65,6 @@ impl Player {
         body.insert(Name::new("Body"));
         let body = body.id();
 
-        // Drop shadow
-        let mut drop_shadow = commands.spawn(SpriteBundle {
-            texture: handle.image[&ImageKey::DropShadow].clone(),
-            transform: Transform::from_xyz(0.0, -11.0, -position.z + 50.0),
-            ..default()
-        });
-        #[cfg(feature = "debug_mode")]
-        drop_shadow.insert(Name::new("DropShadow"));
-        let drop_shadow = drop_shadow.id();
-
         // Parent entity
         let mut entity = commands.spawn((
             SpatialBundle {
@@ -91,6 +82,6 @@ impl Player {
         entity.insert(Name::new("Player"));
 
         entity.add_child(body);
-        entity.add_child(drop_shadow);
+        entity.add_child(vfx::drop_shadow(position.z, vec2(0.0, -11.0)));
     }
 }
