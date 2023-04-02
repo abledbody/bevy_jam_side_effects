@@ -1,5 +1,7 @@
+use std::f32::consts::TAU;
 use std::time::Duration;
 
+use bevy::math::vec3;
 use bevy::prelude::*;
 use bevy_rapier2d::prelude::*;
 
@@ -52,11 +54,8 @@ impl Plugin for GamePlugin {
         app.add_plugin(DebugPlugin::default());
 
         // Startup systems
-        app.add_startup_systems((
-            spawn_camera,
-            Handles::load,
-            spawn_player.after(Handles::load),
-        ));
+        app.add_startup_systems((spawn_camera, Handles::load));
+        app.add_startup_systems((spawn_player, spawn_enemies).after(Handles::load));
 
         // Game logic systems (fixed timestep)
         app.edit_schedule(CoreSchedule::FixedUpdate, |schedule| {
@@ -89,10 +88,12 @@ fn spawn_camera(mut commands: Commands) {
 fn spawn_player(mut commands: Commands, handle: Res<Handles>) {
     let texture = ImageKey::GreenGnoll;
     let health = 100.0;
+    let position = vec3(0.0, 0.0, 500.0);
 
     commands.spawn((
         SpriteBundle {
             texture: handle.image[&texture].clone(),
+            transform: Transform::from_translation(position),
             ..default()
         },
         Mob::player(),
@@ -105,4 +106,33 @@ fn spawn_player(mut commands: Commands, handle: Res<Handles>) {
             LockedAxes::ROTATION_LOCKED,
         ),
     ));
+}
+
+fn spawn_enemies(mut commands: Commands, handle: Res<Handles>) {
+    let texture = ImageKey::RedGnoll;
+    let health = 20.0;
+    let distance = 300.0;
+
+    let enemy_count = 12;
+    for i in 0..enemy_count {
+        let angle = i as f32 / enemy_count as f32 * TAU;
+        let position = (distance * Vec2::from_angle(angle)).extend(400.0);
+
+        commands.spawn((
+            SpriteBundle {
+                texture: handle.image[&texture].clone(),
+                transform: Transform::from_translation(position),
+                ..default()
+            },
+            Mob::player(),
+            MobInputs::default(),
+            // TODO: EnemyAi
+            Health(health),
+            (
+                Velocity::default(),
+                RigidBody::default(),
+                LockedAxes::ROTATION_LOCKED,
+            ),
+        ));
+    }
 }
