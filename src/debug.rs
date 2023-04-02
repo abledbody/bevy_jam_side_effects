@@ -7,9 +7,11 @@ use bevy_inspector_egui::quick::WorldInspectorPlugin;
 use bevy_rapier2d::prelude::*;
 
 use crate::{
+    animation::{Facing, Offset, WalkAnimation},
     asset::Handles,
+    combat::{Hitbox, Hurtbox},
     mob::{
-        enemy::Loot,
+        enemy::{Enemy, Loot},
         player::{Gold, Player},
         Health,
         Mob,
@@ -47,7 +49,13 @@ impl Plugin for DebugPlugin {
             .register_type::<Loot>()
             .register_type::<Mob>()
             .register_type::<MobInputs>()
-            .register_type::<Player>();
+            .register_type::<Player>()
+            .register_type::<Enemy>()
+            .register_type::<Facing>()
+            .register_type::<Offset>()
+            .register_type::<WalkAnimation>()
+            .register_type::<Hitbox>()
+            .register_type::<Hurtbox>();
 
         // Disable Rapier debug initially
         app.world.resource_mut::<DebugRenderContext>().enabled = false;

@@ -1,7 +1,7 @@
 use bevy::prelude::*;
 use bevy_rapier2d::prelude::*;
 
-use crate::{game::TIME_STEP, math::MoveTowards};
+use crate::{animation::Facing, game::TIME_STEP, math::MoveTowards};
 
 pub mod enemy;
 pub mod player;
@@ -18,24 +18,20 @@ pub struct Mob {
 }
 
 impl Mob {
-    pub fn flip_by_direction(
-        mob_query: Query<(&Mob, &MobInputs, &Velocity, &Children)>,
-        mut sprite_query: Query<(&mut Sprite, &mut Transform)>,
-    ) {
-        for (mob, mob_inputs, velocity, children) in &mob_query {
-            for child in children {
-                let Ok((mut sprite, transform)) =
-					sprite_query.get_mut(*child) else {continue;};
-
-                if mob_inputs.movement.x == 0.0 {
-                    continue;
-                }
-                if velocity.linvel.x.abs() < mob.idle_threshold {
-                    sprite.flip_x = mob_inputs.movement.x < 0.0;
-                } else {
-                    sprite.flip_x = velocity.linvel.x < 0.0;
-                }
+    pub fn set_facing(mut mob_query: Query<(&Mob, &MobInputs, &Velocity, &mut Facing)>) {
+        for (mob, mob_inputs, velocity, mut facing) in &mut mob_query {
+            if mob_inputs.movement.x == 0.0 {
+                continue;
             }
+
+            let idle = velocity.linvel.x.abs() < mob.idle_threshold;
+            let input_left = mob_inputs.movement.x < 0.0;
+            let move_left = velocity.linvel.x < 0.0;
+            *facing = if (idle && input_left) || (!idle && move_left) {
+                Facing::Left
+            } else {
+                Facing::Right
+            };
         }
     }
 
@@ -76,6 +72,7 @@ impl Default for Mob {
 pub struct MobBundle {
     pub mob: Mob,
     pub mob_inputs: MobInputs,
+    pub facing: Facing,
     pub health: Health,
     pub velocity: Velocity,
     pub rigid_body: RigidBody,
@@ -90,6 +87,7 @@ impl Default for MobBundle {
         Self {
             mob: Mob::default(),
             mob_inputs: MobInputs::default(),
+            facing: Facing::default(),
             health: Health(100.0),
             velocity: Velocity::default(),
             rigid_body: RigidBody::default(),
@@ -110,16 +108,4 @@ impl Default for MobBundle {
 #[derive(Component, Reflect, Default)]
 pub struct MobInputs {
     pub movement: Vec2,
-}
-
-#[derive(Component)]
-pub struct Offset(pub Vec2);
-
-impl Offset {
-    pub fn apply(mut offset_query: Query<(&Offset, &Sprite, &mut Transform)>) {
-        for (offset, sprite, mut transform) in &mut offset_query {
-            transform.translation.x = offset.0.x * if sprite.flip_x { -1.0 } else { 1.0 };
-            transform.translation.y = offset.0.y * if sprite.flip_y { -1.0 } else { 1.0 };
-        }
-    }
 }

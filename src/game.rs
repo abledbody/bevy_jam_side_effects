@@ -4,9 +4,9 @@ use bevy::prelude::*;
 use bevy_rapier2d::prelude::*;
 
 use crate::{
-    animation::{self, WalkAnimation},
+    animation::{self, Facing, Offset, WalkAnimation},
     asset::Handles,
-    mob::{enemy::Enemy, player::Player, Mob, Offset},
+    mob::{enemy::Enemy, player::Player, Mob},
 };
 
 // TODO: Come up with a title.
@@ -75,8 +75,9 @@ impl Plugin for GamePlugin {
 
         // Visual systems
         app.add_systems((
-            Mob::flip_by_direction,
-            Offset::apply.after(Mob::flip_by_direction),
+            Mob::set_facing,
+            Facing::update_sprites.after(Mob::set_facing),
+            Offset::apply.after(Mob::set_facing),
             WalkAnimation::update,
             animation::sum_animations,
         ));
