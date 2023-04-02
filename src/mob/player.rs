@@ -1,14 +1,8 @@
-use bevy::math::vec3;
-use bevy::prelude::*;
-use bevy_rapier2d::prelude::LockedAxes;
-use bevy_rapier2d::prelude::RigidBody;
-use bevy_rapier2d::prelude::Velocity;
+use bevy::{math::vec3, prelude::*};
+use bevy_rapier2d::prelude::{LockedAxes, RigidBody, Velocity};
 
-use super::Health;
-use super::Mob;
-use super::MobInputs;
-use crate::asset::Handles;
-use crate::asset::ImageKey;
+use super::{Health, Mob, MobBundle, MobInputs};
+use crate::asset::{Handles, ImageKey};
 
 #[derive(Component, Reflect)]
 pub struct Player;
@@ -54,16 +48,12 @@ impl Player {
                 transform: Transform::from_translation(position),
                 ..default()
             },
-            Mob::player(),
-            MobInputs::default(),
             Player,
-            Health(health),
-            Gold::default(),
-            (
-                Velocity::default(),
-                RigidBody::default(),
-                LockedAxes::ROTATION_LOCKED,
-            ),
+            MobBundle {
+                mob: Mob::player(),
+                health: Health(health),
+                ..default()
+            },
         ));
     }
 }

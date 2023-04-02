@@ -36,6 +36,35 @@ impl Mob {
     }
 }
 
+impl Default for Mob {
+    fn default() -> Self {
+        Mob::player()
+    }
+}
+
+#[derive(Bundle)]
+pub struct MobBundle {
+    pub mob: Mob,
+    pub mob_inputs: MobInputs,
+    pub health: Health,
+    pub velocity: Velocity,
+    pub rigid_body: RigidBody,
+    pub locked_axes: LockedAxes,
+}
+
+impl Default for MobBundle {
+    fn default() -> Self {
+        Self {
+            mob: Mob::default(),
+            mob_inputs: MobInputs::default(),
+            health: Health(100.0),
+            velocity: Velocity::default(),
+            rigid_body: RigidBody::default(),
+            locked_axes: LockedAxes::ROTATION_LOCKED,
+        }
+    }
+}
+
 #[derive(Component, Reflect, Default)]
 pub struct MobInputs {
     pub movement: Vec2,
