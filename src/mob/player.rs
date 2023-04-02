@@ -1,6 +1,14 @@
+use bevy::math::vec3;
 use bevy::prelude::*;
+use bevy_rapier2d::prelude::LockedAxes;
+use bevy_rapier2d::prelude::RigidBody;
+use bevy_rapier2d::prelude::Velocity;
 
+use super::Health;
+use super::Mob;
 use super::MobInputs;
+use crate::asset::Handles;
+use crate::asset::ImageKey;
 
 #[derive(Component, Reflect)]
 pub struct Player;
@@ -33,5 +41,29 @@ impl Player {
 
             mob_inputs.movement = movement;
         }
+    }
+
+    pub(crate) fn spawn(mut commands: Commands, handle: Res<Handles>) {
+        let texture = ImageKey::GreenGnoll;
+        let health = 100.0;
+        let position = vec3(0.0, 0.0, 500.0);
+
+        commands.spawn((
+            SpriteBundle {
+                texture: handle.image[&texture].clone(),
+                transform: Transform::from_translation(position),
+                ..default()
+            },
+            Mob::player(),
+            MobInputs::default(),
+            Player,
+            Health(health),
+            Gold::default(),
+            (
+                Velocity::default(),
+                RigidBody::default(),
+                LockedAxes::ROTATION_LOCKED,
+            ),
+        ));
     }
 }

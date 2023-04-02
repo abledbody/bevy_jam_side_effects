@@ -1,7 +1,6 @@
 use std::f32::consts::TAU;
 use std::time::Duration;
 
-use bevy::math::vec3;
 use bevy::prelude::*;
 use bevy_rapier2d::prelude::*;
 
@@ -57,7 +56,7 @@ impl Plugin for GamePlugin {
 
         // Startup systems
         app.add_startup_systems((spawn_camera, Handles::load));
-        app.add_startup_systems((spawn_player, spawn_enemies).after(Handles::load));
+        app.add_startup_systems((Player::spawn, spawn_enemies).after(Handles::load));
 
         // Game logic systems (fixed timestep)
         app.edit_schedule(CoreSchedule::FixedUpdate, |schedule| {
@@ -91,30 +90,6 @@ fn spawn_camera(mut commands: Commands) {
         projection,
         ..default()
     });
-}
-
-fn spawn_player(mut commands: Commands, handle: Res<Handles>) {
-    let texture = ImageKey::GreenGnoll;
-    let health = 100.0;
-    let position = vec3(0.0, 0.0, 500.0);
-
-    commands.spawn((
-        SpriteBundle {
-            texture: handle.image[&texture].clone(),
-            transform: Transform::from_translation(position),
-            ..default()
-        },
-        Mob::player(),
-        MobInputs::default(),
-        Player,
-        Health(health),
-        Gold::default(),
-        (
-            Velocity::default(),
-            RigidBody::default(),
-            LockedAxes::ROTATION_LOCKED,
-        ),
-    ));
 }
 
 fn spawn_enemies(mut commands: Commands, handle: Res<Handles>) {
