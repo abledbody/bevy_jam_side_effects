@@ -3,7 +3,8 @@ use bevy::{
     input::common_conditions::{input_just_pressed, input_toggle_active},
     prelude::*,
 };
-use bevy_inspector_egui::quick::WorldInspectorPlugin;
+#[cfg(feature = "editor")]
+use bevy_editor_pls::EditorPlugin;
 use bevy_rapier2d::prelude::*;
 
 use crate::{
@@ -33,9 +34,11 @@ impl Plugin for DebugPlugin {
 
         // Plugins
         app.add_plugin(RapierDebugRenderPlugin::default())
-            .add_plugin(WorldInspectorPlugin::new().run_if(input_toggle_active(false, TOGGLE_KEY)))
             .add_plugin(FrameTimeDiagnosticsPlugin::default())
             .add_plugin(LogDiagnosticsPlugin::default());
+
+        #[cfg(feature = "editor")]
+        app.add_plugin(EditorPlugin::default());
 
         // Systems
         app.add_system(DebugPlugin::toggle.run_if(input_just_pressed(TOGGLE_KEY)));
