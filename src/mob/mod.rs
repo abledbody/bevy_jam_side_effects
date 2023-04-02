@@ -3,7 +3,7 @@ use bevy_rapier2d::prelude::*;
 
 use crate::{
     animation::{Facing, Offset, WalkAnimation},
-    asset::{Handles, ImageKey},
+    asset::{Handles, ImageKey, AudioKey},
     game::TIME_STEP,
     math::MoveTowards,
 };
@@ -129,8 +129,9 @@ impl Body {
             },
             self.offset,
             WalkAnimation {
-                air_time: 0.25,
-                height: 4.0,
+                air_time: 0.18,
+                height: 3.0,
+				sound: Some(handle.audio[&AudioKey::GnollWalk].clone()),
                 ..default()
             },
         ));

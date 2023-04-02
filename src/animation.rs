@@ -77,6 +77,7 @@ pub struct WalkAnimation {
     pub air_time: f32,
     pub height: f32,
     pub t: f32,
+    pub sound: Option<Handle<AudioSource>>,
 }
 
 impl WalkAnimation {
@@ -84,6 +85,7 @@ impl WalkAnimation {
         mob_query: Query<(&MobInputs, &Children)>,
         mut animator_query: Query<&mut WalkAnimation>,
         time: Res<Time>,
+        audio: Res<Audio>,
     ) {
         for (mob_inputs, children) in &mob_query {
             let moving = mob_inputs.movement.length() != 0.0;
@@ -95,6 +97,18 @@ impl WalkAnimation {
                     continue;
                 }
 
+                if let Some(sound) = &walk_animation.sound {
+                    if walk_animation.t <= 0.0 {
+                        audio.play_with_settings(
+                            sound.clone(),
+                            PlaybackSettings {
+                                volume: 0.3,
+                                ..Default::default()
+                            },
+                        );
+                    }
+                }
+
                 walk_animation.t += time.delta_seconds() / walk_animation.air_time;
 
                 // The rest of this manages the loop, or lack thereof.
@@ -103,6 +117,16 @@ impl WalkAnimation {
                 }
                 if moving {
                     walk_animation.t -= walk_animation.t.floor();
+
+                    if let Some(sound) = &walk_animation.sound {
+                        audio.play_with_settings(
+                            sound.clone(),
+                            PlaybackSettings {
+                                volume: 0.3,
+                                ..Default::default()
+                            },
+                        );
+                    }
                 } else {
                     walk_animation.t = 0.0;
                 }

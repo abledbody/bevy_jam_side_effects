@@ -10,7 +10,9 @@ rand = "0.8"
 bevy = "0.10"
 
 [features]
-default = []
+default = [
+	"bevy/wav"
+]
 debug_mode = [
     "bevy/dynamic_linking",
     "bevy/filesystem_watcher",
