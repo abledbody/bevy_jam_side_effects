@@ -5,7 +5,10 @@ edition = "2021"
 
 [features]
 default = []
-debug_mode = []
+debug_mode = [
+    "bevy/dynamic_linking",
+    "bevy/filesystem_watcher",
+]
 
 [profile.dev]
 opt-level = 1

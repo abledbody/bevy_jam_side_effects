@@ -12,6 +12,13 @@ pub struct DebugPlugin;
 
 impl Plugin for DebugPlugin {
     fn build(&self, app: &mut App) {
+        // Hot-reload assets
+        app.world
+            .resource::<AssetServer>()
+            .asset_io()
+            .watch_for_changes()
+            .unwrap();
+
         // Plugins
         app.add_plugin(RapierDebugRenderPlugin::default())
             .add_plugin(WorldInspectorPlugin::new().run_if(input_toggle_active(false, TOGGLE_KEY)))
