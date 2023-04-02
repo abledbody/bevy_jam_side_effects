@@ -13,6 +13,8 @@ pub struct Health(pub f32);
 pub struct Mob {
     speed: f32,
     acceleration: f32,
+	brake_deceleration: f32,
+	idle_threshold: f32,
 }
 
 impl Mob {
@@ -20,18 +22,37 @@ impl Mob {
         for (mob, mut velocity, mob_inputs) in &mut mob_query {
             let input_direction = mob_inputs.movement.normalize_or_zero();
             let input_magnitude = mob_inputs.movement.length().min(1.0);
+			
+			let mut acceleration = mob.acceleration;
+			if input_direction.dot(velocity.linvel) < 0.0 {
+				acceleration = mob.brake_deceleration;
+			}
 
             let target_velocity = input_direction * input_magnitude * mob.speed;
             velocity.linvel = velocity
                 .linvel
-                .move_towards(target_velocity, mob.acceleration * TIME_STEP);
+                .move_towards(target_velocity, acceleration * TIME_STEP);
         }
     }
 
+	pub fn flip_by_direction(mut mob_query: Query<(&Mob, &MobInputs, &Velocity, &mut Sprite)>) {
+		for (mob, mob_inputs, velocity, mut sprite) in &mut mob_query {
+			if mob_inputs.movement.x == 0.0 {continue;}
+			if velocity.linvel.x.abs() < mob.idle_threshold {
+				sprite.flip_x = mob_inputs.movement.x < 0.0;
+			}
+			else {
+				sprite.flip_x = velocity.linvel.x < 0.0;
+			}
+		}
+	}
+
     pub fn player() -> Self {
         Self {
-            speed: 130.0,
-            acceleration: 500.0,
+            speed: 110.0,
+            acceleration: 900.0,
+			brake_deceleration: 1800.0,
+			idle_threshold: 10.0,
         }
     }
 }

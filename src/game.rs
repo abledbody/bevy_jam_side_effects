@@ -15,6 +15,7 @@ use crate::{
     },
 };
 
+// TODO: Come up with a title.
 const TITLE: &'static str = "My Title";
 const CLEAR_COLOR: Color = Color::DARK_GRAY;
 pub const TIME_STEP: f32 = 1.0 / 60.0;
@@ -77,6 +78,11 @@ impl Plugin for GamePlugin {
                 schedule.add_systems(Physics::get_systems(set.clone()).in_base_set(set));
             }
         });
+
+		// Visual systems
+		app.add_system(
+			Mob::flip_by_direction
+		);
 
         // UI systems
         app.add_system(bevy::window::close_on_esc);
