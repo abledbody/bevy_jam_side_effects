@@ -2,9 +2,77 @@ use std::f32::consts::PI;
 
 use bevy::prelude::*;
 
-use crate::mob::{MobInputs, Offset};
+use crate::mob::MobInputs;
 
-#[derive(Component, Default)]
+#[derive(Component, Reflect, Debug, Default)]
+pub enum Facing {
+    Left,
+    #[default]
+    Right,
+}
+
+impl Facing {
+    pub fn update_sprites(
+        facing_query: Query<(&Facing, &Children)>,
+        mut sprite_query: Query<&mut Sprite>,
+    ) {
+        for (facing, children) in &facing_query {
+            for child in children {
+                let Ok(mut sprite) = sprite_query.get_mut(*child) else {
+                    continue
+                };
+
+                sprite.flip_x = facing.left();
+            }
+        }
+    }
+
+    pub fn sign(&self) -> f32 {
+        match self {
+            Facing::Left => -1.0,
+            Facing::Right => 1.0,
+        }
+    }
+
+    pub fn left(&self) -> bool {
+        if let Facing::Left = self {
+            true
+        } else {
+            false
+        }
+    }
+
+    pub fn right(&self) -> bool {
+        if let Facing::Right = self {
+            true
+        } else {
+            false
+        }
+    }
+}
+
+#[derive(Component, Reflect)]
+pub struct Offset(pub Vec2);
+
+impl Offset {
+    pub fn apply(
+        facing_query: Query<(&Facing, &Children)>,
+        mut offset_query: Query<(&Offset, &mut Transform)>,
+    ) {
+        for (facing, children) in &facing_query {
+            for child in children {
+                let Ok((offset, mut transform)) = offset_query.get_mut(*child) else {
+                    continue
+                };
+
+                transform.translation.x = offset.0.x * facing.sign();
+                transform.translation.y = offset.0.y;
+            }
+        }
+    }
+}
+
+#[derive(Component, Reflect, Default)]
 pub struct WalkAnimation {
     pub air_time: f32,
     pub height: f32,

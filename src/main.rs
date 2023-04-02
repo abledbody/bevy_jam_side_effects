@@ -4,6 +4,7 @@ use crate::game::GamePlugin;
 
 mod animation;
 mod asset;
+mod combat;
 mod debug;
 mod game;
 mod math;
