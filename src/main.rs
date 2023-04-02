@@ -1,3 +1,4 @@
+use crate::asset::Handles;
 use crate::debug::DebugPlugin;
 use bevy::prelude::*;
 use bevy_rapier2d::prelude::*;
@@ -5,6 +6,7 @@ use bevy_rapier2d::prelude::*;
 const TITLE: &'static str = "My Title";
 const CLEAR_COLOR: Color = Color::AQUAMARINE;
 
+mod asset;
 mod debug;
 mod math;
 mod player;
@@ -19,7 +21,8 @@ fn main() {
     let mut app = App::new();
 
     // Resources
-    app.insert_resource(ClearColor(CLEAR_COLOR));
+    app.insert_resource(ClearColor(CLEAR_COLOR))
+        .init_resource::<Handles>();
 
     // Plugins
     app.add_plugins(
@@ -42,7 +45,7 @@ fn main() {
     app.add_plugin(DebugPlugin::default());
 
     // Startup systems
-    app.add_startup_system(spawn_camera);
+    app.add_startup_systems((spawn_camera, Handles::load));
 
     // UI systems
     app.add_system(bevy::window::close_on_esc)

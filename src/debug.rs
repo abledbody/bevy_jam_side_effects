@@ -1,3 +1,4 @@
+use crate::asset::Handles;
 use bevy::diagnostic::{FrameTimeDiagnosticsPlugin, LogDiagnosticsPlugin};
 use bevy::input::common_conditions::{input_just_pressed, input_toggle_active};
 use bevy::prelude::*;
@@ -19,6 +20,9 @@ impl Plugin for DebugPlugin {
 
         // Systems
         app.add_system(DebugPlugin::toggle.run_if(input_just_pressed(TOGGLE_KEY)));
+
+        // Types
+        app.register_type::<Handles>();
 
         // Disable Rapier debug initially
         app.world.resource_mut::<DebugRenderContext>().enabled = false;
