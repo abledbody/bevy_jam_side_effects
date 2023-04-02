@@ -18,6 +18,26 @@ pub struct Mob {
 }
 
 impl Mob {
+	pub fn flip_by_direction(
+		mob_query: Query<(&Mob, &MobInputs, &Velocity, &Children)>,
+		mut sprite_query: Query<(&mut Sprite, &mut Transform)>,
+	) {
+		for (mob, mob_inputs, velocity, children) in &mob_query {
+			for child in children {
+				let Ok((mut sprite, mut transform)) =
+					sprite_query.get_mut(*child) else {continue;};
+
+				if mob_inputs.movement.x == 0.0 {continue;}
+				if velocity.linvel.x.abs() < mob.idle_threshold {
+					sprite.flip_x = mob_inputs.movement.x < 0.0;
+				}
+				else {
+					sprite.flip_x = velocity.linvel.x < 0.0;
+				}
+			}
+		}
+	}
+
     pub fn apply_input(mut mob_query: Query<(&Mob, &mut Velocity, &MobInputs)>) {
         for (mob, mut velocity, mob_inputs) in &mut mob_query {
             let input_direction = mob_inputs.movement.normalize_or_zero();
@@ -34,18 +54,6 @@ impl Mob {
                 .move_towards(target_velocity, acceleration * TIME_STEP);
         }
     }
-
-	pub fn flip_by_direction(mut mob_query: Query<(&Mob, &MobInputs, &Velocity, &mut Sprite)>) {
-		for (mob, mob_inputs, velocity, mut sprite) in &mut mob_query {
-			if mob_inputs.movement.x == 0.0 {continue;}
-			if velocity.linvel.x.abs() < mob.idle_threshold {
-				sprite.flip_x = mob_inputs.movement.x < 0.0;
-			}
-			else {
-				sprite.flip_x = velocity.linvel.x < 0.0;
-			}
-		}
-	}
 
     pub fn player() -> Self {
         Self {
@@ -101,4 +109,18 @@ impl Default for MobBundle {
 #[derive(Component, Reflect, Default)]
 pub struct MobInputs {
     pub movement: Vec2,
+}
+
+#[derive(Component)]
+pub struct Offset(pub Vec2);
+
+impl Offset {
+	pub fn apply(
+		mut offset_query: Query<(&Offset, &Sprite, &mut Transform)>,
+	) {
+		for (offset, sprite, mut transform) in &mut offset_query {
+			transform.translation.x = offset.0.x * if sprite.flip_x {-1.0} else {1.0};
+			transform.translation.y = offset.0.y * if sprite.flip_y {-1.0} else {1.0};
+		}
+	}
 }

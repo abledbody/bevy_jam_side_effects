@@ -1,7 +1,7 @@
-use bevy::{math::vec3, prelude::*};
+use bevy::{math::{vec3, vec2}, prelude::*};
 
-use super::{Health, Mob, MobBundle, MobInputs};
-use crate::asset::{Handles, ImageKey};
+use super::{Health, Mob, MobBundle, MobInputs, Offset};
+use crate::{asset::{Handles, ImageKey}, animation::WalkAnimation};
 
 #[derive(Component, Reflect)]
 pub struct Player;
@@ -42,20 +42,30 @@ impl Player {
         let position = vec3(0.0, 0.0, 500.0);
 
         // Sprite
-        let mut sprite = commands.spawn((SpriteBundle {
-            texture: handle.image[&texture].clone(),
-            ..default()
-        },));
+        let mut sprite = commands.spawn((
+            SpriteBundle {
+                texture: handle.image[&texture].clone(),
+                ..default()
+            },
+            Offset(vec2(2.0, 0.0)),
+			WalkAnimation {
+				air_time: 0.18,
+				height: 3.0,
+				..default()
+			},
+        ));
         #[cfg(feature = "debug_mode")]
         sprite.insert(Name::new("Sprite"));
         let sprite = sprite.id();
 
         // Drop shadow
-        let mut drop_shadow = commands.spawn(SpriteBundle {
-            texture: handle.image[&ImageKey::DropShadow].clone(),
-            transform: Transform::from_xyz(-2.0, -11.0, -position.z + 50.0),
-            ..default()
-        });
+        let mut drop_shadow = commands.spawn((
+			SpriteBundle {
+				texture: handle.image[&ImageKey::DropShadow].clone(),
+				transform: Transform::from_xyz(0.0, -11.0, -position.z + 50.0),
+				..default()
+			}
+		));
         #[cfg(feature = "debug_mode")]
         drop_shadow.insert(Name::new("DropShadow"));
         let drop_shadow = drop_shadow.id();
@@ -71,7 +81,7 @@ impl Player {
                 mob: Mob::player(),
                 health: Health(health),
                 ..default()
-            },
+            }
         ));
         #[cfg(feature = "debug_mode")]
         entity.insert(Name::new("Player"));

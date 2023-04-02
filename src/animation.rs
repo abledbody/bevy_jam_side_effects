@@ -1,25 +1,34 @@
+use std::f32::consts::PI;
+
 use bevy::prelude::*;
 
-use crate::mob::MobInputs;
+use crate::mob::{MobInputs, Offset};
 
-#[derive(Component)]
+#[derive(Component, Default)]
 pub struct WalkAnimation {
-	air_time: f32,
-	height: f32,
-	t: f32,
+	pub air_time: f32,
+	pub height: f32,
+	pub t: f32,
 }
 
 impl WalkAnimation {
 	pub fn update(
-		mut mob_query: Query<(&mut WalkAnimation, &MobInputs)>,
+		mob_query: Query<(&MobInputs, &Children)>,
+		mut animator_query: Query<&mut WalkAnimation>,
 		time: Res<Time>,
 	) {
-		for (mut walk_animation, mob_inputs) in &mut mob_query {
+		for (mob_inputs, children) in &mob_query {
 			let moving = mob_inputs.movement.length() != 0.0;
-			if walk_animation.t <= 0.0 || !moving {continue;}
 
-			walk_animation.t += time.delta_seconds() / walk_animation.air_time;
-			if walk_animation.t > 1.0 {
+			for child in children {
+				let Ok(mut walk_animation) = animator_query.get_mut(*child) else {continue;};
+				
+				if walk_animation.t <= 0.0 && !moving {continue;}
+	
+				walk_animation.t += time.delta_seconds() / walk_animation.air_time;
+				
+				// The rest of this manages the loop, or lack thereof.
+				if walk_animation.t < 1.0 {continue;}
 				if moving {
 					walk_animation.t -= walk_animation.t.floor();
 				}
@@ -32,8 +41,10 @@ impl WalkAnimation {
 }
 
 pub fn sum_animations(
-	mob_query: Query<&WalkAnimation>,
-	mut sprite_query: Query<&mut Sprite>,
+	mut sprite_query: Query<(&mut Offset, &WalkAnimation)>,
 ) {
-	
+	for (mut offset, walk_animation) in &mut sprite_query {
+		// PI is used here because we only want half a rotation.
+		offset.0.y = walk_animation.height * (walk_animation.t * PI).sin();
+	}
 }
