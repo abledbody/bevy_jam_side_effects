@@ -84,7 +84,13 @@ impl Plugin for GamePlugin {
 }
 
 fn spawn_camera(mut commands: Commands) {
-    commands.spawn(Camera2dBundle::default());
+    let mut projection = OrthographicProjection::default();
+    // TODO: Scale to screen resolution
+    projection.scale = 1.0 / 4.0;
+    commands.spawn(Camera2dBundle {
+        projection,
+        ..default()
+    });
 }
 
 fn spawn_player(mut commands: Commands, handle: Res<Handles>) {
@@ -115,7 +121,7 @@ fn spawn_enemies(mut commands: Commands, handle: Res<Handles>) {
     let texture = ImageKey::RedGnoll;
     let health = 20.0;
     let gold = 10.0;
-    let distance = 300.0;
+    let distance = 80.0;
 
     let enemy_count = 12;
     for i in 0..enemy_count {
