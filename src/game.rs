@@ -11,7 +11,7 @@ use crate::{
         player::{Gold, Player},
         Health,
         Mob,
-        MobInputs,
+        MobInputs, MobBundle,
     },
 };
 
@@ -110,16 +110,12 @@ fn spawn_enemies(mut commands: Commands, handle: Res<Handles>) {
                 transform: Transform::from_translation(position),
                 ..default()
             },
-            Mob::player(),
-            MobInputs::default(),
+			MobBundle {
+				health: Health(health),
+				..default()
+			},
             // TODO: EnemyAi
-            Health(health),
             Loot { gold },
-            (
-                Velocity::default(),
-                RigidBody::default(),
-                LockedAxes::ROTATION_LOCKED,
-            ),
         ));
         #[cfg(feature = "debug_mode")]
         entity.insert(Name::new("Enemy"));
