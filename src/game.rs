@@ -4,13 +4,13 @@ use bevy::prelude::*;
 use bevy_rapier2d::prelude::*;
 
 use crate::{
+    animation::{self, WalkAnimation},
     asset::Handles,
-    debug::DebugPlugin,
-    mob::{enemy::Enemy, player::Player, Mob, Offset}, animation::{WalkAnimation, self},
+    mob::{enemy::Enemy, player::Player, Mob, Offset},
 };
 
 // TODO: Come up with a title.
-const TITLE: &'static str = "My Title";
+const TITLE: &str = "My Title";
 const CLEAR_COLOR: Color = Color::DARK_GRAY;
 pub const TIME_STEP: f32 = 1.0 / 60.0;
 const TIME_STEP_DURATION: Duration = Duration::from_nanos((TIME_STEP * 1_000_000_000.0) as u64);
@@ -48,7 +48,7 @@ impl Plugin for GamePlugin {
         )
         .add_plugin(Physics::default().with_default_system_setup(false));
         #[cfg(feature = "debug_mode")]
-        app.add_plugin(DebugPlugin::default());
+        app.add_plugin(crate::debug::DebugPlugin::default());
 
         // Startup systems
         app.add_startup_systems((spawn_camera, Handles::load));
@@ -75,11 +75,11 @@ impl Plugin for GamePlugin {
 
         // Visual systems
         app.add_systems((
-			Mob::flip_by_direction,
-			Offset::apply.after(Mob::flip_by_direction),
-			WalkAnimation::update,
-			animation::sum_animations,
-		));
+            Mob::flip_by_direction,
+            Offset::apply.after(Mob::flip_by_direction),
+            WalkAnimation::update,
+            animation::sum_animations,
+        ));
 
         // UI systems
         app.add_system(bevy::window::close_on_esc);
@@ -87,9 +87,11 @@ impl Plugin for GamePlugin {
 }
 
 fn spawn_camera(mut commands: Commands) {
-    let mut projection = OrthographicProjection::default();
-    // TODO: Scale to screen resolution
-    projection.scale = 1.0 / 4.0;
+    let projection = OrthographicProjection {
+        // TODO: Scale to screen resolution
+        scale: 1.0 / 4.0,
+        ..default()
+    };
     commands.spawn(Camera2dBundle {
         projection,
         ..default()

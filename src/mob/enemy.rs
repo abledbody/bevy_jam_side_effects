@@ -1,11 +1,11 @@
-use bevy::{prelude::*, math::vec2};
-
-use crate::{
-    asset::{Handles, ImageKey},
-    mob::{Health, MobBundle}, animation::WalkAnimation,
-};
+use bevy::{math::vec2, prelude::*};
 
 use super::Offset;
+use crate::{
+    animation::WalkAnimation,
+    asset::{Handles, ImageKey},
+    mob::{Health, MobBundle},
+};
 
 #[derive(Component, Reflect)]
 pub struct Loot {
@@ -29,24 +29,22 @@ impl Enemy {
                 ..default()
             },
             Offset(vec2(2.0, 0.0)),
-			WalkAnimation {
-				air_time: 0.25,
-				height: 4.0,
-				..default()
-			},
+            WalkAnimation {
+                air_time: 0.25,
+                height: 4.0,
+                ..default()
+            },
         ));
         #[cfg(feature = "debug_mode")]
         sprite.insert(Name::new("Sprite"));
         let sprite = sprite.id();
 
         // Drop shadow
-        let mut drop_shadow = commands.spawn((
-			SpriteBundle {
-				texture: handle.image[&ImageKey::DropShadow].clone(),
-				transform: Transform::from_xyz(0.0, -11.0, -position.z + 50.0),
-				..default()
-			}
-		));
+        let mut drop_shadow = commands.spawn((SpriteBundle {
+            texture: handle.image[&ImageKey::DropShadow].clone(),
+            transform: Transform::from_xyz(0.0, -11.0, -position.z + 50.0),
+            ..default()
+        },));
         #[cfg(feature = "debug_mode")]
         drop_shadow.insert(Name::new("DropShadow"));
         let drop_shadow = drop_shadow.id();

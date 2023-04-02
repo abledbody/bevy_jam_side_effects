@@ -8,7 +8,7 @@ pub enum ImageKey {
     DropShadow,
 }
 
-const IMAGE_MAP: [(ImageKey, &'static str); 4] = [
+const IMAGE_MAP: [(ImageKey, &str); 4] = [
     (ImageKey::RedGnoll, "sprites/character/RedGnoll.png"),
     (ImageKey::GreenGnoll, "sprites/character/GreenGnoll.png"),
     (ImageKey::BlueGnoll, "sprites/character/BlueGnoll.png"),
