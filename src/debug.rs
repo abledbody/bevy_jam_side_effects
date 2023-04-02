@@ -1,9 +1,12 @@
-use crate::asset::Handles;
-use bevy::diagnostic::{FrameTimeDiagnosticsPlugin, LogDiagnosticsPlugin};
-use bevy::input::common_conditions::{input_just_pressed, input_toggle_active};
+use bevy::diagnostic::FrameTimeDiagnosticsPlugin;
+use bevy::diagnostic::LogDiagnosticsPlugin;
+use bevy::input::common_conditions::input_just_pressed;
+use bevy::input::common_conditions::input_toggle_active;
 use bevy::prelude::*;
 use bevy_inspector_egui::quick::WorldInspectorPlugin;
 use bevy_rapier2d::prelude::*;
+
+use crate::asset::Handles;
 
 const TOGGLE_KEY: KeyCode = KeyCode::F3;
 

@@ -1,5 +1,6 @@
-use crate::mob::*;
 use bevy::prelude::*;
+
+use crate::mob::*;
 
 #[derive(Component)]
 pub struct Player;

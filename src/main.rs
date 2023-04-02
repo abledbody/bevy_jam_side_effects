@@ -1,5 +1,6 @@
-use crate::game::GamePlugin;
 use bevy::prelude::*;
+
+use crate::game::GamePlugin;
 
 mod asset;
 mod debug;
