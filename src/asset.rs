@@ -6,7 +6,9 @@ pub enum ImageKey {
     Gnoll,
 }
 
-const IMAGE_MAP: [(ImageKey, &'static str); 1] = [(ImageKey::Gnoll, "sprites/character/Gnoll.png")];
+const IMAGE_MAP: [(ImageKey, &'static str); 1] = [
+	(ImageKey::Gnoll, "sprites/character/Gnoll.png")
+];
 
 #[derive(Resource, Reflect, Default)]
 pub struct Handles {
@@ -14,12 +16,10 @@ pub struct Handles {
 }
 
 impl Handles {
-    pub fn load(mut commands: Commands, asset: Res<AssetServer>) {
-        commands.insert_resource(Self {
-            image: IMAGE_MAP
-                .into_iter()
-                .map(|(key, path)| (key, asset.load(path)))
-                .collect(),
-        });
+    pub fn load(asset: Res<AssetServer>, mut handle: ResMut<Self>) {
+        handle.image = IMAGE_MAP
+            .into_iter()
+            .map(|(key, path)| (key, asset.load(path)))
+            .collect();
     }
 }
