@@ -5,12 +5,12 @@ use crate::{
     asset::{Handles, ImageKey},
 };
 
-pub struct DropShadow {
+pub struct DropShadowTemplate {
     pub parent_z: f32,
-    pub offset: Offset,
+    pub offset: Vec2,
 }
 
-impl DropShadow {
+impl DropShadowTemplate {
     pub fn spawn(self, commands: &mut Commands, handle: &Handles) -> Entity {
         let mut drop_shadow = commands.spawn((
             SpriteBundle {
@@ -18,7 +18,7 @@ impl DropShadow {
                 transform: Transform::from_xyz(0.0, 0.0, 50.0 - self.parent_z),
                 ..default()
             },
-            self.offset,
+            Offset(self.offset),
         ));
         #[cfg(feature = "debug_mode")]
         drop_shadow.insert(Name::new("DropShadow"));

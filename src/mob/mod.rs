@@ -115,19 +115,19 @@ pub struct MobInputs {
     pub movement: Vec2,
 }
 
-pub struct Body {
+pub struct BodyTemplate {
     texture: ImageKey,
-    offset: Offset,
+    offset: Vec2,
 }
 
-impl Body {
+impl BodyTemplate {
     pub fn spawn(self, commands: &mut Commands, handle: &Handles) -> Entity {
         let mut body = commands.spawn((
             SpriteBundle {
                 texture: handle.image[&self.texture].clone(),
                 ..default()
             },
-            self.offset,
+            Offset(self.offset),
             WalkAnimation {
                 air_time: 0.18,
                 height: 3.0,

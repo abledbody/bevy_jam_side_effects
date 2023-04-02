@@ -5,21 +5,20 @@ use bevy::{
 
 use super::{Health, Mob, MobBundle, MobInputs};
 use crate::{
-    animation::Offset,
     asset::{Handles, ImageKey},
-    mob::Body,
-    vfx::DropShadow,
+    mob::BodyTemplate,
+    vfx::DropShadowTemplate,
 };
-
-#[derive(Component, Reflect)]
-pub struct Player;
 
 #[derive(Component, Reflect, Default)]
 pub struct Gold(f32);
 
-impl Player {
-    pub fn record_controls(
-        mut player_query: Query<&mut MobInputs, With<Player>>,
+#[derive(Component, Reflect)]
+pub struct PlayerControl;
+
+impl PlayerControl {
+    pub fn record_inputs(
+        mut player_query: Query<&mut MobInputs, With<PlayerControl>>,
         input_resource: Res<Input<KeyCode>>,
     ) {
         for mut mob_inputs in &mut player_query {
@@ -43,33 +42,46 @@ impl Player {
             mob_inputs.movement = movement;
         }
     }
+}
 
-    pub fn spawn(mut commands: Commands, handle: Res<Handles>) {
-        let position = vec3(0.0, 0.0, 500.0);
-        let health = 100.0;
+pub struct PlayerTemplate {
+    position: Vec3,
+    health: f32,
+}
 
+impl Default for PlayerTemplate {
+    fn default() -> Self {
+        Self {
+            position: vec3(0.0, 0.0, 500.0),
+            health: 100.0,
+        }
+    }
+}
+
+impl PlayerTemplate {
+    pub fn spawn(self, commands: &mut Commands, handle: &Handles) -> Entity {
         // Children
-        let body = Body {
+        let body = BodyTemplate {
             texture: ImageKey::GreenGnoll,
-            offset: Offset(vec2(2.0, 0.0)),
+            offset: vec2(2.0, 0.0),
         }
-        .spawn(&mut commands, &handle);
-        let drop_shadow = DropShadow {
-            parent_z: position.z,
-            offset: Offset(vec2(0.0, -11.0)),
+        .spawn(commands, handle);
+        let drop_shadow = DropShadowTemplate {
+            parent_z: self.position.z,
+            offset: vec2(0.0, -11.0),
         }
-        .spawn(&mut commands, &handle);
+        .spawn(commands, handle);
 
         // Parent
         let mut entity = commands.spawn((
             SpatialBundle {
-                transform: Transform::from_translation(position),
+                transform: Transform::from_translation(self.position),
                 ..default()
             },
-            Player,
+            PlayerControl,
             MobBundle {
                 mob: Mob::player(),
-                health: Health(health),
+                health: Health(self.health),
                 ..default()
             },
         ));
@@ -78,5 +90,7 @@ impl Player {
 
         entity.add_child(body);
         entity.add_child(drop_shadow);
+
+        entity.id()
     }
 }

@@ -12,8 +12,8 @@ use crate::{
     asset::Handles,
     combat::Effects,
     mob::{
-        enemy::{Enemy, Loot},
-        player::{Gold, Player},
+        enemy::{EnemyAi, Loot},
+        player::{Gold, PlayerControl},
         Health,
         Mob,
         MobInputs,
@@ -52,8 +52,8 @@ impl Plugin for DebugPlugin {
             .register_type::<Loot>()
             .register_type::<Mob>()
             .register_type::<MobInputs>()
-            .register_type::<Player>()
-            .register_type::<Enemy>()
+            .register_type::<PlayerControl>()
+            .register_type::<EnemyAi>()
             .register_type::<Facing>()
             .register_type::<Offset>()
             .register_type::<WalkAnimation>()

@@ -6,7 +6,11 @@ use bevy_rapier2d::prelude::*;
 use crate::{
     animation::{self, Facing, Offset, WalkAnimation},
     asset::Handles,
-    mob::{enemy::Enemy, player::Player, Mob},
+    mob::{
+        enemy::EnemyTemplate,
+        player::{PlayerControl, PlayerTemplate},
+        Mob,
+    },
 };
 
 // TODO: Come up with a title.
@@ -52,12 +56,12 @@ impl Plugin for GamePlugin {
 
         // Startup systems
         app.add_startup_systems((spawn_camera, Handles::load));
-        app.add_startup_systems((Player::spawn, spawn_enemies).after(Handles::load));
+        app.add_startup_systems((spawn_player, spawn_enemies).after(Handles::load));
 
         // Game logic systems (fixed timestep)
         app.edit_schedule(CoreSchedule::FixedUpdate, |schedule| {
             schedule.add_systems(
-                (Player::record_controls, Mob::apply_input)
+                (PlayerControl::record_inputs, Mob::apply_input)
                     .chain()
                     .before(PhysicsSet::SyncBackend),
             );
@@ -99,12 +103,20 @@ fn spawn_camera(mut commands: Commands) {
     });
 }
 
+fn spawn_player(mut commands: Commands, handle: Res<Handles>) {
+    PlayerTemplate::default().spawn(&mut commands, &handle);
+}
+
 fn spawn_enemies(mut commands: Commands, handle: Res<Handles>) {
     let distance = 80.0;
     let count = 12;
     for i in 0..count {
         let angle = i as f32 / count as f32 * TAU;
         let position = (distance * Vec2::from_angle(angle)).extend(400.0);
-        Enemy::spawn(&mut commands, &handle, position);
+        EnemyTemplate {
+            position,
+            ..default()
+        }
+        .spawn(&mut commands, &handle);
     }
 }
