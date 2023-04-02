@@ -104,7 +104,7 @@ fn spawn_enemies(mut commands: Commands, handle: Res<Handles>) {
         let angle = i as f32 / enemy_count as f32 * TAU;
         let position = (distance * Vec2::from_angle(angle)).extend(400.0);
 
-        commands.spawn((
+        let mut entity = commands.spawn((
             SpriteBundle {
                 texture: handle.image[&texture].clone(),
                 transform: Transform::from_translation(position),
@@ -121,5 +121,7 @@ fn spawn_enemies(mut commands: Commands, handle: Res<Handles>) {
                 LockedAxes::ROTATION_LOCKED,
             ),
         ));
+        #[cfg(feature = "debug_mode")]
+        entity.insert(Name::new("Enemy"));
     }
 }
