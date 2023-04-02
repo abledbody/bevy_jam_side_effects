@@ -3,11 +3,15 @@ use bevy::utils::HashMap;
 
 #[derive(Reflect, FromReflect, Eq, PartialEq, Hash)]
 pub enum ImageKey {
-    Gnoll,
+    RedGnoll,
+    GreenGnoll,
+    BlueGnoll,
 }
 
-const IMAGE_MAP: [(ImageKey, &'static str); 1] = [
-	(ImageKey::Gnoll, "sprites/character/Gnoll.png")
+const IMAGE_MAP: [(ImageKey, &'static str); 3] = [
+    (ImageKey::RedGnoll, "sprites/character/RedGnoll.png"),
+    (ImageKey::GreenGnoll, "sprites/character/GreenGnoll.png"),
+    (ImageKey::BlueGnoll, "sprites/character/BlueGnoll.png"),
 ];
 
 #[derive(Resource, Reflect, Default)]

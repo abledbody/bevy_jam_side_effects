@@ -6,14 +6,14 @@ use crate::player::Player;
 use bevy::prelude::*;
 use bevy_rapier2d::prelude::*;
 
-const TITLE: &'static str = "My Title";
-const CLEAR_COLOR: Color = Color::AQUAMARINE;
-
 mod asset;
 mod debug;
 mod math;
 mod mob;
 mod player;
+
+const TITLE: &'static str = "My Title";
+const CLEAR_COLOR: Color = Color::DARK_GRAY;
 
 fn main() {
     // Hot reload assets
@@ -51,13 +51,13 @@ fn main() {
     // Startup systems
     app.add_startup_systems((
         spawn_camera,
-		Handles::load,
-		spawn_player.after(Handles::load),
-	));
+        Handles::load,
+        spawn_player.after(Handles::load),
+    ));
 
     // UI systems
     app.add_system(bevy::window::close_on_esc)
-		.add_system(player::record_controls)
+        .add_system(player::record_controls)
         .add_system(Mob::apply_input);
 
     app.run();
@@ -67,21 +67,17 @@ fn spawn_camera(mut commands: Commands) {
     commands.spawn(Camera2dBundle::default());
 }
 
-fn spawn_player(
-	mut commands: Commands,
-	handle: Res<Handles>,
-) {
-	commands
-		.spawn((
-            SpriteBundle {
-			    texture: handle.image[&ImageKey::Gnoll].clone(),
-			    ..default()
-		    },
-			Mob::default(),
-			MobInputs::default(),
-			Player {},
-			Velocity::default(),
-			RigidBody::default(),
-            LockedAxes::ROTATION_LOCKED,
-        ));
+fn spawn_player(mut commands: Commands, handle: Res<Handles>) {
+    commands.spawn((
+        SpriteBundle {
+            texture: handle.image[&ImageKey::GreenGnoll].clone(),
+            ..default()
+        },
+        Mob::default(),
+        MobInputs::default(),
+        Player {},
+        Velocity::default(),
+        RigidBody::default(),
+        LockedAxes::ROTATION_LOCKED,
+    ));
 }
