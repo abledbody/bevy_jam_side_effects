@@ -1,10 +1,13 @@
+use crate::debug::DebugPlugin;
 use bevy::prelude::*;
+use bevy_rapier2d::prelude::*;
 
 const TITLE: &'static str = "My Title";
 const CLEAR_COLOR: Color = Color::AQUAMARINE;
 
-mod player;
+mod debug;
 mod math;
+mod player;
 
 fn main() {
     // Hot reload assets
@@ -33,14 +36,17 @@ fn main() {
                 ..default()
             })
             .set(ImagePlugin::default_nearest()),
-    );
+    )
+    .add_plugin(RapierPhysicsPlugin::<NoUserData>::default());
+    #[cfg(feature = "debug_mode")]
+    app.add_plugin(DebugPlugin::default());
 
     // Startup systems
     app.add_startup_system(spawn_camera);
 
     // UI systems
     app.add_system(bevy::window::close_on_esc)
-		.add_system(player::Player::player_movement);
+        .add_system(player::Player::player_movement);
 
     app.run();
 }
