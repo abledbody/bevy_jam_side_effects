@@ -1,6 +1,7 @@
 use bevy::prelude::*;
 use bevy_rapier2d::prelude::*;
 
+use crate::game::TIME_STEP;
 use crate::math::MoveTowards;
 
 #[derive(Component, Reflect)]
@@ -15,16 +16,13 @@ pub struct Mob {
 impl Mob {
     pub fn apply_input(mut mob_query: Query<(&Mob, &mut Velocity, &MobInputs)>) {
         for (mob, mut velocity, mob_inputs) in &mut mob_query {
-            // FIXME: Should be a fixed delta timestep.
-            let dt = 1.0 / 60.0;
-
             let input_direction = mob_inputs.movement.normalize_or_zero();
             let input_magnitude = mob_inputs.movement.length().min(1.0);
 
             let target_velocity = input_direction * input_magnitude * mob.speed;
             velocity.linvel = velocity
                 .linvel
-                .move_towards(target_velocity, mob.acceleration * dt);
+                .move_towards(target_velocity, mob.acceleration * TIME_STEP);
         }
     }
 

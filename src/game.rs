@@ -1,3 +1,5 @@
+use std::time::Duration;
+
 use bevy::prelude::*;
 use bevy_rapier2d::prelude::*;
 
@@ -11,13 +13,26 @@ use crate::player::Player;
 
 const TITLE: &'static str = "My Title";
 const CLEAR_COLOR: Color = Color::DARK_GRAY;
+pub const TIME_STEP: f32 = 1.0 / 60.0;
+const TIME_STEP_DURATION: Duration = Duration::from_nanos((TIME_STEP * 1_000_000_000.0) as u64);
+
+type Physics = RapierPhysicsPlugin<NoUserData>;
 
 pub struct GamePlugin;
 
 impl Plugin for GamePlugin {
     fn build(&self, app: &mut App) {
         // Resources
-        app.insert_resource(ClearColor(CLEAR_COLOR))
+        app.insert_resource(FixedTime::new(TIME_STEP_DURATION))
+            .insert_resource(ClearColor(CLEAR_COLOR))
+            .insert_resource(RapierConfiguration {
+                gravity: Vec2::ZERO,
+                timestep_mode: TimestepMode::Fixed {
+                    dt: TIME_STEP,
+                    substeps: 1,
+                },
+                ..default()
+            })
             .init_resource::<Handles>();
 
         // Plugins
@@ -32,7 +47,7 @@ impl Plugin for GamePlugin {
                 })
                 .set(ImagePlugin::default_nearest()),
         )
-        .add_plugin(RapierPhysicsPlugin::<NoUserData>::default());
+        .add_plugin(Physics::default().with_default_system_setup(false));
         #[cfg(feature = "debug_mode")]
         app.add_plugin(DebugPlugin::default());
 
@@ -43,10 +58,27 @@ impl Plugin for GamePlugin {
             spawn_player.after(Handles::load),
         ));
 
+        // Game logic systems (fixed timestep)
+        app.edit_schedule(CoreSchedule::FixedUpdate, |schedule| {
+            schedule.add_systems(
+                (Player::record_controls, Mob::apply_input)
+                    .chain()
+                    .before(PhysicsSet::SyncBackend),
+            );
+
+            // Physics
+            for set in [
+                PhysicsSet::SyncBackend,
+                PhysicsSet::SyncBackendFlush,
+                PhysicsSet::StepSimulation,
+                PhysicsSet::Writeback,
+            ] {
+                schedule.add_systems(Physics::get_systems(set.clone()).in_base_set(set));
+            }
+        });
+
         // UI systems
-        app.add_system(bevy::window::close_on_esc)
-            .add_system(Player::record_controls)
-            .add_system(Mob::apply_input);
+        app.add_system(bevy::window::close_on_esc);
     }
 }
 
