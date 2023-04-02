@@ -1,18 +1,19 @@
-use std::f32::consts::TAU;
-use std::time::Duration;
+use std::{f32::consts::TAU, time::Duration};
 
-use bevy::prelude::*;
+use bevy::{math::vec3, prelude::*};
 use bevy_rapier2d::prelude::*;
 
-use crate::asset::Handles;
-use crate::asset::ImageKey;
-use crate::debug::DebugPlugin;
-use crate::mob::enemy::Loot;
-use crate::mob::player::Gold;
-use crate::mob::player::Player;
-use crate::mob::Health;
-use crate::mob::Mob;
-use crate::mob::MobInputs;
+use crate::{
+    asset::{Handles, ImageKey},
+    debug::DebugPlugin,
+    mob::{
+        enemy::Loot,
+        player::{Gold, Player},
+        Health,
+        Mob,
+        MobInputs,
+    },
+};
 
 const TITLE: &'static str = "My Title";
 const CLEAR_COLOR: Color = Color::DARK_GRAY;

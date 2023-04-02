@@ -1,18 +1,21 @@
-use bevy::diagnostic::FrameTimeDiagnosticsPlugin;
-use bevy::diagnostic::LogDiagnosticsPlugin;
-use bevy::input::common_conditions::input_just_pressed;
-use bevy::input::common_conditions::input_toggle_active;
-use bevy::prelude::*;
+use bevy::{
+    diagnostic::{FrameTimeDiagnosticsPlugin, LogDiagnosticsPlugin},
+    input::common_conditions::{input_just_pressed, input_toggle_active},
+    prelude::*,
+};
 use bevy_inspector_egui::quick::WorldInspectorPlugin;
 use bevy_rapier2d::prelude::*;
 
-use crate::asset::Handles;
-use crate::mob::enemy::Loot;
-use crate::mob::player::Gold;
-use crate::mob::player::Player;
-use crate::mob::Health;
-use crate::mob::Mob;
-use crate::mob::MobInputs;
+use crate::{
+    asset::Handles,
+    mob::{
+        enemy::Loot,
+        player::{Gold, Player},
+        Health,
+        Mob,
+        MobInputs,
+    },
+};
 
 const TOGGLE_KEY: KeyCode = KeyCode::F3;
 
