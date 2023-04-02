@@ -6,7 +6,7 @@ use bevy_rapier2d::prelude::*;
 use crate::{
     asset::Handles,
     debug::DebugPlugin,
-    mob::{enemy::Enemy, player::Player, Mob},
+    mob::{enemy::Enemy, player::Player, Mob}, animation::{WalkAnimation, self},
 };
 
 // TODO: Come up with a title.
@@ -74,7 +74,11 @@ impl Plugin for GamePlugin {
         });
 
         // Visual systems
-        app.add_system(Mob::flip_by_direction);
+        app.add_systems((
+			Mob::flip_by_direction,
+			WalkAnimation::update,
+			animation::sum_animations,
+		));
 
         // UI systems
         app.add_system(bevy::window::close_on_esc);
