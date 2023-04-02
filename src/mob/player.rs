@@ -41,9 +41,28 @@ impl Player {
         let health = 100.0;
         let position = vec3(0.0, 0.0, 500.0);
 
+        // Sprite
+        let mut sprite = commands.spawn((SpriteBundle {
+            texture: handle.image[&texture].clone(),
+            ..default()
+        },));
+        #[cfg(feature = "debug_mode")]
+        sprite.insert(Name::new("Sprite"));
+        let sprite = sprite.id();
+
+        // Drop shadow
+        let mut drop_shadow = commands.spawn(SpriteBundle {
+            texture: handle.image[&ImageKey::DropShadow].clone(),
+            transform: Transform::from_xyz(-2.0, -11.0, -position.z + 50.0),
+            ..default()
+        });
+        #[cfg(feature = "debug_mode")]
+        drop_shadow.insert(Name::new("DropShadow"));
+        let drop_shadow = drop_shadow.id();
+
+        // Parent entity
         let mut entity = commands.spawn((
-            SpriteBundle {
-                texture: handle.image[&texture].clone(),
+            SpatialBundle {
                 transform: Transform::from_translation(position),
                 ..default()
             },
@@ -56,5 +75,8 @@ impl Player {
         ));
         #[cfg(feature = "debug_mode")]
         entity.insert(Name::new("Player"));
+
+        entity.add_child(sprite);
+        entity.add_child(drop_shadow);
     }
 }
