@@ -3,7 +3,10 @@ use bevy_rapier2d::prelude::*;
 
 use crate::math::MoveTowards;
 
-#[derive(Component)]
+#[derive(Component, Reflect)]
+pub struct Health(pub f32);
+
+#[derive(Component, Reflect)]
 pub struct Mob {
     speed: f32,
     acceleration: f32,
@@ -24,10 +27,8 @@ impl Mob {
                 .move_towards(target_velocity, mob.acceleration * dt);
         }
     }
-}
 
-impl Default for Mob {
-    fn default() -> Self {
+    pub fn player() -> Self {
         Self {
             speed: 130.0,
             acceleration: 500.0,
@@ -35,15 +36,7 @@ impl Default for Mob {
     }
 }
 
-#[derive(Component)]
+#[derive(Component, Reflect, Default)]
 pub struct MobInputs {
     pub movement: Vec2,
-}
-
-impl Default for MobInputs {
-    fn default() -> Self {
-        Self {
-            movement: Vec2::ZERO,
-        }
-    }
 }

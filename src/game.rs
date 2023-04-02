@@ -4,6 +4,7 @@ use bevy_rapier2d::prelude::*;
 use crate::asset::Handles;
 use crate::asset::ImageKey;
 use crate::debug::DebugPlugin;
+use crate::mob::Health;
 use crate::mob::Mob;
 use crate::mob::MobInputs;
 use crate::player::Player;
@@ -54,16 +55,22 @@ fn spawn_camera(mut commands: Commands) {
 }
 
 fn spawn_player(mut commands: Commands, handle: Res<Handles>) {
+    let texture = ImageKey::GreenGnoll;
+    let health = 100.0;
+
     commands.spawn((
         SpriteBundle {
-            texture: handle.image[&ImageKey::GreenGnoll].clone(),
+            texture: handle.image[&texture].clone(),
             ..default()
         },
-        Mob::default(),
+        Mob::player(),
         MobInputs::default(),
         Player,
-        Velocity::default(),
-        RigidBody::default(),
-        LockedAxes::ROTATION_LOCKED,
+        Health(health),
+        (
+            Velocity::default(),
+            RigidBody::default(),
+            LockedAxes::ROTATION_LOCKED,
+        ),
     ));
 }

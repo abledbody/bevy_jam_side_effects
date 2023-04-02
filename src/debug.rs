@@ -7,6 +7,10 @@ use bevy_inspector_egui::quick::WorldInspectorPlugin;
 use bevy_rapier2d::prelude::*;
 
 use crate::asset::Handles;
+use crate::mob::Health;
+use crate::mob::Mob;
+use crate::mob::MobInputs;
+use crate::player::Player;
 
 const TOGGLE_KEY: KeyCode = KeyCode::F3;
 
@@ -32,7 +36,11 @@ impl Plugin for DebugPlugin {
         app.add_system(DebugPlugin::toggle.run_if(input_just_pressed(TOGGLE_KEY)));
 
         // Types
-        app.register_type::<Handles>();
+        app.register_type::<Handles>()
+            .register_type::<Health>()
+            .register_type::<Mob>()
+            .register_type::<MobInputs>()
+            .register_type::<Player>();
 
         // Disable Rapier debug initially
         app.world.resource_mut::<DebugRenderContext>().enabled = false;

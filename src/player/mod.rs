@@ -2,7 +2,7 @@ use bevy::prelude::*;
 
 use crate::mob::*;
 
-#[derive(Component)]
+#[derive(Component, Reflect)]
 pub struct Player;
 
 impl Player {
