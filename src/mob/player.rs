@@ -1,7 +1,6 @@
 use bevy::{math::vec3, prelude::*};
-use bevy_rapier2d::prelude::*;
 
-use super::{Health, Mob, MobInputs, MobBundle};
+use super::{Health, Mob, MobBundle, MobInputs};
 use crate::asset::{Handles, ImageKey};
 
 #[derive(Component, Reflect)]

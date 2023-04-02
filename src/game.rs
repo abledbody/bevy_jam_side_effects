@@ -1,18 +1,12 @@
 use std::{f32::consts::TAU, time::Duration};
 
-use bevy::{math::vec3, prelude::*};
+use bevy::prelude::*;
 use bevy_rapier2d::prelude::*;
 
 use crate::{
-    asset::{Handles, ImageKey},
+    asset::Handles,
     debug::DebugPlugin,
-    mob::{
-        enemy::Loot,
-        player::{Gold, Player},
-        Health,
-        Mob,
-        MobInputs, MobBundle,
-    },
+    mob::{enemy::Enemy, player::Player, Mob},
 };
 
 // TODO: Come up with a title.
@@ -79,10 +73,8 @@ impl Plugin for GamePlugin {
             }
         });
 
-		// Visual systems
-		app.add_system(
-			Mob::flip_by_direction
-		);
+        // Visual systems
+        app.add_system(Mob::flip_by_direction);
 
         // UI systems
         app.add_system(bevy::window::close_on_esc);
@@ -100,30 +92,11 @@ fn spawn_camera(mut commands: Commands) {
 }
 
 fn spawn_enemies(mut commands: Commands, handle: Res<Handles>) {
-    let texture = ImageKey::RedGnoll;
-    let health = 20.0;
-    let gold = 10.0;
     let distance = 80.0;
-
-    let enemy_count = 12;
-    for i in 0..enemy_count {
-        let angle = i as f32 / enemy_count as f32 * TAU;
+    let count = 12;
+    for i in 0..count {
+        let angle = i as f32 / count as f32 * TAU;
         let position = (distance * Vec2::from_angle(angle)).extend(400.0);
-
-        let mut entity = commands.spawn((
-            SpriteBundle {
-                texture: handle.image[&texture].clone(),
-                transform: Transform::from_translation(position),
-                ..default()
-            },
-			MobBundle {
-				health: Health(health),
-				..default()
-			},
-            // TODO: EnemyAi
-            Loot { gold },
-        ));
-        #[cfg(feature = "debug_mode")]
-        entity.insert(Name::new("Enemy"));
+        Enemy::spawn(&mut commands, &handle, position);
     }
 }
