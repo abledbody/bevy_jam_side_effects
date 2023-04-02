@@ -4,7 +4,7 @@ use crate::{
     animation::{Offset, WalkAnimation},
     asset::{Handles, ImageKey},
     mob::{Health, MobBundle},
-    vfx,
+    vfx::DropShadow,
 };
 
 #[derive(Component, Reflect)]
@@ -39,6 +39,12 @@ impl Enemy {
         body.insert(Name::new("Body"));
         let body = body.id();
 
+        let drop_shadow = DropShadow {
+            parent_z: position.z,
+            offset: Offset(vec2(0.0, -11.0)),
+        }
+        .spawn(commands, handle);
+
         // Parent entity
         let mut entity = commands.spawn((
             SpatialBundle {
@@ -56,7 +62,7 @@ impl Enemy {
         entity.insert(Name::new("Enemy"));
 
         entity.add_child(body);
-        entity.add_child(vfx::drop_shadow(position.z, vec2(0.0, -11.0)));
+        entity.add_child(drop_shadow);
 
         entity.id()
     }

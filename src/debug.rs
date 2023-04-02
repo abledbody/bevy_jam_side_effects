@@ -1,6 +1,6 @@
 use bevy::{
     diagnostic::{FrameTimeDiagnosticsPlugin, LogDiagnosticsPlugin},
-    input::common_conditions::{input_just_pressed, input_toggle_active},
+    input::common_conditions::input_just_pressed,
     prelude::*,
 };
 #[cfg(feature = "editor")]
@@ -10,7 +10,7 @@ use bevy_rapier2d::prelude::*;
 use crate::{
     animation::{Facing, Offset, WalkAnimation},
     asset::Handles,
-    combat::{Hitbox, Hurtbox},
+    combat::Effects,
     mob::{
         enemy::{Enemy, Loot},
         player::{Gold, Player},
@@ -57,8 +57,7 @@ impl Plugin for DebugPlugin {
             .register_type::<Facing>()
             .register_type::<Offset>()
             .register_type::<WalkAnimation>()
-            .register_type::<Hitbox>()
-            .register_type::<Hurtbox>();
+            .register_type::<Effects>();
 
         // Disable Rapier debug initially
         app.world.resource_mut::<DebugRenderContext>().enabled = false;

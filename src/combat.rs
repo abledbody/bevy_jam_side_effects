@@ -4,17 +4,24 @@ use bevy_rapier2d::prelude::*;
 use crate::animation::Offset;
 
 #[derive(Component, Reflect)]
-pub struct Hitbox {
+pub struct Effects {
     damage: f32,
     knockback: f32,
 }
 
+pub struct Hitbox {
+    pub offset: Offset,
+    pub radius: f32,
+    pub effects: Effects,
+}
+
 impl Hitbox {
-    fn spawn(commands: &mut Commands, radius: f32, offset: Vec2) -> Entity {
+    pub fn spawn(self, commands: &mut Commands) -> Entity {
         let mut entity = commands.spawn((
-            Offset(offset),
+            self.offset,
+            self.effects,
             RigidBody::KinematicPositionBased,
-            Collider::ball(radius),
+            Collider::ball(self.radius),
             CollisionGroups {
                 memberships: Group::ALL,
                 filters: Group::ALL,
@@ -28,15 +35,17 @@ impl Hitbox {
     }
 }
 
-#[derive(Component, Reflect)]
-pub struct Hurtbox;
+pub struct Hurtbox {
+    pub offset: Offset,
+    pub radius: f32,
+}
 
 impl Hurtbox {
-    fn spawn(commands: &mut Commands, radius: f32, offset: Vec2) -> Entity {
+    pub fn spawn(self, commands: &mut Commands) -> Entity {
         let mut entity = commands.spawn((
-            Offset(offset),
+            self.offset,
             RigidBody::KinematicPositionBased,
-            Collider::ball(radius),
+            Collider::ball(self.radius),
             CollisionGroups {
                 memberships: Group::ALL,
                 filters: Group::ALL,
