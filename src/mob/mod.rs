@@ -1,7 +1,12 @@
 use bevy::prelude::*;
 use bevy_rapier2d::prelude::*;
 
-use crate::{animation::Facing, game::TIME_STEP, math::MoveTowards};
+use crate::{
+    animation::{Facing, Offset, WalkAnimation},
+    asset::{Handles, ImageKey},
+    game::TIME_STEP,
+    math::MoveTowards,
+};
 
 pub mod enemy;
 pub mod player;
@@ -108,4 +113,30 @@ impl Default for MobBundle {
 #[derive(Component, Reflect, Default)]
 pub struct MobInputs {
     pub movement: Vec2,
+}
+
+pub struct Body {
+    texture: ImageKey,
+    offset: Offset,
+}
+
+impl Body {
+    pub fn spawn(self, commands: &mut Commands, handle: &Handles) -> Entity {
+        let mut body = commands.spawn((
+            SpriteBundle {
+                texture: handle.image[&self.texture].clone(),
+                ..default()
+            },
+            self.offset,
+            WalkAnimation {
+                air_time: 0.25,
+                height: 4.0,
+                ..default()
+            },
+        ));
+        #[cfg(feature = "debug_mode")]
+        body.insert(Name::new("Body"));
+
+        body.id()
+    }
 }

@@ -5,8 +5,9 @@ use bevy::{
 
 use super::{Health, Mob, MobBundle, MobInputs};
 use crate::{
-    animation::{Offset, WalkAnimation},
+    animation::Offset,
     asset::{Handles, ImageKey},
+    mob::Body,
     vfx::DropShadow,
 };
 
@@ -44,34 +45,22 @@ impl Player {
     }
 
     pub fn spawn(mut commands: Commands, handle: Res<Handles>) {
-        let texture = ImageKey::GreenGnoll;
-        let health = 100.0;
         let position = vec3(0.0, 0.0, 500.0);
+        let health = 100.0;
 
-        // Body
-        let mut body = commands.spawn((
-            SpriteBundle {
-                texture: handle.image[&texture].clone(),
-                ..default()
-            },
-            Offset(vec2(2.0, 0.0)),
-            WalkAnimation {
-                air_time: 0.18,
-                height: 3.0,
-                ..default()
-            },
-        ));
-        #[cfg(feature = "debug_mode")]
-        body.insert(Name::new("Body"));
-        let body = body.id();
-
+        // Children
+        let body = Body {
+            texture: ImageKey::GreenGnoll,
+            offset: Offset(vec2(2.0, 0.0)),
+        }
+        .spawn(&mut commands, &handle);
         let drop_shadow = DropShadow {
             parent_z: position.z,
             offset: Offset(vec2(0.0, -11.0)),
         }
         .spawn(&mut commands, &handle);
 
-        // Parent entity
+        // Parent
         let mut entity = commands.spawn((
             SpatialBundle {
                 transform: Transform::from_translation(position),
