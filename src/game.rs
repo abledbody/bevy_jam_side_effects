@@ -8,6 +8,8 @@ use bevy_rapier2d::prelude::*;
 use crate::asset::Handles;
 use crate::asset::ImageKey;
 use crate::debug::DebugPlugin;
+use crate::mob::enemy::Loot;
+use crate::mob::player::Gold;
 use crate::mob::player::Player;
 use crate::mob::Health;
 use crate::mob::Mob;
@@ -100,6 +102,7 @@ fn spawn_player(mut commands: Commands, handle: Res<Handles>) {
         MobInputs::default(),
         Player,
         Health(health),
+        Gold::default(),
         (
             Velocity::default(),
             RigidBody::default(),
@@ -111,6 +114,7 @@ fn spawn_player(mut commands: Commands, handle: Res<Handles>) {
 fn spawn_enemies(mut commands: Commands, handle: Res<Handles>) {
     let texture = ImageKey::RedGnoll;
     let health = 20.0;
+    let gold = 10.0;
     let distance = 300.0;
 
     let enemy_count = 12;
@@ -128,6 +132,7 @@ fn spawn_enemies(mut commands: Commands, handle: Res<Handles>) {
             MobInputs::default(),
             // TODO: EnemyAi
             Health(health),
+            Loot { gold },
             (
                 Velocity::default(),
                 RigidBody::default(),

@@ -5,6 +5,9 @@ use super::MobInputs;
 #[derive(Component, Reflect)]
 pub struct Player;
 
+#[derive(Component, Reflect, Default)]
+pub struct Gold(f32);
+
 impl Player {
     pub fn record_controls(
         mut player_query: Query<&mut MobInputs, With<Player>>,

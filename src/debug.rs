@@ -7,6 +7,8 @@ use bevy_inspector_egui::quick::WorldInspectorPlugin;
 use bevy_rapier2d::prelude::*;
 
 use crate::asset::Handles;
+use crate::mob::enemy::Loot;
+use crate::mob::player::Gold;
 use crate::mob::player::Player;
 use crate::mob::Health;
 use crate::mob::Mob;
@@ -38,6 +40,8 @@ impl Plugin for DebugPlugin {
         // Types
         app.register_type::<Handles>()
             .register_type::<Health>()
+            .register_type::<Gold>()
+            .register_type::<Loot>()
             .register_type::<Mob>()
             .register_type::<MobInputs>()
             .register_type::<Player>();
