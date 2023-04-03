@@ -4,6 +4,7 @@ use bevy_rapier2d::prelude::*;
 use crate::{
     animation::{Facing, Offset, WalkAnimation},
     asset::{AudioKey, Handles, ImageKey},
+    combat::COLLISION_GROUP,
     game::TIME_STEP,
     math::MoveTowards,
 };
@@ -82,6 +83,9 @@ pub struct MobBundle {
     pub velocity: Velocity,
     pub rigid_body: RigidBody,
     pub locked_axes: LockedAxes,
+    pub collider: Collider,
+    pub collision_groups: CollisionGroups,
+    pub solver_groups: SolverGroups,
 }
 
 impl Default for MobBundle {
@@ -94,6 +98,15 @@ impl Default for MobBundle {
             velocity: Velocity::default(),
             rigid_body: RigidBody::default(),
             locked_axes: LockedAxes::ROTATION_LOCKED,
+            collider: Collider::ball(8.0),
+            collision_groups: CollisionGroups {
+                memberships: COLLISION_GROUP,
+                filters: COLLISION_GROUP,
+            },
+            solver_groups: SolverGroups {
+                memberships: COLLISION_GROUP,
+                filters: COLLISION_GROUP,
+            },
         }
     }
 }
