@@ -1,15 +1,15 @@
 use bevy::prelude::*;
 
-pub const MOB_Z: f32 = 500.0;
+pub const Z_MAX: f32 = 10.0;
+pub const Z_SCALE: f32 = 0.001;
 
-#[derive(Debug, Component, Reflect)]
-pub struct ZRampByY(pub f32);
+#[derive(Default, Clone, Debug, Component, Reflect)]
+pub struct ZRampByY;
 
 impl ZRampByY {
-    pub fn apply(mut transform_query: Query<(&Self, &mut Transform)>) {
-        let scale = 0.01;
-        for (z, mut transform) in &mut transform_query {
-            transform.translation.z = (z.0 - scale * transform.translation.y).max(0.0);
+    pub fn apply(mut transform_query: Query<&mut Transform, With<ZRampByY>>) {
+        for mut transform in &mut transform_query {
+            transform.translation.z = Z_MAX - Z_SCALE * transform.translation.y;
         }
     }
 }

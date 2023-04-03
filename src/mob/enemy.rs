@@ -4,7 +4,6 @@ use crate::{
     asset::{Handles, ImageKey},
     combat::Faction,
     mob::{BodyTemplate, Health, MobBundle},
-    util::MOB_Z,
     vfx::DropShadowTemplate,
 };
 
@@ -51,7 +50,6 @@ impl EnemyTemplate {
         }
         .spawn(commands, handle);
         let drop_shadow = DropShadowTemplate {
-            parent_z: MOB_Z,
             offset: vec2(0.0, -11.0),
         }
         .spawn(commands, handle);
@@ -59,7 +57,7 @@ impl EnemyTemplate {
         // Parent entity
         let mut enemy = commands.spawn((
             SpatialBundle {
-                transform: Transform::from_translation(self.position.extend(MOB_Z)),
+                transform: Transform::from_translation(self.position.extend(0.0)),
                 ..default()
             },
             MobBundle {
