@@ -3,39 +3,12 @@ use bevy_rapier2d::prelude::*;
 
 use crate::animation::Offset;
 
-const COLLISION_GROUP: Group = Group::GROUP_1;
+pub const COLLISION_GROUP: Group = Group::GROUP_1;
 
 #[derive(Component, Reflect)]
 pub struct Effects {
     damage: f32,
     knockback: f32,
-}
-
-pub struct CollisionboxTemplate {
-    pub offset: Vec2,
-    pub radius: f32,
-}
-
-impl CollisionboxTemplate {
-    pub fn spawn(self, commands: &mut Commands) -> Entity {
-        let mut entity = commands.spawn((
-            Offset(self.offset),
-            TransformBundle::default(),
-            Collider::ball(self.radius),
-            CollisionGroups {
-                memberships: COLLISION_GROUP,
-                filters: COLLISION_GROUP,
-            },
-            SolverGroups {
-                memberships: COLLISION_GROUP,
-                filters: COLLISION_GROUP,
-            },
-        ));
-        #[cfg(feature = "debug_mode")]
-        entity.insert(Name::new("Collisionbox"));
-
-        entity.id()
-    }
 }
 
 pub struct HitboxTemplate {

@@ -5,7 +5,6 @@ use bevy::{
 
 use crate::{
     asset::{Handles, ImageKey},
-    combat::CollisionboxTemplate,
     mob::{BodyTemplate, Health, MobBundle},
     vfx::DropShadowTemplate,
 };
@@ -50,11 +49,6 @@ impl EnemyTemplate {
             offset: vec2(0.0, -11.0),
         }
         .spawn(commands, handle);
-        let body_collisionbox = CollisionboxTemplate {
-            offset: Vec2::ZERO,
-            radius: 8.0,
-        }
-        .spawn(commands);
 
         // Parent entity
         let mut entity = commands.spawn((
@@ -74,7 +68,6 @@ impl EnemyTemplate {
 
         entity.add_child(body);
         entity.add_child(drop_shadow);
-        entity.add_child(body_collisionbox);
 
         entity.id()
     }
