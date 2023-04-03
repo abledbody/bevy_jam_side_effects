@@ -13,7 +13,7 @@ use crate::{
     map::Wall,
     mob::{
         enemy::{EnemyAi, Loot},
-        player::{Gold, PlayerControl},
+        player::{Gold, Player, PlayerControl},
         Health,
         Mob,
         MobInputs,
@@ -60,7 +60,7 @@ impl Plugin for DebugPlugin {
             .register_type::<HitEffects>()
             .register_type::<Lifetime>()
             .register_type::<Wall>()
-            .register_type::<CameraFollow>()
+            .register_type::<CameraFollow<Player>>()
             .register_type::<ZRampByY>()
             .register_type::<VirtualParent>();
 

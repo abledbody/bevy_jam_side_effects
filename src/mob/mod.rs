@@ -13,10 +13,10 @@ use crate::{
 pub mod enemy;
 pub mod player;
 
-#[derive(Component, Reflect)]
+#[derive(Debug, Component, Reflect)]
 pub struct Health(pub f32);
 
-#[derive(Component, Reflect)]
+#[derive(Debug, Component, Reflect)]
 pub struct Mob {
     speed: f32,
     acceleration: f32,
@@ -75,7 +75,7 @@ impl Default for Mob {
     }
 }
 
-#[derive(Bundle)]
+#[derive(Debug, Bundle, Reflect)]
 pub struct MobBundle {
     pub mob: Mob,
     pub mob_inputs: MobInputs,
@@ -85,6 +85,7 @@ pub struct MobBundle {
     pub z_ramp_by_y: ZRampByY,
     pub rigid_body: RigidBody,
     pub locked_axes: LockedAxes,
+    #[reflect(ignore)]
     pub collider: Collider,
     pub collision_groups: CollisionGroups,
     pub solver_groups: SolverGroups,
@@ -123,7 +124,7 @@ impl MobBundle {
     }
 }
 
-#[derive(Component, Reflect, Default)]
+#[derive(Debug, Component, Reflect, Default)]
 pub struct MobInputs {
     pub movement: Vec2,
 }

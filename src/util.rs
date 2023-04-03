@@ -1,6 +1,6 @@
 use bevy::prelude::*;
 
-#[derive(Component, Reflect)]
+#[derive(Debug, Component, Reflect)]
 pub struct ZRampByY(pub f32);
 
 impl ZRampByY {

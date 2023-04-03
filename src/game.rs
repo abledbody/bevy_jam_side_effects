@@ -1,4 +1,4 @@
-use std::{f32::consts::TAU, time::Duration};
+use std::time::Duration;
 
 use bevy::prelude::*;
 use bevy_ecs_ldtk::LdtkWorldBundle;
@@ -11,8 +11,8 @@ use crate::{
     combat::HitEffects,
     map::MapPlugin,
     mob::{
-        enemy::EnemyTemplate,
-        player::{PlayerControl, PlayerTemplate},
+        enemy::EnemyBundle,
+        player::{Player, PlayerBundle, PlayerControl},
         Mob,
     },
     util::ZRampByY,
@@ -65,6 +65,8 @@ impl Plugin for GamePlugin {
         app.add_startup_system(Handles::load.in_base_set(StartupSet::PreStartup));
         app.add_startup_system(spawn_scene);
 
+        app.add_systems((PlayerBundle::spawn, EnemyBundle::spawn));
+
         // Game logic systems (fixed timestep)
         app.edit_schedule(CoreSchedule::FixedUpdate, |schedule| {
             schedule.add_systems(
@@ -115,22 +117,6 @@ fn spawn_scene(mut commands: Commands, handle: Res<Handles>) {
         ..default()
     });
 
-    // Player
-    let player = PlayerTemplate::default().spawn(&mut commands, &handle);
-
-    // Enemies
-    let distance = 80.0;
-    let count = 12;
-    for i in 0..count {
-        let angle = i as f32 / count as f32 * TAU;
-        let position = (distance * Vec2::from_angle(angle)).extend(400.0);
-        EnemyTemplate {
-            position,
-            ..default()
-        }
-        .spawn(&mut commands, &handle);
-    }
-
     // Camera
-    GameCameraTemplate { target: player }.spawn(&mut commands);
+    GameCameraTemplate::<Player>::default().spawn(&mut commands);
 }

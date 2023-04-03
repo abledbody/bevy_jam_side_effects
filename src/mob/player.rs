@@ -1,7 +1,8 @@
 use bevy::{
-    math::{vec2, vec3},
+    math::{vec2, Vec3Swizzles},
     prelude::*,
 };
+use bevy_ecs_ldtk::{EntityInstance, Worldly};
 
 use super::{Health, Mob, MobBundle, MobInputs};
 use crate::{
@@ -14,7 +15,7 @@ use crate::{
 #[derive(Component, Reflect, Default)]
 pub struct Gold(f32);
 
-#[derive(Component, Reflect)]
+#[derive(Debug, Default, Component, Reflect)]
 pub struct PlayerControl;
 
 impl PlayerControl {
@@ -45,73 +46,81 @@ impl PlayerControl {
     }
 }
 
-pub struct PlayerTemplate {
-    position: Vec3,
-    health: f32,
+#[derive(Default, Component, Reflect)]
+pub struct Player;
+
+#[derive(Default, Bundle, Reflect)]
+pub struct PlayerBundle {
+    player: Player,
+    #[reflect(ignore)]
+    spatial_bundle: SpatialBundle,
+    mob_bundle: MobBundle,
+    player_control: PlayerControl,
+    worldly: Worldly,
 }
 
-impl Default for PlayerTemplate {
-    fn default() -> Self {
-        Self {
-            // TODO: Use the map definition to set this
-            position: vec3(19.0 * 8.0, 13.0 * 8.0, 500.0),
-            health: 100.0,
-        }
-    }
-}
+impl PlayerBundle {
+    pub fn spawn(
+        mut commands: Commands,
+        handle: Res<Handles>,
+        entity_query: Query<(Entity, &Transform, &EntityInstance), Added<EntityInstance>>,
+    ) {
+        for (entity, transform, instance) in &entity_query {
+            if &instance.identifier == "Player" {
+                const HEALTH: f32 = 100.0;
+                const Z_IDX: f32 = 500.0;
 
-impl PlayerTemplate {
-    pub fn spawn(self, commands: &mut Commands, handle: &Handles) -> Entity {
-        let faction = Faction::Player;
+                let faction = Faction::Player;
 
-        // Children
-        let body = BodyTemplate {
-            texture: ImageKey::GreenGnoll,
-            offset: vec2(2.0, 0.0),
-        }
-        .spawn(commands, handle);
-        let drop_shadow = DropShadowTemplate {
-            parent_z: self.position.z,
-            offset: vec2(0.0, -11.0),
-        }
-        .spawn(commands, handle);
-        // TODO: Component to "Attach" hitbox to another entity.
-        //       Like a child entity but not a child entity because Rapier.
+                // Children
+                let body = BodyTemplate {
+                    texture: ImageKey::GreenGnoll,
+                    offset: vec2(2.0, 0.0),
+                }
+                .spawn(&mut commands, &handle);
+                let drop_shadow = DropShadowTemplate {
+                    parent_z: Z_IDX,
+                    offset: vec2(0.0, -11.0),
+                }
+                .spawn(&mut commands, &handle);
+                // TODO: Component to "Attach" hitbox to another entity.
+                //       Like a child entity but not a child entity because Rapier.
 
-        // Parent
-        let mut player = commands.spawn((
-            SpatialBundle {
-                transform: Transform::from_translation(self.position),
-                ..default()
-            },
-            MobBundle {
-                mob: Mob::player(),
-                health: Health(self.health),
-                ..default()
+                // Parent
+                let mut player = commands.entity(entity);
+                player.insert(PlayerBundle {
+                    spatial_bundle: SpatialBundle {
+                        transform: Transform::from_translation(
+                            transform.translation.xy().extend(Z_IDX),
+                        ),
+                        ..default()
+                    },
+                    mob_bundle: MobBundle {
+                        mob: Mob::player(),
+                        health: Health(HEALTH),
+                        ..default()
+                    }
+                    .with_faction(faction),
+                    ..default()
+                });
+                #[cfg(feature = "debug_mode")]
+                player.insert(Name::new("Player"));
+
+                player.add_child(body);
+                player.add_child(drop_shadow);
+
+                // Axe hitbox
+                HitboxTemplate {
+                    offset: vec2(10.0, 4.0),
+                    radius: 6.0,
+                    damage: 8.0,
+                    knockback: 5.0,
+                    faction,
+                    lifetime: f32::INFINITY,
+                    parent: player.id(),
+                }
+                .spawn(&mut commands);
             }
-            .with_faction(faction),
-            PlayerControl,
-        ));
-        #[cfg(feature = "debug_mode")]
-        player.insert(Name::new("Player"));
-
-        player.add_child(body);
-        player.add_child(drop_shadow);
-
-        let player = player.id();
-
-        // Axe hitbox
-        HitboxTemplate {
-            offset: vec2(10.0, 4.0),
-            radius: 6.0,
-            damage: 8.0,
-            knockback: 5.0,
-            faction,
-            lifetime: f32::INFINITY,
-            parent: player,
         }
-        .spawn(commands);
-
-        player
     }
 }
