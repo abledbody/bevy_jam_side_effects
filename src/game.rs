@@ -89,14 +89,17 @@ impl Plugin for GamePlugin {
                 schedule.add_systems(Physics::get_systems(set.clone()).in_base_set(set));
             }
 
-            schedule.add_systems((
-                HitEvent::detect.after(PhysicsSet::Writeback),
-                HitEffects::apply.after(HitEvent::detect),
-                DeathEffects::apply.after(HitEffects::apply),
-                // TODO: Define an enum UpdateSet
-                Lifetime::apply.after(HitEffects::apply),
-                spawn_instances.after(Lifetime::apply),
-            ));
+            schedule.add_systems(
+                (
+                    HitEvent::detect.after(PhysicsSet::Writeback),
+                    HitEffects::apply,
+                    DeathEffects::apply,
+                    // TODO: Define an enum UpdateSet
+                    Lifetime::apply,
+                    spawn_instances,
+                )
+                    .chain(),
+            );
         });
 
         // Visual systems
@@ -104,10 +107,9 @@ impl Plugin for GamePlugin {
             Mob::set_facing,
             Facing::update_sprites.after(Mob::set_facing),
             Offset::apply_to_sprites.after(Mob::set_facing),
-            ZRampByY::apply,
-            WalkAnimation::update,
-            animation::sum_animations.after(WalkAnimation::update),
         ));
+        app.add_systems((WalkAnimation::update, animation::sum_animations).chain());
+        app.add_system(ZRampByY::apply);
 
         // UI systems
         app.add_system(bevy::window::close_on_esc);
