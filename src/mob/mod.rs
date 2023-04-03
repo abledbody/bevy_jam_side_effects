@@ -102,7 +102,7 @@ impl Default for MobBundle {
             velocity: Velocity::default(),
             rigid_body: RigidBody::default(),
             locked_axes: LockedAxes::ROTATION_LOCKED,
-            collider: Collider::ball(7.0),
+            collider: Collider::capsule_x(5.0, 3.0),
             collision_groups: CollisionGroups {
                 memberships: COLLISION_GROUP,
                 filters: COLLISION_GROUP,
