@@ -82,9 +82,6 @@ pub struct MobBundle {
     pub velocity: Velocity,
     pub rigid_body: RigidBody,
     pub locked_axes: LockedAxes,
-    pub collider: Collider,
-    pub collision_groups: CollisionGroups,
-    pub solver_groups: SolverGroups,
 }
 
 impl Default for MobBundle {
@@ -97,15 +94,6 @@ impl Default for MobBundle {
             velocity: Velocity::default(),
             rigid_body: RigidBody::default(),
             locked_axes: LockedAxes::ROTATION_LOCKED,
-            collider: Collider::ball(12.0),
-            collision_groups: CollisionGroups {
-                memberships: Group::ALL,
-                filters: Group::ALL,
-            },
-            solver_groups: SolverGroups {
-                memberships: Group::ALL,
-                filters: Group::ALL,
-            },
         }
     }
 }

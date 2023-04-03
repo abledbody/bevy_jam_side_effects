@@ -55,9 +55,25 @@ impl Facing {
 pub struct Offset(pub Vec2);
 
 impl Offset {
-    pub fn apply(
+    pub fn apply_to_sprites(
         facing_query: Query<(&Facing, &Children)>,
-        mut offset_query: Query<(&Offset, &mut Transform)>,
+        mut offset_query: Query<(&Offset, &mut Transform), With<Sprite>>,
+    ) {
+        for (facing, children) in &facing_query {
+            for child in children {
+                let Ok((offset, mut transform)) = offset_query.get_mut(*child) else {
+                    continue
+                };
+
+                transform.translation.x = offset.0.x * facing.sign();
+                transform.translation.y = offset.0.y;
+            }
+        }
+    }
+
+    pub fn apply_to_non_sprites(
+        facing_query: Query<(&Facing, &Children)>,
+        mut offset_query: Query<(&Offset, &mut Transform), Without<Sprite>>,
     ) {
         for (facing, children) in &facing_query {
             for child in children {
