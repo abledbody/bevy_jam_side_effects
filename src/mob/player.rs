@@ -101,7 +101,7 @@ impl PlayerTemplate {
             lifetime: f32::INFINITY,
             parent: player,
         }
-        .spawn(commands);
+        .spawn(commands, handle);
 
         player
     }

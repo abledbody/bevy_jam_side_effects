@@ -7,7 +7,7 @@ use crate::{
         player::{Gold, PlayerControl},
         Health,
     },
-    util::{DespawnSet, VirtualParent},
+    util::{DespawnSet, VirtualParent}, asset::{Handles, AudioKey},
 };
 
 pub const COLLISION_GROUP: Group = Group::GROUP_1;
@@ -54,7 +54,7 @@ pub struct HitboxTemplate {
 }
 
 impl HitboxTemplate {
-    pub fn spawn(self, commands: &mut Commands) -> Entity {
+    pub fn spawn(self, commands: &mut Commands, handle: &Handles) -> Entity {
         let mut entity = commands.spawn((
             Offset(self.offset),
             TransformBundle::default(),
@@ -65,6 +65,7 @@ impl HitboxTemplate {
             HitEffects {
                 damage: self.damage,
                 knockback: self.knockback,
+				sound: Some(handle.audio[&AudioKey::PlayerAttack2].clone()),
             },
             Lifetime(self.lifetime),
             VirtualParent(self.parent),
@@ -112,7 +113,7 @@ impl HitEvent {
 pub struct HitEffects {
     damage: f32,
     knockback: f32,
-    // TODO: Sound effect (audio_key: AudioKey)
+	sound: Option<Handle<AudioSource>>,
 }
 
 impl HitEffects {
@@ -123,6 +124,7 @@ impl HitEffects {
         mut health_query: Query<&mut Health>,
         mut velocity_query: Query<&mut Velocity>,
         transform_query: Query<&Transform>,
+		mut audio: ResMut<Audio>,
     ) {
         for &HitEvent {
             actor,
@@ -131,6 +133,10 @@ impl HitEffects {
         } in hit_events.iter()
         {
             let Ok(effect) = hit_effects_query.get(hitbox) else { return };
+			
+			if let Some(sound) = &effect.sound {
+				audio.play(sound.clone());
+			}
 
             // Damage
             if let Ok(mut health) = health_query.get_mut(target) {
