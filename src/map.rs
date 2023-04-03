@@ -21,19 +21,25 @@ impl Plugin for MapPlugin {
 #[derive(Copy, Clone, Eq, PartialEq, Debug, Default, Component)]
 pub struct Wall;
 
-#[derive(Clone, Debug, Bundle, LdtkIntCell)]
-pub struct WallBundle {
-    wall: Wall,
+#[derive(Clone, Debug, Bundle)]
+pub struct WallCollider {
     collider: Collider,
     collision_groups: CollisionGroups,
     rigid_body: RigidBody,
     friction: Friction,
 }
 
-impl From<IntGridCell> for WallBundle {
+#[derive(Clone, Debug, Bundle, LdtkIntCell)]
+pub struct WallBundle {
+    wall: Wall,
+    #[bundle]
+    #[from_int_grid_cell]
+    collider: WallCollider,
+}
+
+impl From<IntGridCell> for WallCollider {
     fn from(_value: IntGridCell) -> Self {
         Self {
-            wall: Wall,
             collider: Collider::cuboid(8.0, 8.0),
             collision_groups: CollisionGroups {
                 memberships: Group::ALL,
