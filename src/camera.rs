@@ -9,10 +9,10 @@ impl Plugin for CameraPlugin {
     }
 }
 
-#[derive(Component)]
+#[derive(Component, Reflect)]
 pub struct CameraFollow;
 
-#[derive(Resource)]
+#[derive(Resource, Reflect)]
 pub struct CameraTarget(pub Entity);
 
 pub struct GameCamera;

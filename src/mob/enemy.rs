@@ -5,6 +5,7 @@ use bevy::{
 
 use crate::{
     asset::{Handles, ImageKey},
+    combat::Faction,
     mob::{BodyTemplate, Health, MobBundle},
     vfx::DropShadowTemplate,
 };
@@ -38,6 +39,8 @@ impl Default for EnemyTemplate {
 
 impl EnemyTemplate {
     pub fn spawn(self, commands: &mut Commands, handle: &Handles) -> Entity {
+        let faction = Faction::Enemy;
+
         // Children
         let body = BodyTemplate {
             texture: self.variant,
@@ -59,7 +62,8 @@ impl EnemyTemplate {
             MobBundle {
                 health: Health(self.health),
                 ..default()
-            },
+            }
+            .with_faction(faction),
             EnemyAi,
             Loot { gold: self.gold },
         ));

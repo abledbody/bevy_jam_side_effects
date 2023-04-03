@@ -8,6 +8,7 @@ use crate::{
     animation::{self, Facing, Offset, WalkAnimation},
     asset::{Handles, LevelKey},
     camera::{CameraPlugin, CameraTarget},
+    combat::{HitEffects, Lifetime},
     map::MapPlugin,
     mob::{
         enemy::EnemyTemplate,
@@ -118,6 +119,12 @@ impl Plugin for GamePlugin {
             ] {
                 schedule.add_systems(Physics::get_systems(set.clone()).in_base_set(set));
             }
+
+            schedule.add_systems((
+                HitEffects::apply.after(PhysicsSet::Writeback),
+                // TODO: Define an enum UpdateSet
+                Lifetime::apply.after(HitEffects::apply),
+            ));
         });
 
         // Visual systems
@@ -137,7 +144,7 @@ impl Plugin for GamePlugin {
 fn spawn_map(mut commands: Commands, handle: Res<Handles>) {
     commands.spawn(LdtkWorldBundle {
         ldtk_handle: handle.levels[&LevelKey::TestLevel].clone(),
-        ..Default::default()
+        ..default()
     });
 }
 

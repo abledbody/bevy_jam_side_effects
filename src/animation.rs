@@ -119,7 +119,7 @@ impl WalkAnimation {
                             sound.clone(),
                             PlaybackSettings {
                                 volume: 0.3,
-                                ..Default::default()
+                                ..default()
                             },
                         );
                     }
@@ -139,7 +139,7 @@ impl WalkAnimation {
                             sound.clone(),
                             PlaybackSettings {
                                 volume: 0.3,
-                                ..Default::default()
+                                ..default()
                             },
                         );
                     }

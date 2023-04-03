@@ -10,7 +10,9 @@ use bevy_rapier2d::prelude::*;
 use crate::{
     animation::{Facing, Offset, WalkAnimation},
     asset::Handles,
-    combat::Effects,
+    camera::{CameraFollow, CameraTarget},
+    combat::{HitEffects, Lifetime},
+    map::Wall,
     mob::{
         enemy::{EnemyAi, Loot},
         player::{Gold, PlayerControl},
@@ -57,7 +59,11 @@ impl Plugin for DebugPlugin {
             .register_type::<Facing>()
             .register_type::<Offset>()
             .register_type::<WalkAnimation>()
-            .register_type::<Effects>();
+            .register_type::<HitEffects>()
+            .register_type::<Lifetime>()
+            .register_type::<Wall>()
+            .register_type::<CameraFollow>()
+            .register_type::<CameraTarget>();
 
         // Disable Rapier debug initially
         app.world.resource_mut::<DebugRenderContext>().enabled = false;

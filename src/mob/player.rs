@@ -6,7 +6,7 @@ use bevy::{
 use super::{Health, Mob, MobBundle, MobInputs};
 use crate::{
     asset::{Handles, ImageKey},
-    combat::HitboxTemplate,
+    combat::{Faction, HitboxTemplate},
     mob::BodyTemplate,
     vfx::DropShadowTemplate,
 };
@@ -62,6 +62,8 @@ impl Default for PlayerTemplate {
 
 impl PlayerTemplate {
     pub fn spawn(self, commands: &mut Commands, handle: &Handles) -> Entity {
+        let faction = Faction::Player;
+
         // Children
         let body = BodyTemplate {
             texture: ImageKey::GreenGnoll,
@@ -73,11 +75,15 @@ impl PlayerTemplate {
             offset: vec2(0.0, -11.0),
         }
         .spawn(commands, handle);
+        // TODO: Component to "Attach" hitbox to another entity.
+        //       Like a child entity but not a child entity because Rapier.
         let axe_hitbox = HitboxTemplate {
-            offset: vec2(4.0, 4.0),
-            radius: 5.0,
+            offset: vec2(10.0, 4.0),
+            radius: 6.0,
             damage: 8.0,
             knockback: 5.0,
+            faction,
+            lifetime: f32::INFINITY,
         }
         .spawn(commands);
 
@@ -91,7 +97,8 @@ impl PlayerTemplate {
                 mob: Mob::player(),
                 health: Health(self.health),
                 ..default()
-            },
+            }
+            .with_faction(faction),
             PlayerControl,
         ));
         #[cfg(feature = "debug_mode")]
@@ -99,7 +106,6 @@ impl PlayerTemplate {
 
         entity.add_child(body);
         entity.add_child(drop_shadow);
-        entity.add_child(axe_hitbox);
 
         entity.id()
     }

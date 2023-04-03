@@ -4,7 +4,7 @@ use bevy_rapier2d::prelude::*;
 use crate::{
     animation::{Facing, Offset, WalkAnimation},
     asset::{AudioKey, Handles, ImageKey},
-    combat::COLLISION_GROUP,
+    combat::{Faction, COLLISION_GROUP},
     game::TIME_STEP,
     math::MoveTowards,
 };
@@ -108,6 +108,15 @@ impl Default for MobBundle {
                 filters: COLLISION_GROUP,
             },
         }
+    }
+}
+
+impl MobBundle {
+    pub fn with_faction(mut self, faction: Faction) -> Self {
+        let hurtbox_groups = faction.hurtbox_groups();
+        self.collision_groups.memberships |= hurtbox_groups.memberships;
+        self.collision_groups.filters |= hurtbox_groups.filters;
+        self
     }
 }
 
