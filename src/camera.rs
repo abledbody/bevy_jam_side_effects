@@ -2,14 +2,14 @@ use std::marker::PhantomData;
 
 use bevy::prelude::*;
 
-use crate::mob::player::Player;
+use crate::mob::player::PlayerControl;
 
 pub struct CameraPlugin;
 
 impl Plugin for CameraPlugin {
     fn build(&self, app: &mut App) {
-        app.add_system(CameraFollow::<Player>::apply)
-            .add_system(CameraFollow::<Player>::follow);
+        app.add_system(CameraFollow::<PlayerControl>::apply)
+            .add_system(CameraFollow::<PlayerControl>::follow);
     }
 }
 
@@ -69,9 +69,12 @@ impl<C: Component> Default for CameraFollow<C> {
 }
 
 impl<C: Component> CameraFollow<C> {
-    fn follow(mut follow: Query<&mut CameraFollow<C>>, target: Query<Entity, Added<C>>) {
-        for mut follow in &mut follow {
-            for target in &target {
+    fn follow(
+        mut follow_query: Query<&mut CameraFollow<C>>,
+        target_query: Query<Entity, Added<C>>,
+    ) {
+        for mut follow in &mut follow_query {
+            if let Ok(target) = target_query.get_single() {
                 follow.target = target;
             }
         }

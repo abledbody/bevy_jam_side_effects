@@ -1,7 +1,7 @@
 use std::time::Duration;
 
-use bevy::prelude::*;
-use bevy_ecs_ldtk::LdtkWorldBundle;
+use bevy::{math::Vec3Swizzles, prelude::*};
+use bevy_ecs_ldtk::prelude::*;
 use bevy_rapier2d::prelude::*;
 
 use crate::{
@@ -11,8 +11,8 @@ use crate::{
     combat::HitEffects,
     map::MapPlugin,
     mob::{
-        enemy::EnemyBundle,
-        player::{Player, PlayerBundle, PlayerControl},
+        enemy::EnemyTemplate,
+        player::{PlayerControl, PlayerTemplate},
         Mob,
     },
     util::ZRampByY,
@@ -65,8 +65,6 @@ impl Plugin for GamePlugin {
         app.add_startup_system(Handles::load.in_base_set(StartupSet::PreStartup));
         app.add_startup_system(spawn_scene);
 
-        app.add_systems((PlayerBundle::spawn, EnemyBundle::spawn));
-
         // Game logic systems (fixed timestep)
         app.edit_schedule(CoreSchedule::FixedUpdate, |schedule| {
             schedule.add_systems(
@@ -92,6 +90,7 @@ impl Plugin for GamePlugin {
                 HitEffects::apply.after(PhysicsSet::Writeback),
                 // TODO: Define an enum UpdateSet
                 Lifetime::apply.after(HitEffects::apply),
+                spawn_instances.after(Lifetime::apply),
             ));
         });
 
@@ -118,5 +117,36 @@ fn spawn_scene(mut commands: Commands, handle: Res<Handles>) {
     });
 
     // Camera
-    GameCameraTemplate::<Player>::default().spawn(&mut commands);
+    GameCameraTemplate::<PlayerControl>::default().spawn(&mut commands);
+}
+
+pub fn spawn_instances(
+    mut commands: Commands,
+    handle: Res<Handles>,
+    entity_query: Query<(Entity, &Transform, &EntityInstance)>,
+) {
+    for (entity, transform, instance) in &entity_query {
+        // Despawn the marker entity
+        commands.entity(entity).despawn_recursive();
+
+        // Replace with the actual entity
+        let position = transform.translation.xy();
+        match instance.identifier.as_str() {
+            "Player" => {
+                PlayerTemplate {
+                    position,
+                    ..default()
+                }
+                .spawn(&mut commands, &handle);
+            },
+            "Enemy" => {
+                EnemyTemplate {
+                    position,
+                    ..default()
+                }
+                .spawn(&mut commands, &handle);
+            },
+            _ => (),
+        }
+    }
 }

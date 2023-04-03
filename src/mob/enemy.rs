@@ -1,86 +1,81 @@
-use bevy::{
-    math::{vec2, Vec3Swizzles},
-    prelude::*,
-};
-use bevy_ecs_ldtk::EntityInstance;
+use bevy::{math::vec2, prelude::*};
 
 use crate::{
     asset::{Handles, ImageKey},
     combat::Faction,
     mob::{BodyTemplate, Health, MobBundle},
+    util::MOB_Z,
     vfx::DropShadowTemplate,
 };
 
 #[derive(Component, Reflect)]
 pub struct Loot {
-    pub gold: usize,
+    pub gold: f32,
 }
 
 impl Default for Loot {
     fn default() -> Self {
-        Self { gold: 10 }
+        Self { gold: 10.0 }
     }
 }
 
-// TODO: Use this for AI
 #[derive(Default, Component, Reflect)]
 pub struct EnemyAi;
 
-#[derive(Default, Bundle, Reflect)]
-pub struct EnemyBundle {
-    #[reflect(ignore)]
-    spatial_bundle: SpatialBundle,
-    mob_bundle: MobBundle,
-    enemy_ai: EnemyAi,
-    loot: Loot,
+pub struct EnemyTemplate {
+    pub position: Vec2,
+    pub variant: ImageKey,
+    pub health: f32,
+    pub gold: f32,
 }
 
-impl EnemyBundle {
-    pub fn spawn(
-        mut commands: Commands,
-        handle: Res<Handles>,
-        entity_query: Query<(Entity, &Transform, &EntityInstance), Added<EntityInstance>>,
-    ) {
-        for (entity, transform, instance) in &entity_query {
-            if &instance.identifier == "Enemy" {
-                const HEALTH: f32 = 20.0;
-                const Z_IDX: f32 = 400.0;
-                let faction = Faction::Enemy;
-
-                // Children
-                let body = BodyTemplate {
-                    texture: ImageKey::RedGnoll,
-                    offset: vec2(2.0, 0.0),
-                }
-                .spawn(&mut commands, &handle);
-                let drop_shadow = DropShadowTemplate {
-                    parent_z: Z_IDX,
-                    offset: vec2(0.0, -11.0),
-                }
-                .spawn(&mut commands, &handle);
-
-                // Parent entity
-                let mut entity = commands.entity(entity);
-                entity.insert(EnemyBundle {
-                    spatial_bundle: SpatialBundle {
-                        transform: Transform::from_translation(
-                            transform.translation.xy().extend(Z_IDX),
-                        ),
-                        ..default()
-                    },
-                    mob_bundle: MobBundle {
-                        health: Health(HEALTH),
-                        ..default()
-                    }
-                    .with_faction(faction),
-                    ..default()
-                });
-                #[cfg(feature = "debug_mode")]
-                entity.insert(Name::new("Enemy"));
-
-                entity.add_child(body);
-                entity.add_child(drop_shadow);
-            }
+impl Default for EnemyTemplate {
+    fn default() -> Self {
+        Self {
+            position: Vec2::ZERO,
+            variant: ImageKey::RedGnoll,
+            health: 20.0,
+            gold: 10.0,
         }
+    }
+}
+
+impl EnemyTemplate {
+    pub fn spawn(self, commands: &mut Commands, handle: &Handles) -> Entity {
+        const FACTION: Faction = Faction::Enemy;
+
+        // Children
+        let body = BodyTemplate {
+            texture: ImageKey::RedGnoll,
+            offset: vec2(2.0, 0.0),
+        }
+        .spawn(commands, handle);
+        let drop_shadow = DropShadowTemplate {
+            parent_z: MOB_Z,
+            offset: vec2(0.0, -11.0),
+        }
+        .spawn(commands, handle);
+
+        // Parent entity
+        let mut enemy = commands.spawn((
+            SpatialBundle {
+                transform: Transform::from_translation(self.position.extend(MOB_Z)),
+                ..default()
+            },
+            MobBundle {
+                health: Health(self.health),
+                ..default()
+            }
+            .with_faction(FACTION),
+            EnemyAi,
+            Loot { gold: self.gold },
+        ));
+        #[cfg(feature = "debug_mode")]
+        enemy.insert(Name::new("Enemy"));
+
+        enemy.add_child(body);
+        enemy.add_child(drop_shadow);
+
+        enemy.id()
     }
 }

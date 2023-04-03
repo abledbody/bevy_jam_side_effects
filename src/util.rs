@@ -1,5 +1,7 @@
 use bevy::prelude::*;
 
+pub const MOB_Z: f32 = 500.0;
+
 #[derive(Debug, Component, Reflect)]
 pub struct ZRampByY(pub f32);
 
