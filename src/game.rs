@@ -8,7 +8,7 @@ use crate::{
     animation::{self, Facing, Lifetime, Offset, WalkAnimation},
     asset::{Handles, LevelKey},
     camera::{CameraPlugin, GameCameraTemplate},
-    combat::HitEffects,
+    combat::{DeathEffects, DeathEvent, HitEffects, HitEvent},
     map::MapPlugin,
     mob::{
         enemy::EnemyTemplate,
@@ -42,6 +42,9 @@ impl Plugin for GamePlugin {
                 ..default()
             })
             .init_resource::<Handles>();
+
+        // Events
+        app.add_event::<HitEvent>().add_event::<DeathEvent>();
 
         // Plugins
         app.add_plugins(
@@ -87,7 +90,9 @@ impl Plugin for GamePlugin {
             }
 
             schedule.add_systems((
-                HitEffects::apply.after(PhysicsSet::Writeback),
+                HitEvent::detect.after(PhysicsSet::Writeback),
+                HitEffects::apply.after(HitEvent::detect),
+                DeathEffects::apply.after(HitEffects::apply),
                 // TODO: Define an enum UpdateSet
                 Lifetime::apply.after(HitEffects::apply),
                 spawn_instances.after(Lifetime::apply),

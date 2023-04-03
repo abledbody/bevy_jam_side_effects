@@ -132,6 +132,7 @@ impl Lifetime {
 pub struct WalkAnimation {
     pub air_time: f32,
     pub height: f32,
+    pub base_height: f32,
     pub t: f32,
     pub sound: Option<Handle<AudioSource>>,
 }
@@ -194,6 +195,7 @@ impl WalkAnimation {
 pub fn sum_animations(mut sprite_query: Query<(&mut Offset, &WalkAnimation)>) {
     for (mut offset, walk_animation) in &mut sprite_query {
         // PI is used here because we only want half a rotation.
-        offset.0.y = walk_animation.height * (walk_animation.t * PI).sin();
+        offset.0.y =
+            walk_animation.base_height + walk_animation.height * (walk_animation.t * PI).sin();
     }
 }

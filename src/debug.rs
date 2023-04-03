@@ -9,10 +9,10 @@ use crate::{
     animation::{Facing, Lifetime, Offset, WalkAnimation},
     asset::Handles,
     camera::CameraFollow,
-    combat::HitEffects,
+    combat::{DeathEffects, HitEffects},
     map::Wall,
     mob::{
-        enemy::{EnemyAi, Loot},
+        enemy::EnemyAi,
         player::{Gold, PlayerControl},
         Health,
         Mob,
@@ -49,7 +49,7 @@ impl Plugin for DebugPlugin {
         app.register_type::<Handles>()
             .register_type::<Health>()
             .register_type::<Gold>()
-            .register_type::<Loot>()
+            .register_type::<DeathEffects>()
             .register_type::<Mob>()
             .register_type::<MobInputs>()
             .register_type::<PlayerControl>()

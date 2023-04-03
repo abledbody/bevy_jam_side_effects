@@ -9,7 +9,7 @@ use crate::{
 };
 
 #[derive(Component, Reflect, Default)]
-pub struct Gold(f32);
+pub struct Gold(pub f32);
 
 #[derive(Component, Reflect, Default, Debug)]
 pub struct PlayerControl;
@@ -65,13 +65,10 @@ impl PlayerTemplate {
         // Children
         let body = BodyTemplate {
             texture: ImageKey::GreenGnoll,
-            offset: vec2(2.0, 0.0),
+            offset: vec2(2.0, 11.0),
         }
         .spawn(commands, handle);
-        let drop_shadow = DropShadowTemplate {
-            offset: vec2(0.0, -11.0),
-        }
-        .spawn(commands, handle);
+        let drop_shadow = DropShadowTemplate::default().spawn(commands, handle);
 
         // Parent
         let mut player = commands.spawn((
@@ -97,7 +94,7 @@ impl PlayerTemplate {
         // Axe hitbox
         HitboxTemplate {
             offset: vec2(10.0, 4.0),
-            radius: 6.0,
+            radius: 7.0,
             damage: 8.0,
             knockback: 5.0,
             faction: FACTION,

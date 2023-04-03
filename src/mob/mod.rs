@@ -102,7 +102,7 @@ impl Default for MobBundle {
             velocity: Velocity::default(),
             rigid_body: RigidBody::default(),
             locked_axes: LockedAxes::ROTATION_LOCKED,
-            collider: Collider::ball(8.0),
+            collider: Collider::ball(7.0),
             collision_groups: CollisionGroups {
                 memberships: COLLISION_GROUP,
                 filters: COLLISION_GROUP,
@@ -145,6 +145,7 @@ impl BodyTemplate {
             WalkAnimation {
                 air_time: 0.18,
                 height: 3.0,
+                base_height: self.offset.y,
                 sound: Some(handle.audio[&AudioKey::GnollWalk].clone()),
                 ..default()
             },

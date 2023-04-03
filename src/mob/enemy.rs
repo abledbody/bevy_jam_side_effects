@@ -2,21 +2,10 @@ use bevy::{math::vec2, prelude::*};
 
 use crate::{
     asset::{Handles, ImageKey},
-    combat::Faction,
+    combat::{DeathEffects, Faction},
     mob::{BodyTemplate, Health, MobBundle},
     vfx::DropShadowTemplate,
 };
-
-#[derive(Component, Reflect)]
-pub struct Loot {
-    pub gold: f32,
-}
-
-impl Default for Loot {
-    fn default() -> Self {
-        Self { gold: 10.0 }
-    }
-}
 
 #[derive(Default, Component, Reflect)]
 pub struct EnemyAi;
@@ -46,13 +35,10 @@ impl EnemyTemplate {
         // Children
         let body = BodyTemplate {
             texture: ImageKey::RedGnoll,
-            offset: vec2(2.0, 0.0),
+            offset: vec2(2.0, 11.0),
         }
         .spawn(commands, handle);
-        let drop_shadow = DropShadowTemplate {
-            offset: vec2(0.0, -11.0),
-        }
-        .spawn(commands, handle);
+        let drop_shadow = DropShadowTemplate::default().spawn(commands, handle);
 
         // Parent entity
         let mut enemy = commands.spawn((
@@ -66,7 +52,9 @@ impl EnemyTemplate {
             }
             .with_faction(FACTION),
             EnemyAi,
-            Loot { gold: self.gold },
+            DeathEffects {
+                reward_gold: self.gold,
+            },
         ));
         #[cfg(feature = "debug_mode")]
         enemy.insert(Name::new("Enemy"));
