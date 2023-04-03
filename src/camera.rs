@@ -90,7 +90,6 @@ impl<C: Component> CameraFollow<C> {
     ) {
         for (follow, mut transform) in &mut camera_query {
             if let Ok(&target) = transform_query.get(follow.target) {
-				println!("{}", follow.rate);
                 transform.translation.x = transform.translation.x.smooth_approach(target.translation.x, follow.rate, time.delta_seconds());
                 transform.translation.y = transform.translation.y.smooth_approach(target.translation.y, follow.rate, time.delta_seconds());
             }
