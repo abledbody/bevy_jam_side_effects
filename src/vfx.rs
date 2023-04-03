@@ -10,6 +10,15 @@ pub struct DropShadowTemplate {
     pub offset: Vec2,
 }
 
+impl Default for DropShadowTemplate {
+    fn default() -> Self {
+        Self {
+            parent_z: 0.0,
+            offset: Vec2::ZERO,
+        }
+    }
+}
+
 impl DropShadowTemplate {
     pub fn spawn(self, commands: &mut Commands, handle: &Handles) -> Entity {
         let mut drop_shadow = commands.spawn((

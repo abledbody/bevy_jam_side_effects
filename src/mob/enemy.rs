@@ -47,12 +47,12 @@ impl EnemyTemplate {
         // Children
         let body = BodyTemplate {
             texture: ImageKey::RedGnoll,
-            offset: vec2(2.0, 0.0),
+            offset: vec2(2.0, 11.0),
         }
         .spawn(commands, handle);
         let drop_shadow = DropShadowTemplate {
             parent_z: MOB_Z,
-            offset: vec2(0.0, -11.0),
+            ..default()
         }
         .spawn(commands, handle);
 

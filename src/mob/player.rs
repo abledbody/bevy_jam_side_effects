@@ -66,12 +66,12 @@ impl PlayerTemplate {
         // Children
         let body = BodyTemplate {
             texture: ImageKey::GreenGnoll,
-            offset: vec2(2.0, 0.0),
+            offset: vec2(2.0, 11.0),
         }
         .spawn(commands, handle);
         let drop_shadow = DropShadowTemplate {
             parent_z: MOB_Z,
-            offset: vec2(0.0, -11.0),
+            ..default()
         }
         .spawn(commands, handle);
 
@@ -99,7 +99,7 @@ impl PlayerTemplate {
         // Axe hitbox
         HitboxTemplate {
             offset: vec2(10.0, 4.0),
-            radius: 6.0,
+            radius: 7.0,
             damage: 8.0,
             knockback: 5.0,
             faction: FACTION,
