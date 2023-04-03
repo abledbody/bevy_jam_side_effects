@@ -42,6 +42,7 @@ impl<C: Component> GameCameraTemplate<C> {
             },
             CameraFollow::<C> {
                 target: self.target,
+				rate: 5.0,
                 ..default()
             },
         ));
@@ -55,6 +56,7 @@ impl<C: Component> GameCameraTemplate<C> {
 #[derive(Component, Reflect)]
 pub struct CameraFollow<C: Component> {
     pub target: Entity,
+	pub rate: f32,
     #[reflect(ignore)]
     _c: PhantomData<C>,
 }
@@ -63,6 +65,7 @@ impl<C: Component> Default for CameraFollow<C> {
     fn default() -> Self {
         Self {
             target: Entity::PLACEHOLDER,
+			rate: 0.0,
             _c: PhantomData,
         }
     }
@@ -83,12 +86,24 @@ impl<C: Component> CameraFollow<C> {
     fn apply(
         mut camera_query: Query<(&CameraFollow<C>, &mut Transform)>,
         transform_query: Query<&Transform, Without<CameraFollow<C>>>,
+		time: Res<Time>,
     ) {
         for (follow, mut transform) in &mut camera_query {
             if let Ok(&target) = transform_query.get(follow.target) {
-                transform.translation.x = target.translation.x;
-                transform.translation.y = target.translation.y;
+				println!("{}", follow.rate);
+                transform.translation.x = transform.translation.x.smooth_approach(target.translation.x, follow.rate, time.delta_seconds());
+                transform.translation.y = transform.translation.y.smooth_approach(target.translation.y, follow.rate, time.delta_seconds());
             }
         }
     }
+}
+
+pub trait SmoothApproach {
+	fn smooth_approach(self, target: Self, rate: f32, dt: f32) -> Self;
+}
+
+impl SmoothApproach for f32 {
+	fn smooth_approach(self, target: Self, rate: f32, dt: f32) -> Self {
+		(self - target) / ((rate * dt) + 1.0) + target
+	}
 }
