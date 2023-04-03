@@ -77,18 +77,9 @@ impl PlayerTemplate {
         .spawn(commands, handle);
         // TODO: Component to "Attach" hitbox to another entity.
         //       Like a child entity but not a child entity because Rapier.
-        let axe_hitbox = HitboxTemplate {
-            offset: vec2(10.0, 4.0),
-            radius: 6.0,
-            damage: 8.0,
-            knockback: 5.0,
-            faction,
-            lifetime: f32::INFINITY,
-        }
-        .spawn(commands);
 
         // Parent
-        let mut entity = commands.spawn((
+        let mut player = commands.spawn((
             SpatialBundle {
                 transform: Transform::from_translation(self.position),
                 ..default()
@@ -102,11 +93,25 @@ impl PlayerTemplate {
             PlayerControl,
         ));
         #[cfg(feature = "debug_mode")]
-        entity.insert(Name::new("Player"));
+        player.insert(Name::new("Player"));
 
-        entity.add_child(body);
-        entity.add_child(drop_shadow);
+        player.add_child(body);
+        player.add_child(drop_shadow);
 
-        entity.id()
+        let player = player.id();
+
+        // Axe hitbox
+        HitboxTemplate {
+            offset: vec2(10.0, 4.0),
+            radius: 6.0,
+            damage: 8.0,
+            knockback: 5.0,
+            faction,
+            lifetime: f32::INFINITY,
+            parent: player,
+        }
+        .spawn(commands);
+
+        player
     }
 }

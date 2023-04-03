@@ -2,7 +2,7 @@ use std::f32::consts::PI;
 
 use bevy::prelude::*;
 
-use crate::{game::TIME_STEP, mob::MobInputs};
+use crate::{game::TIME_STEP, mob::MobInputs, util::VirtualParent};
 
 #[derive(Component, Reflect, Debug, Default)]
 pub enum Facing {
@@ -56,34 +56,60 @@ pub struct Offset(pub Vec2);
 
 impl Offset {
     pub fn apply_to_sprites(
-        facing_query: Query<(&Facing, &Children)>,
-        mut offset_query: Query<(&Offset, &mut Transform), With<Sprite>>,
+        mut parent_query: Query<
+            (&Offset, &Parent, &mut Transform),
+            (With<Sprite>, Without<VirtualParent>),
+        >,
+        mut virtual_parent_query: Query<
+            (&Offset, &VirtualParent, &mut Transform),
+            (With<Sprite>, Without<Parent>),
+        >,
+        facing_query: Query<(&Facing, &Transform), (Without<Parent>, Without<VirtualParent>)>,
     ) {
-        for (facing, children) in &facing_query {
-            for child in children {
-                let Ok((offset, mut transform)) = offset_query.get_mut(*child) else {
-                    continue
-                };
+        for (offset, parent, mut transform) in &mut parent_query {
+            let Ok((facing, _)) = facing_query.get(parent.get()) else {
+                continue
+            };
 
-                transform.translation.x = offset.0.x * facing.sign();
-                transform.translation.y = offset.0.y;
-            }
+            transform.translation.x = offset.0.x * facing.sign();
+            transform.translation.y = offset.0.y;
+        }
+        for (offset, virtual_parent, mut transform) in &mut virtual_parent_query {
+            let Ok((facing, parent_transform)) = facing_query.get(virtual_parent.0) else {
+                continue
+            };
+
+            transform.translation.x = parent_transform.translation.x + offset.0.x * facing.sign();
+            transform.translation.y = parent_transform.translation.y + offset.0.y;
         }
     }
 
     pub fn apply_to_non_sprites(
-        facing_query: Query<(&Facing, &Children)>,
-        mut offset_query: Query<(&Offset, &mut Transform), Without<Sprite>>,
+        mut parent_query: Query<
+            (&Offset, &Parent, &mut Transform),
+            (Without<Sprite>, Without<VirtualParent>),
+        >,
+        mut virtual_parent_query: Query<
+            (&Offset, &VirtualParent, &mut Transform),
+            (Without<Sprite>, Without<Parent>),
+        >,
+        facing_query: Query<(&Facing, &Transform), (Without<Parent>, Without<VirtualParent>)>,
     ) {
-        for (facing, children) in &facing_query {
-            for child in children {
-                let Ok((offset, mut transform)) = offset_query.get_mut(*child) else {
-                    continue
-                };
+        for (offset, parent, mut transform) in &mut parent_query {
+            let Ok((facing, _)) = facing_query.get(parent.get()) else {
+                continue
+            };
 
-                transform.translation.x = offset.0.x * facing.sign();
-                transform.translation.y = offset.0.y;
-            }
+            transform.translation.x = offset.0.x * facing.sign();
+            transform.translation.y = offset.0.y;
+        }
+        for (offset, virtual_parent, mut transform) in &mut virtual_parent_query {
+            let Ok((facing, parent_transform)) = facing_query.get(virtual_parent.0) else {
+                continue
+            };
+
+            transform.translation.x = parent_transform.translation.x + offset.0.x * facing.sign();
+            transform.translation.y = parent_transform.translation.y + offset.0.y;
         }
     }
 }

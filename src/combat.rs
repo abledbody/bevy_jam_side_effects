@@ -4,6 +4,7 @@ use bevy_rapier2d::prelude::*;
 use crate::{
     animation::{Lifetime, Offset},
     mob::Health,
+    util::VirtualParent,
 };
 
 pub const COLLISION_GROUP: Group = Group::GROUP_1;
@@ -58,14 +59,14 @@ impl HitEffects {
             };
 
             let mut handle_collision = |x: Entity, y: Entity| {
-                if let Ok(effect1) = hit_effects_query.get(x) {
-                    if let Ok(mut health2) = health_query.get_mut(y) {
+                if let Ok(effect) = hit_effects_query.get(x) {
+                    if let Ok(mut health) = health_query.get_mut(y) {
                         // TODO: System that detects when health <= 0 and triggers a Death event
-                        health2.0 -= effect1.damage;
+                        health.0 -= effect.damage;
                     }
-                    if let Ok(mut velocity2) = velocity_query.get_mut(y) {
+                    if let Ok(mut velocity) = velocity_query.get_mut(y) {
                         // TODO: Actually implement knockback
-                        velocity2.linvel = 100.0 * effect1.knockback * Vec2::ONE;
+                        velocity.linvel = 100.0 * effect.knockback * Vec2::ONE;
                     }
                 }
             };
@@ -82,8 +83,8 @@ pub struct HitboxTemplate {
     pub damage: f32,
     pub knockback: f32,
     pub faction: Faction,
-    // TODO: Implement this
     pub lifetime: f32,
+    pub parent: Entity,
 }
 
 impl HitboxTemplate {
@@ -100,6 +101,7 @@ impl HitboxTemplate {
                 knockback: self.knockback,
             },
             Lifetime(self.lifetime),
+            VirtualParent(self.parent),
         ));
         #[cfg(feature = "debug_mode")]
         entity.insert(Name::new("Hitbox"));

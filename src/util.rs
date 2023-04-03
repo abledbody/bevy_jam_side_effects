@@ -11,3 +11,7 @@ impl ZRampByY {
         }
     }
 }
+
+// An alternative to bevy hierarchy. Workaround for bevy rapier. Pair this with Offset.
+#[derive(Component, Reflect)]
+pub struct VirtualParent(pub Entity);

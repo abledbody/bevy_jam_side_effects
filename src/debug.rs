@@ -18,7 +18,7 @@ use crate::{
         Mob,
         MobInputs,
     },
-    util::ZRampByY,
+    util::{VirtualParent, ZRampByY},
 };
 
 const TOGGLE_KEY: KeyCode = KeyCode::F3;
@@ -61,7 +61,8 @@ impl Plugin for DebugPlugin {
             .register_type::<Lifetime>()
             .register_type::<Wall>()
             .register_type::<CameraFollow>()
-            .register_type::<ZRampByY>();
+            .register_type::<ZRampByY>()
+            .register_type::<VirtualParent>();
 
         // Disable Rapier debug initially
         app.world.resource_mut::<DebugRenderContext>().enabled = false;
