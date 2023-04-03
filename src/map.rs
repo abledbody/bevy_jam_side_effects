@@ -1,6 +1,12 @@
-use bevy::prelude::{Bundle, Component, Plugin};
-use bevy_ecs_ldtk::{prelude::LdtkIntCellAppExt, LdtkIntCell, LdtkPlugin, LevelSelection};
-use bevy_rapier2d::prelude::{Collider, CollisionGroups, Group};
+use bevy::prelude::{default, Bundle, Component, Plugin};
+use bevy_ecs_ldtk::{
+    prelude::LdtkIntCellAppExt,
+    IntGridCell,
+    LdtkIntCell,
+    LdtkPlugin,
+    LevelSelection,
+};
+use bevy_rapier2d::prelude::{Collider, CollisionGroups, Friction, Group, RigidBody};
 
 pub struct MapPlugin;
 
@@ -20,16 +26,23 @@ pub struct WallBundle {
     wall: Wall,
     collider: Collider,
     collision_groups: CollisionGroups,
+    rigid_body: RigidBody,
+    friction: Friction,
 }
 
-impl Default for WallBundle {
-    fn default() -> Self {
+impl From<IntGridCell> for WallBundle {
+    fn from(_value: IntGridCell) -> Self {
         Self {
-            wall: Default::default(),
-            collider: Collider::cuboid(20.0, 20.0),
+            wall: Wall,
+            collider: Collider::cuboid(8.0, 8.0),
             collision_groups: CollisionGroups {
                 memberships: Group::ALL,
                 filters: Group::ALL,
+            },
+            rigid_body: RigidBody::Fixed,
+            friction: Friction {
+                coefficient: 1.0,
+                ..default()
             },
         }
     }
