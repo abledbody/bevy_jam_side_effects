@@ -2,6 +2,8 @@ use bevy::prelude::*;
 use bevy_ecs_ldtk::prelude::*;
 use bevy_rapier2d::prelude::*;
 
+use crate::combat::COLLISION_GROUP;
+
 pub struct MapPlugin;
 
 impl Plugin for MapPlugin {
@@ -36,8 +38,8 @@ impl From<IntGridCell> for WallCollider {
         Self {
             collider: Collider::cuboid(8.0, 8.0),
             collision_groups: CollisionGroups {
-                memberships: Group::ALL,
-                filters: Group::ALL,
+                memberships: COLLISION_GROUP,
+                filters: COLLISION_GROUP,
             },
             rigid_body: RigidBody::Fixed,
             friction: Friction {

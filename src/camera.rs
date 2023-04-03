@@ -4,42 +4,56 @@ pub struct CameraPlugin;
 
 impl Plugin for CameraPlugin {
     fn build(&self, app: &mut App) {
-        app.add_startup_system(GameCamera::spawn)
-            .add_system(GameCamera::follow);
+        app.add_system(CameraFollow::apply);
     }
 }
 
-#[derive(Component, Reflect)]
-pub struct CameraFollow;
+pub struct GameCameraTemplate {
+    pub target: Entity,
+}
 
-#[derive(Resource, Reflect)]
-pub struct CameraTarget(pub Entity);
+impl Default for GameCameraTemplate {
+    fn default() -> Self {
+        Self {
+            target: Entity::PLACEHOLDER,
+        }
+    }
+}
 
-pub struct GameCamera;
-
-impl GameCamera {
-    pub fn spawn(mut commands: Commands) {
+impl GameCameraTemplate {
+    pub fn spawn(self, commands: &mut Commands) -> Entity {
         let projection = OrthographicProjection {
             // TODO: Scale to screen resolution
             scale: 1.0 / 4.0,
             ..default()
         };
-        commands
-            .spawn(Camera2dBundle {
+
+        let mut camera = commands.spawn((
+            Camera2dBundle {
                 projection,
                 ..default()
-            })
-            .insert(CameraFollow);
-    }
+            },
+            CameraFollow(self.target),
+        ));
+        #[cfg(feature = "debug_mode")]
+        camera.insert(Name::new("GameCamera"));
 
-    fn follow(
-        mut camera: Query<&mut Transform, With<CameraFollow>>,
-        transforms: Query<&Transform, Without<CameraFollow>>,
-        target: Res<CameraTarget>,
+        camera.id()
+    }
+}
+
+#[derive(Component, Reflect)]
+pub struct CameraFollow(pub Entity);
+
+impl CameraFollow {
+    fn apply(
+        mut camera_query: Query<(&CameraFollow, &mut Transform)>,
+        transform_query: Query<&Transform, Without<CameraFollow>>,
     ) {
-        for mut transform in &mut camera {
-            if let Ok(followed) = transforms.get(target.0) {
-                *transform = *followed;
+        for (follow, mut transform) in &mut camera_query {
+            if let Ok(&target) = transform_query.get(follow.0) {
+                transform.translation.x = target.translation.x;
+                transform.translation.y = target.translation.y;
             }
         }
     }

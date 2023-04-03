@@ -2,7 +2,7 @@ use std::f32::consts::PI;
 
 use bevy::prelude::*;
 
-use crate::mob::MobInputs;
+use crate::{game::TIME_STEP, mob::MobInputs};
 
 #[derive(Component, Reflect, Debug, Default)]
 pub enum Facing {
@@ -83,6 +83,20 @@ impl Offset {
 
                 transform.translation.x = offset.0.x * facing.sign();
                 transform.translation.y = offset.0.y;
+            }
+        }
+    }
+}
+
+#[derive(Component, Reflect)]
+pub struct Lifetime(pub f32);
+
+impl Lifetime {
+    pub fn apply(mut commands: Commands, mut lifetime_query: Query<(Entity, &mut Self)>) {
+        for (entity, mut lifetime) in &mut lifetime_query {
+            lifetime.0 -= TIME_STEP;
+            if lifetime.0 <= 0.0 {
+                commands.entity(entity).despawn_recursive();
             }
         }
     }

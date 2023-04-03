@@ -3,15 +3,13 @@ use bevy::{
     input::common_conditions::input_just_pressed,
     prelude::*,
 };
-#[cfg(feature = "editor")]
-use bevy_editor_pls::EditorPlugin;
 use bevy_rapier2d::prelude::*;
 
 use crate::{
-    animation::{Facing, Offset, WalkAnimation},
+    animation::{Facing, Lifetime, Offset, WalkAnimation},
     asset::Handles,
-    camera::{CameraFollow, CameraTarget},
-    combat::{HitEffects, Lifetime},
+    camera::CameraFollow,
+    combat::HitEffects,
     map::Wall,
     mob::{
         enemy::{EnemyAi, Loot},
@@ -20,6 +18,7 @@ use crate::{
         Mob,
         MobInputs,
     },
+    util::ZRampByY,
 };
 
 const TOGGLE_KEY: KeyCode = KeyCode::F3;
@@ -40,9 +39,8 @@ impl Plugin for DebugPlugin {
         app.add_plugin(RapierDebugRenderPlugin::default())
             .add_plugin(FrameTimeDiagnosticsPlugin::default())
             .add_plugin(LogDiagnosticsPlugin::default());
-
         #[cfg(feature = "editor")]
-        app.add_plugin(EditorPlugin::default());
+        app.add_plugin(bevy_editor_pls::EditorPlugin::default());
 
         // Systems
         app.add_system(DebugPlugin::toggle.run_if(input_just_pressed(TOGGLE_KEY)));
@@ -63,7 +61,7 @@ impl Plugin for DebugPlugin {
             .register_type::<Lifetime>()
             .register_type::<Wall>()
             .register_type::<CameraFollow>()
-            .register_type::<CameraTarget>();
+            .register_type::<ZRampByY>();
 
         // Disable Rapier debug initially
         app.world.resource_mut::<DebugRenderContext>().enabled = false;

@@ -11,6 +11,7 @@ mod game;
 mod map;
 mod math;
 mod mob;
+mod util;
 mod vfx;
 
 fn main() {

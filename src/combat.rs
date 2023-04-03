@@ -1,7 +1,10 @@
 use bevy::prelude::*;
 use bevy_rapier2d::prelude::*;
 
-use crate::{animation::Offset, game::TIME_STEP, mob::Health};
+use crate::{
+    animation::{Lifetime, Offset},
+    mob::Health,
+};
 
 pub const COLLISION_GROUP: Group = Group::GROUP_1;
 pub const HITBOX_GROUP: Group = Group::GROUP_2;
@@ -69,20 +72,6 @@ impl HitEffects {
 
             handle_collision(entity1, entity2);
             handle_collision(entity2, entity1);
-        }
-    }
-}
-
-#[derive(Component, Reflect)]
-pub struct Lifetime(pub f32);
-
-impl Lifetime {
-    pub fn apply(mut commands: Commands, mut lifetime_query: Query<(Entity, &mut Lifetime)>) {
-        for (entity, mut lifetime) in &mut lifetime_query {
-            lifetime.0 -= TIME_STEP;
-            if lifetime.0 <= 0.0 {
-                commands.entity(entity).despawn_recursive();
-            }
         }
     }
 }

@@ -5,16 +5,17 @@ use bevy_ecs_ldtk::LdtkWorldBundle;
 use bevy_rapier2d::prelude::*;
 
 use crate::{
-    animation::{self, Facing, Offset, WalkAnimation},
+    animation::{self, Facing, Lifetime, Offset, WalkAnimation},
     asset::{Handles, LevelKey},
-    camera::{CameraPlugin, CameraTarget},
-    combat::{HitEffects, Lifetime},
+    camera::{CameraPlugin, GameCameraTemplate},
+    combat::HitEffects,
     map::MapPlugin,
     mob::{
         enemy::EnemyTemplate,
         player::{PlayerControl, PlayerTemplate},
         Mob,
     },
+    util::ZRampByY,
 };
 
 // TODO: Come up with a title.
@@ -61,8 +62,8 @@ impl Plugin for GamePlugin {
         app.add_plugin(crate::debug::DebugPlugin::default());
 
         // Startup systems
-        app.add_startup_system(Handles::load);
-        app.add_startup_systems((spawn_map, spawn_player, spawn_enemies).after(Handles::load));
+        app.add_startup_system(Handles::load.in_base_set(StartupSet::PreStartup));
+        app.add_startup_system(spawn_scene);
 
         // Game logic systems (fixed timestep)
         app.edit_schedule(CoreSchedule::FixedUpdate, |schedule| {
@@ -71,48 +72,13 @@ impl Plugin for GamePlugin {
                     PlayerControl::record_inputs,
                     Mob::apply_input.after(PlayerControl::record_inputs),
                     Offset::apply_to_non_sprites,
-                    //fine_ill_update_the_colliders_myself.after(Offset::apply_to_non_sprites),
                 )
                     .before(PhysicsSet::SyncBackend),
             );
 
             // Physics
-            // Manually add PhysicsSet::SyncBackend, but with `systems::apply_collider_user_changes`
-            // swapped out for `fine_ill_update_the_colliders_myself`
-            #[derive(Debug, Hash, PartialEq, Eq, Clone, SystemSet)]
-            struct PropagateTransformsSet;
-            schedule.add_systems(
-                (
-                    // Run the character controller before the manual transform propagation.
-                    systems::update_character_controls,
-                    // Run Bevy transform propagation additionally to sync [`GlobalTransform`]
-                    bevy::transform::systems::sync_simple_transforms
-                        .in_set(RapierTransformPropagateSet)
-                        .after(systems::update_character_controls),
-                    bevy::transform::systems::propagate_transforms
-                        .after(systems::update_character_controls)
-                        .in_set(PropagateTransformsSet)
-                        .in_set(RapierTransformPropagateSet),
-                    systems::init_async_colliders.after(RapierTransformPropagateSet),
-                    systems::apply_scale.after(systems::init_async_colliders),
-                    // SWAP-OUT OCCURS HERE:
-                    fine_ill_update_the_colliders_myself.after(systems::apply_scale),
-                    systems::apply_rigid_body_user_changes
-                        .after(systems::apply_collider_user_changes),
-                    systems::apply_joint_user_changes.after(systems::apply_rigid_body_user_changes),
-                    systems::init_rigid_bodies.after(systems::apply_joint_user_changes),
-                    systems::init_colliders
-                        .after(systems::init_rigid_bodies)
-                        .after(systems::init_async_colliders),
-                    systems::init_joints.after(systems::init_colliders),
-                    systems::apply_initial_rigid_body_impulses.after(systems::init_colliders),
-                    systems::sync_removals
-                        .after(systems::init_joints)
-                        .after(systems::apply_initial_rigid_body_impulses),
-                )
-                    .in_base_set(PhysicsSet::SyncBackend),
-            );
             for set in [
+                PhysicsSet::SyncBackend,
                 PhysicsSet::SyncBackendFlush,
                 PhysicsSet::StepSimulation,
                 PhysicsSet::Writeback,
@@ -132,8 +98,9 @@ impl Plugin for GamePlugin {
             Mob::set_facing,
             Facing::update_sprites.after(Mob::set_facing),
             Offset::apply_to_sprites.after(Mob::set_facing),
+            ZRampByY::apply,
             WalkAnimation::update,
-            animation::sum_animations,
+            animation::sum_animations.after(WalkAnimation::update),
         ));
 
         // UI systems
@@ -141,19 +108,17 @@ impl Plugin for GamePlugin {
     }
 }
 
-fn spawn_map(mut commands: Commands, handle: Res<Handles>) {
+fn spawn_scene(mut commands: Commands, handle: Res<Handles>) {
+    // Map
     commands.spawn(LdtkWorldBundle {
         ldtk_handle: handle.levels[&LevelKey::TestLevel].clone(),
         ..default()
     });
-}
 
-fn spawn_player(mut commands: Commands, handle: Res<Handles>) {
-    let entity = PlayerTemplate::default().spawn(&mut commands, &handle);
-    commands.insert_resource(CameraTarget(entity))
-}
+    // Player
+    let player = PlayerTemplate::default().spawn(&mut commands, &handle);
 
-fn spawn_enemies(mut commands: Commands, handle: Res<Handles>) {
+    // Enemies
     let distance = 80.0;
     let count = 12;
     for i in 0..count {
@@ -165,29 +130,7 @@ fn spawn_enemies(mut commands: Commands, handle: Res<Handles>) {
         }
         .spawn(&mut commands, &handle);
     }
-}
 
-fn fine_ill_update_the_colliders_myself(
-    mut context: ResMut<RapierContext>,
-    collider_transforms: Query<
-        (&RapierColliderHandle, &GlobalTransform),
-        Without<RapierRigidBodyHandle>,
-    >,
-) {
-    let scale = 1.0;
-
-    for (handle, transform) in &collider_transforms {
-        let Some(co) = context.colliders.get_mut(handle.0) else {
-            continue
-        };
-
-        let transform = transform.compute_transform();
-        co.set_position({
-            use bevy::math::Vec3Swizzles;
-            bevy_rapier2d::rapier::math::Isometry::new(
-                (transform.translation / scale).xy().into(),
-                transform.rotation.to_scaled_axis().z,
-            )
-        });
-    }
+    // Camera
+    GameCameraTemplate { target: player }.spawn(&mut commands);
 }

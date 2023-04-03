@@ -7,6 +7,7 @@ use crate::{
     combat::{Faction, COLLISION_GROUP},
     game::TIME_STEP,
     math::MoveTowards,
+    util::ZRampByY,
 };
 
 pub mod enemy;
@@ -81,6 +82,7 @@ pub struct MobBundle {
     pub facing: Facing,
     pub health: Health,
     pub velocity: Velocity,
+    pub z_ramp_by_y: ZRampByY,
     pub rigid_body: RigidBody,
     pub locked_axes: LockedAxes,
     pub collider: Collider,
@@ -95,6 +97,7 @@ impl Default for MobBundle {
             mob_inputs: MobInputs::default(),
             facing: Facing::default(),
             health: Health(100.0),
+            z_ramp_by_y: ZRampByY(500.0),
             velocity: Velocity::default(),
             rigid_body: RigidBody::default(),
             locked_axes: LockedAxes::ROTATION_LOCKED,
