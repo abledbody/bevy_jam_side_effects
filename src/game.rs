@@ -61,8 +61,12 @@ impl Plugin for GamePlugin {
         // Game logic systems (fixed timestep)
         app.edit_schedule(CoreSchedule::FixedUpdate, |schedule| {
             schedule.add_systems(
-                (PlayerControl::record_inputs, Mob::apply_input)
-                    .chain()
+                (
+                    PlayerControl::record_inputs,
+                    Mob::apply_input.after(PlayerControl::record_inputs),
+                    Offset::apply_to_non_sprites,
+                    //fine_ill_update_the_colliders_myself.after(Offset::apply_to_non_sprites),
+                )
                     .before(PhysicsSet::SyncBackend),
             );
 
@@ -81,7 +85,7 @@ impl Plugin for GamePlugin {
         app.add_systems((
             Mob::set_facing,
             Facing::update_sprites.after(Mob::set_facing),
-            Offset::apply.after(Mob::set_facing),
+            Offset::apply_to_sprites.after(Mob::set_facing),
             WalkAnimation::update,
             animation::sum_animations,
         ));
@@ -118,5 +122,31 @@ fn spawn_enemies(mut commands: Commands, handle: Res<Handles>) {
             ..default()
         }
         .spawn(&mut commands, &handle);
+    }
+}
+
+fn fine_ill_update_the_colliders_myself(
+    mut context: ResMut<RapierContext>,
+    collider_transforms: Query<
+        (&RapierColliderHandle, &Transform),
+        (Without<RapierRigidBodyHandle>),
+    >,
+) {
+    let scale = 1.0;
+
+    for (handle, transform) in &collider_transforms {
+        let Some(co) = context.colliders.get_mut(handle.0) else {
+            continue
+        };
+
+        //if co.parent().is_none() {
+        co.set_position({
+            use bevy::math::Vec3Swizzles;
+            bevy_rapier2d::rapier::math::Isometry::new(
+                (transform.translation / scale).xy().into(),
+                transform.rotation.to_scaled_axis().z,
+            )
+        });
+        //}
     }
 }

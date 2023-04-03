@@ -3,7 +3,7 @@ use bevy_rapier2d::prelude::*;
 
 use crate::{
     animation::{Facing, Offset, WalkAnimation},
-    asset::{Handles, ImageKey, AudioKey},
+    asset::{AudioKey, Handles, ImageKey},
     game::TIME_STEP,
     math::MoveTowards,
 };
@@ -82,9 +82,6 @@ pub struct MobBundle {
     pub velocity: Velocity,
     pub rigid_body: RigidBody,
     pub locked_axes: LockedAxes,
-    pub collider: Collider,
-    pub collision_groups: CollisionGroups,
-    pub solver_groups: SolverGroups,
 }
 
 impl Default for MobBundle {
@@ -97,15 +94,6 @@ impl Default for MobBundle {
             velocity: Velocity::default(),
             rigid_body: RigidBody::default(),
             locked_axes: LockedAxes::ROTATION_LOCKED,
-            collider: Collider::ball(12.0),
-            collision_groups: CollisionGroups {
-                memberships: Group::ALL,
-                filters: Group::ALL,
-            },
-            solver_groups: SolverGroups {
-                memberships: Group::ALL,
-                filters: Group::ALL,
-            },
         }
     }
 }
@@ -131,7 +119,7 @@ impl BodyTemplate {
             WalkAnimation {
                 air_time: 0.18,
                 height: 3.0,
-				sound: Some(handle.audio[&AudioKey::GnollWalk].clone()),
+                sound: Some(handle.audio[&AudioKey::GnollWalk].clone()),
                 ..default()
             },
         ));

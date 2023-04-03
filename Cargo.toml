@@ -16,7 +16,7 @@ default = [
 debug_mode = [
     "bevy/dynamic_linking",
     "bevy/filesystem_watcher",
-    "bevy_rapier2d/debug-render-2d"
+    "bevy_rapier2d/debug-render-2d",
 ]
 editor = [
     "debug_mode",

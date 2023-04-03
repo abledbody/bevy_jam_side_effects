@@ -6,6 +6,7 @@ use bevy::{
 use super::{Health, Mob, MobBundle, MobInputs};
 use crate::{
     asset::{Handles, ImageKey},
+    combat::{CollisionboxTemplate, HitboxTemplate},
     mob::BodyTemplate,
     vfx::DropShadowTemplate,
 };
@@ -71,6 +72,18 @@ impl PlayerTemplate {
             offset: vec2(0.0, -11.0),
         }
         .spawn(commands, handle);
+        let body_collisionbox = CollisionboxTemplate {
+            offset: Vec2::ZERO,
+            radius: 8.0,
+        }
+        .spawn(commands);
+        let axe_hitbox = HitboxTemplate {
+            offset: vec2(4.0, 4.0),
+            radius: 5.0,
+            damage: 8.0,
+            knockback: 5.0,
+        }
+        .spawn(commands);
 
         // Parent
         let mut entity = commands.spawn((
@@ -78,18 +91,20 @@ impl PlayerTemplate {
                 transform: Transform::from_translation(self.position),
                 ..default()
             },
-            PlayerControl,
             MobBundle {
                 mob: Mob::player(),
                 health: Health(self.health),
                 ..default()
             },
+            PlayerControl,
         ));
         #[cfg(feature = "debug_mode")]
         entity.insert(Name::new("Player"));
 
         entity.add_child(body);
         entity.add_child(drop_shadow);
+        entity.add_child(body_collisionbox);
+        entity.add_child(axe_hitbox);
 
         entity.id()
     }
