@@ -3,7 +3,10 @@ use bevy_rapier2d::prelude::*;
 
 use crate::{
     animation::{Lifetime, Offset},
-    mob::Health,
+    mob::{
+        player::{Gold, PlayerControl},
+        Health,
+    },
     util::VirtualParent,
 };
 
@@ -40,56 +43,6 @@ impl Faction {
     }
 }
 
-#[derive(Component, Reflect)]
-pub struct HitEffects {
-    damage: f32,
-    knockback: f32,
-}
-
-impl HitEffects {
-    pub fn apply(
-        mut collision_events: EventReader<CollisionEvent>,
-        hit_effects_query: Query<&HitEffects>,
-        mut health_query: Query<&mut Health>,
-        mut velocity_query: Query<&mut Velocity>,
-        virtual_parent_query: Query<&VirtualParent>,
-        transform_query: Query<&Transform>,
-    ) {
-        for &event in collision_events.iter() {
-            let CollisionEvent::Started(entity1, entity2, _) = event else {
-                continue
-            };
-
-            let mut handle_collision = |actor: Entity, target: Entity| {
-                let Ok(effect) = hit_effects_query.get(actor) else { return };
-                if let Ok(mut health) = health_query.get_mut(target) {
-                    // TODO: System that detects when health <= 0 and triggers a Death event
-                    health.0 -= effect.damage;
-                }
-                if let Ok(mut velocity) = velocity_query.get_mut(target) {
-                    let Ok(actor_transform) = virtual_parent_query
-                        .get(actor)
-                        .and_then(|parent| transform_query.get(parent.0)) else {
-                        return
-                    };
-                    let Ok(target_transform) = transform_query.get(target) else {
-                        return
-                    };
-
-                    let scale = 40.0;
-                    let direction = (target_transform.translation.xy()
-                        - actor_transform.translation.xy())
-                    .normalize_or_zero();
-                    velocity.linvel = effect.knockback * scale * direction;
-                }
-            };
-
-            handle_collision(entity1, entity2);
-            handle_collision(entity2, entity1);
-        }
-    }
-}
-
 pub struct HitboxTemplate {
     pub offset: Vec2,
     pub radius: f32,
@@ -120,5 +73,125 @@ impl HitboxTemplate {
         entity.insert(Name::new("Hitbox"));
 
         entity.id()
+    }
+}
+
+pub struct HitEvent {
+    actor: Entity,
+    hitbox: Entity,
+    target: Entity,
+}
+
+impl HitEvent {
+    pub fn detect(
+        mut collision_events: EventReader<CollisionEvent>,
+        mut hit_events: EventWriter<HitEvent>,
+        hit_query: Query<&VirtualParent, With<HitEffects>>,
+    ) {
+        for &event in collision_events.iter() {
+            let CollisionEvent::Started(entity1, entity2, _) = event else {
+                continue
+            };
+
+            let mut handle_collision = |hitbox: Entity, target: Entity| {
+                let Ok(&VirtualParent(actor)) = hit_query.get(hitbox) else { return };
+                hit_events.send(HitEvent {
+                    actor,
+                    hitbox,
+                    target,
+                });
+            };
+
+            handle_collision(entity1, entity2);
+            handle_collision(entity2, entity1);
+        }
+    }
+}
+
+#[derive(Component, Reflect)]
+pub struct HitEffects {
+    damage: f32,
+    knockback: f32,
+    // TODO: Sound effect (audio_key: AudioKey)
+}
+
+impl HitEffects {
+    pub fn apply(
+        mut hit_events: EventReader<HitEvent>,
+        mut death_events: EventWriter<DeathEvent>,
+        hit_effects_query: Query<&HitEffects>,
+        mut health_query: Query<&mut Health>,
+        mut velocity_query: Query<&mut Velocity>,
+        transform_query: Query<&Transform>,
+    ) {
+        for &HitEvent {
+            actor,
+            hitbox,
+            target,
+        } in hit_events.iter()
+        {
+            let Ok(effect) = hit_effects_query.get(hitbox) else { return };
+
+            // Damage
+            if let Ok(mut health) = health_query.get_mut(target) {
+                if 0.0 < health.0 && health.0 <= effect.damage {
+                    death_events.send(DeathEvent(target));
+                }
+                health.0 -= effect.damage;
+            }
+
+            // Knockback
+            if let Ok(mut velocity) = velocity_query.get_mut(target) {
+                let Ok(actor_transform) = transform_query.get(actor) else {
+                    return
+                };
+                let Ok(target_transform) = transform_query.get(target) else {
+                    return
+                };
+
+                let scale = 40.0;
+                let direction = (target_transform.translation.xy()
+                    - actor_transform.translation.xy())
+                .normalize_or_zero();
+                velocity.linvel = effect.knockback * scale * direction;
+            }
+        }
+    }
+}
+
+pub struct DeathEvent(pub Entity);
+
+#[derive(Component, Reflect)]
+pub struct DeathEffects {
+    pub reward_gold: f32,
+    // TODO: Animation, sound effect
+}
+
+impl Default for DeathEffects {
+    fn default() -> Self {
+        Self { reward_gold: 10.0 }
+    }
+}
+
+impl DeathEffects {
+    pub fn apply(
+        mut commands: Commands,
+        mut death_events: EventReader<DeathEvent>,
+        death_effects_query: Query<&DeathEffects>,
+        mut player_query: Query<&mut Gold, With<PlayerControl>>,
+    ) {
+        for &DeathEvent(entity) in death_events.iter() {
+            // Despawn
+            commands.entity(entity).despawn_recursive();
+
+            let Ok(death_effects) = death_effects_query.get(entity) else {
+                continue
+            };
+
+            // Reward gold
+            for mut player_gold in &mut player_query {
+                player_gold.0 += death_effects.reward_gold;
+            }
+        }
     }
 }

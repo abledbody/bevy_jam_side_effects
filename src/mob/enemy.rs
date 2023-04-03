@@ -2,22 +2,11 @@ use bevy::{math::vec2, prelude::*};
 
 use crate::{
     asset::{Handles, ImageKey},
-    combat::Faction,
+    combat::{DeathEffects, Faction},
     mob::{BodyTemplate, Health, MobBundle},
     util::MOB_Z,
     vfx::DropShadowTemplate,
 };
-
-#[derive(Component, Reflect)]
-pub struct Loot {
-    pub gold: f32,
-}
-
-impl Default for Loot {
-    fn default() -> Self {
-        Self { gold: 10.0 }
-    }
-}
 
 #[derive(Default, Component, Reflect)]
 pub struct EnemyAi;
@@ -68,7 +57,9 @@ impl EnemyTemplate {
             }
             .with_faction(FACTION),
             EnemyAi,
-            Loot { gold: self.gold },
+            DeathEffects {
+                reward_gold: self.gold,
+            },
         ));
         #[cfg(feature = "debug_mode")]
         enemy.insert(Name::new("Enemy"));

@@ -10,7 +10,7 @@ use crate::{
 };
 
 #[derive(Component, Reflect, Default)]
-pub struct Gold(f32);
+pub struct Gold(pub f32);
 
 #[derive(Component, Reflect, Default, Debug)]
 pub struct PlayerControl;
