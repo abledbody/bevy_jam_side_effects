@@ -1,4 +1,4 @@
-use bevy::prelude::*;
+use bevy::{prelude::*, utils::HashSet};
 
 pub const Z_MAX: f32 = 10.0;
 pub const Z_SCALE: f32 = 0.001;
@@ -17,3 +17,14 @@ impl ZRampByY {
 // An alternative to bevy hierarchy. Workaround for bevy rapier. Pair this with Offset.
 #[derive(Component, Reflect)]
 pub struct VirtualParent(pub Entity);
+
+#[derive(Resource, Reflect, Default)]
+pub struct DespawnSet(pub HashSet<Entity>);
+
+impl DespawnSet {
+    pub fn apply(mut commands: Commands, mut despawn: ResMut<Self>) {
+        for entity in despawn.0.drain() {
+            commands.entity(entity).despawn_recursive();
+        }
+    }
+}

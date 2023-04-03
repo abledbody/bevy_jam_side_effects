@@ -15,7 +15,7 @@ use crate::{
         player::{PlayerControl, PlayerTemplate},
         Mob,
     },
-    util::ZRampByY,
+    util::{DespawnSet, ZRampByY},
 };
 
 // TODO: Come up with a title.
@@ -25,6 +25,14 @@ pub const TIME_STEP: f32 = 1.0 / 60.0;
 const TIME_STEP_DURATION: Duration = Duration::from_nanos((TIME_STEP * 1_000_000_000.0) as u64);
 
 type Physics = RapierPhysicsPlugin<NoUserData>;
+
+#[derive(SystemSet, Clone, Debug, Eq, PartialEq, Hash)]
+enum UpdateSet {
+    Input,
+    // <-- Physics
+    Combat,
+    SpawnDespawn,
+}
 
 pub struct GamePlugin;
 
@@ -41,7 +49,8 @@ impl Plugin for GamePlugin {
                 },
                 ..default()
             })
-            .init_resource::<Handles>();
+            .init_resource::<Handles>()
+            .init_resource::<DespawnSet>();
 
         // Events
         app.add_event::<HitEvent>().add_event::<DeathEvent>();
@@ -70,13 +79,27 @@ impl Plugin for GamePlugin {
 
         // Game logic systems (fixed timestep)
         app.edit_schedule(CoreSchedule::FixedUpdate, |schedule| {
+            schedule.configure_sets(
+                (
+                    UpdateSet::Input,
+                    PhysicsSet::SyncBackend,
+                    PhysicsSet::SyncBackendFlush,
+                    PhysicsSet::StepSimulation,
+                    PhysicsSet::Writeback,
+                    UpdateSet::Combat,
+                    UpdateSet::SpawnDespawn,
+                )
+                    .chain(),
+            );
+
+            // Input
             schedule.add_systems(
                 (
                     PlayerControl::record_inputs,
                     Mob::apply_input.after(PlayerControl::record_inputs),
                     Offset::apply_to_non_sprites,
                 )
-                    .before(PhysicsSet::SyncBackend),
+                    .in_set(UpdateSet::Input),
             );
 
             // Physics
@@ -89,27 +112,31 @@ impl Plugin for GamePlugin {
                 schedule.add_systems(Physics::get_systems(set.clone()).in_base_set(set));
             }
 
+            // Combat
             schedule.add_systems(
                 (
-                    HitEvent::detect.after(PhysicsSet::Writeback),
-                    HitEffects::apply,
-                    DeathEffects::apply,
-                    // TODO: Define an enum UpdateSet
+                    HitEvent::detect,
+                    HitEffects::apply.after(HitEvent::detect),
+                    DeathEffects::apply.after(HitEffects::apply),
                     Lifetime::apply,
-                    spawn_instances,
                 )
-                    .chain(),
+                    .in_set(UpdateSet::Combat),
             );
+
+            // Spawn / Despawn
+            schedule
+                .add_systems((DespawnSet::apply, spawn_instances).in_set(UpdateSet::SpawnDespawn));
         });
 
         // Visual systems
         app.add_systems((
+            ZRampByY::apply,
             Mob::set_facing,
             Facing::update_sprites.after(Mob::set_facing),
             Offset::apply_to_sprites.after(Mob::set_facing),
+            WalkAnimation::update,
+            animation::sum_animations.after(WalkAnimation::update),
         ));
-        app.add_systems((WalkAnimation::update, animation::sum_animations).chain());
-        app.add_system(ZRampByY::apply);
 
         // UI systems
         app.add_system(bevy::window::close_on_esc);

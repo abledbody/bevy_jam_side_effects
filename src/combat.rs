@@ -7,7 +7,7 @@ use crate::{
         player::{Gold, PlayerControl},
         Health,
     },
-    util::VirtualParent,
+    util::{DespawnSet, VirtualParent},
 };
 
 pub const COLLISION_GROUP: Group = Group::GROUP_1;
@@ -175,14 +175,14 @@ impl Default for DeathEffects {
 
 impl DeathEffects {
     pub fn apply(
-        mut commands: Commands,
         mut death_events: EventReader<DeathEvent>,
+        mut despawn: ResMut<DespawnSet>,
         death_effects_query: Query<&DeathEffects>,
         mut player_query: Query<&mut Gold, With<PlayerControl>>,
     ) {
         for &DeathEvent(entity) in death_events.iter() {
             // Despawn
-            commands.entity(entity).despawn_recursive();
+            despawn.0.insert(entity);
 
             let Ok(death_effects) = death_effects_query.get(entity) else {
                 continue
