@@ -1,4 +1,5 @@
 use bevy::{prelude::*, utils::HashMap};
+use bevy_ecs_ldtk::LdtkAsset;
 
 #[derive(Reflect, FromReflect, Eq, PartialEq, Hash)]
 pub enum ImageKey {
@@ -13,6 +14,11 @@ pub enum AudioKey {
     GnollWalk,
 }
 
+#[derive(Reflect, FromReflect, Eq, PartialEq, Hash)]
+pub enum LevelKey {
+    TestLevel,
+}
+
 const IMAGE_MAP: [(ImageKey, &str); 4] = [
     (ImageKey::RedGnoll, "sprites/character/RedGnoll.png"),
     (ImageKey::GreenGnoll, "sprites/character/GreenGnoll.png"),
@@ -20,12 +26,15 @@ const IMAGE_MAP: [(ImageKey, &str); 4] = [
     (ImageKey::DropShadow, "sprites/vfx/DropShadow.png"),
 ];
 
-const AUDIO_MAP: [(AudioKey, &'static str); 1] = [(AudioKey::GnollWalk, "sfx/walk.wav")];
+const AUDIO_MAP: [(AudioKey, &str); 1] = [(AudioKey::GnollWalk, "sfx/walk.wav")];
+
+const LEVEL_MAP: [(LevelKey, &str); 1] = [(LevelKey::TestLevel, "maps/test_map.ldtk")];
 
 #[derive(Resource, Reflect, Default)]
 pub struct Handles {
     pub image: HashMap<ImageKey, Handle<Image>>,
     pub audio: HashMap<AudioKey, Handle<AudioSource>>,
+    pub levels: HashMap<LevelKey, Handle<LdtkAsset>>,
 }
 
 impl Handles {
@@ -36,6 +45,11 @@ impl Handles {
             .collect();
 
         handle.audio = AUDIO_MAP
+            .into_iter()
+            .map(|(key, path)| (key, asset.load(path)))
+            .collect();
+
+        handle.levels = LEVEL_MAP
             .into_iter()
             .map(|(key, path)| (key, asset.load(path)))
             .collect();

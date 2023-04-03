@@ -4,3 +4,6 @@
 
 # Build output
 /target
+
+# Map backups
+/assets/maps/**/backups/*

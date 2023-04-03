@@ -52,7 +52,8 @@ pub struct PlayerTemplate {
 impl Default for PlayerTemplate {
     fn default() -> Self {
         Self {
-            position: vec3(0.0, 0.0, 500.0),
+            // TODO: Use the map definition to set this
+            position: vec3(19.0 * 8.0, 13.0 * 8.0, 500.0),
             health: 100.0,
         }
     }

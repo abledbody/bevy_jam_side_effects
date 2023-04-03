@@ -3,7 +3,7 @@ use bevy_rapier2d::prelude::*;
 
 use crate::{
     animation::{Facing, Offset, WalkAnimation},
-    asset::{Handles, ImageKey, AudioKey},
+    asset::{AudioKey, Handles, ImageKey},
     game::TIME_STEP,
     math::MoveTowards,
 };
@@ -131,7 +131,7 @@ impl BodyTemplate {
             WalkAnimation {
                 air_time: 0.18,
                 height: 3.0,
-				sound: Some(handle.audio[&AudioKey::GnollWalk].clone()),
+                sound: Some(handle.audio[&AudioKey::GnollWalk].clone()),
                 ..default()
             },
         ));

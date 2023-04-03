@@ -1,11 +1,14 @@
 use std::{f32::consts::TAU, time::Duration};
 
 use bevy::prelude::*;
+use bevy_ecs_ldtk::LdtkWorldBundle;
 use bevy_rapier2d::prelude::*;
 
 use crate::{
     animation::{self, Facing, Offset, WalkAnimation},
-    asset::Handles,
+    asset::{Handles, LevelKey},
+    camera::{CameraPlugin, CameraTarget},
+    map::MapPlugin,
     mob::{
         enemy::EnemyTemplate,
         player::{PlayerControl, PlayerTemplate},
@@ -50,13 +53,15 @@ impl Plugin for GamePlugin {
                 })
                 .set(ImagePlugin::default_nearest()),
         )
-        .add_plugin(Physics::default().with_default_system_setup(false));
+        .add_plugin(Physics::default().with_default_system_setup(false))
+        .add_plugin(MapPlugin)
+        .add_plugin(CameraPlugin);
         #[cfg(feature = "debug_mode")]
         app.add_plugin(crate::debug::DebugPlugin::default());
 
         // Startup systems
-        app.add_startup_systems((spawn_camera, Handles::load));
-        app.add_startup_systems((spawn_player, spawn_enemies).after(Handles::load));
+        app.add_startup_system(Handles::load);
+        app.add_startup_systems((spawn_map, spawn_player, spawn_enemies).after(Handles::load));
 
         // Game logic systems (fixed timestep)
         app.edit_schedule(CoreSchedule::FixedUpdate, |schedule| {
@@ -91,20 +96,16 @@ impl Plugin for GamePlugin {
     }
 }
 
-fn spawn_camera(mut commands: Commands) {
-    let projection = OrthographicProjection {
-        // TODO: Scale to screen resolution
-        scale: 1.0 / 4.0,
-        ..default()
-    };
-    commands.spawn(Camera2dBundle {
-        projection,
-        ..default()
+fn spawn_map(mut commands: Commands, handle: Res<Handles>) {
+    commands.spawn(LdtkWorldBundle {
+        ldtk_handle: handle.levels[&LevelKey::TestLevel].clone(),
+        ..Default::default()
     });
 }
 
 fn spawn_player(mut commands: Commands, handle: Res<Handles>) {
-    PlayerTemplate::default().spawn(&mut commands, &handle);
+    let entity = PlayerTemplate::default().spawn(&mut commands, &handle);
+    commands.insert_resource(CameraTarget(entity))
 }
 
 fn spawn_enemies(mut commands: Commands, handle: Res<Handles>) {
