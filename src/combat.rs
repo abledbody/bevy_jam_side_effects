@@ -1,4 +1,4 @@
-use bevy::prelude::*;
+use bevy::{math::Vec3Swizzles, prelude::*};
 use bevy_rapier2d::prelude::*;
 
 use crate::{
@@ -52,22 +52,35 @@ impl HitEffects {
         hit_effects_query: Query<&HitEffects>,
         mut health_query: Query<&mut Health>,
         mut velocity_query: Query<&mut Velocity>,
+        virtual_parent_query: Query<&VirtualParent>,
+        transform_query: Query<&Transform>,
     ) {
         for &event in collision_events.iter() {
             let CollisionEvent::Started(entity1, entity2, _) = event else {
                 continue
             };
 
-            let mut handle_collision = |x: Entity, y: Entity| {
-                if let Ok(effect) = hit_effects_query.get(x) {
-                    if let Ok(mut health) = health_query.get_mut(y) {
-                        // TODO: System that detects when health <= 0 and triggers a Death event
-                        health.0 -= effect.damage;
-                    }
-                    if let Ok(mut velocity) = velocity_query.get_mut(y) {
-                        // TODO: Actually implement knockback
-                        velocity.linvel = 100.0 * effect.knockback * Vec2::ONE;
-                    }
+            let mut handle_collision = |actor: Entity, target: Entity| {
+                let Ok(effect) = hit_effects_query.get(actor) else { return };
+                if let Ok(mut health) = health_query.get_mut(target) {
+                    // TODO: System that detects when health <= 0 and triggers a Death event
+                    health.0 -= effect.damage;
+                }
+                if let Ok(mut velocity) = velocity_query.get_mut(target) {
+                    let Ok(actor_transform) = virtual_parent_query
+                        .get(actor)
+                        .and_then(|parent| transform_query.get(parent.0)) else {
+                        return
+                    };
+                    let Ok(target_transform) = transform_query.get(target) else {
+                        return
+                    };
+
+                    let scale = 40.0;
+                    let direction = (target_transform.translation.xy()
+                        - actor_transform.translation.xy())
+                    .normalize_or_zero();
+                    velocity.linvel = effect.knockback * scale * direction;
                 }
             };
 
