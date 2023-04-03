@@ -5,12 +5,11 @@ use crate::{
     asset::{Handles, ImageKey},
     combat::{Faction, HitboxTemplate},
     mob::BodyTemplate,
-    util::MOB_Z,
     vfx::DropShadowTemplate,
 };
 
 #[derive(Component, Reflect, Default)]
-pub struct Gold(f32);
+pub struct Gold(pub f32);
 
 #[derive(Component, Reflect, Default, Debug)]
 pub struct PlayerControl;
@@ -69,16 +68,12 @@ impl PlayerTemplate {
             offset: vec2(2.0, 11.0),
         }
         .spawn(commands, handle);
-        let drop_shadow = DropShadowTemplate {
-            parent_z: MOB_Z,
-            ..default()
-        }
-        .spawn(commands, handle);
+        let drop_shadow = DropShadowTemplate::default().spawn(commands, handle);
 
         // Parent
         let mut player = commands.spawn((
             SpatialBundle {
-                transform: Transform::from_translation(self.position.extend(MOB_Z)),
+                transform: Transform::from_translation(self.position.extend(0.0)),
                 ..default()
             },
             MobBundle {
