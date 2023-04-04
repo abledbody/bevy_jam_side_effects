@@ -2,24 +2,24 @@ use bevy::{prelude::*, utils::HashMap};
 use bevy_ecs_ldtk::LdtkAsset;
 
 #[derive(Reflect, FromReflect, Eq, PartialEq, Hash)]
+pub enum FontKey {
+    Regular,
+    Bold,
+    Pixel,
+}
+
+const FONT_MAP: [(FontKey, &str); 3] = [
+    (FontKey::Regular, "font/OpenSans-Regular.ttf"),
+    (FontKey::Bold, "font/OpenSans-Bold.ttf"),
+    (FontKey::Pixel, "font/Jaywalk.ttf"),
+];
+
+#[derive(Reflect, FromReflect, Eq, PartialEq, Hash)]
 pub enum ImageKey {
     RedGnoll,
     GreenGnoll,
     BlueGnoll,
     DropShadow,
-}
-
-#[derive(Reflect, FromReflect, Eq, PartialEq, Hash)]
-pub enum AudioKey {
-    GnollWalk,
-	PlayerAttack1,
-	PlayerAttack2,
-	PlayerHit,
-}
-
-#[derive(Reflect, FromReflect, Eq, PartialEq, Hash)]
-pub enum LevelKey {
-    TestLevel,
 }
 
 const IMAGE_MAP: [(ImageKey, &str); 4] = [
@@ -29,17 +29,31 @@ const IMAGE_MAP: [(ImageKey, &str); 4] = [
     (ImageKey::DropShadow, "sprites/vfx/DropShadow.png"),
 ];
 
+#[derive(Reflect, FromReflect, Eq, PartialEq, Hash)]
+pub enum AudioKey {
+    GnollWalk,
+    PlayerAttack1,
+    PlayerAttack2,
+    PlayerHit,
+}
+
 const AUDIO_MAP: [(AudioKey, &str); 4] = [
-	(AudioKey::GnollWalk, "sfx/walk.wav"),
-	(AudioKey::PlayerAttack1, "sfx/player_attack_1.wav"),
-	(AudioKey::PlayerAttack2, "sfx/player_attack_2.wav"),
-	(AudioKey::PlayerHit, "sfx/player_hit.wav"),
+    (AudioKey::GnollWalk, "sfx/walk.wav"),
+    (AudioKey::PlayerAttack1, "sfx/player_attack_1.wav"),
+    (AudioKey::PlayerAttack2, "sfx/player_attack_2.wav"),
+    (AudioKey::PlayerHit, "sfx/player_hit.wav"),
 ];
+
+#[derive(Reflect, FromReflect, Eq, PartialEq, Hash)]
+pub enum LevelKey {
+    TestLevel,
+}
 
 const LEVEL_MAP: [(LevelKey, &str); 1] = [(LevelKey::TestLevel, "maps/test_map.ldtk")];
 
 #[derive(Resource, Reflect, Default)]
 pub struct Handles {
+    pub font: HashMap<FontKey, Handle<Font>>,
     pub image: HashMap<ImageKey, Handle<Image>>,
     pub audio: HashMap<AudioKey, Handle<AudioSource>>,
     pub levels: HashMap<LevelKey, Handle<LdtkAsset>>,
@@ -47,6 +61,11 @@ pub struct Handles {
 
 impl Handles {
     pub fn load(asset: Res<AssetServer>, mut handle: ResMut<Self>) {
+        handle.font = FONT_MAP
+            .into_iter()
+            .map(|(key, path)| (key, asset.load(path)))
+            .collect();
+
         handle.image = IMAGE_MAP
             .into_iter()
             .map(|(key, path)| (key, asset.load(path)))
