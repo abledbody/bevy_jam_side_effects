@@ -17,7 +17,6 @@ use crate::{
 };
 
 const TITLE: &str = "Sai Defects";
-const CLEAR_COLOR: Color = Color::rgba(0.18, 0.15, 0.23, 1.0);
 
 #[derive(SystemSet, Clone, Debug, Eq, PartialEq, Hash)]
 enum UpdateSet {
@@ -32,13 +31,12 @@ pub struct GamePlugin;
 impl Plugin for GamePlugin {
     fn build(&self, app: &mut App) {
         // Resources
-        app.insert_resource(ClearColor(CLEAR_COLOR))
-            .insert_resource(RapierConfiguration {
-                gravity: Vec2::ZERO,
-                ..default()
-            })
-            .init_resource::<Handles>()
-            .init_resource::<DespawnSet>();
+        app.insert_resource(RapierConfiguration {
+            gravity: Vec2::ZERO,
+            ..default()
+        })
+        .init_resource::<Handles>()
+        .init_resource::<DespawnSet>();
 
         // Events
         app.add_event::<HitEvent>().add_event::<DeathEvent>();
@@ -141,14 +139,18 @@ fn spawn_scene(mut commands: Commands, handle: Res<Handles>) {
 pub fn spawn_instances(
     mut commands: Commands,
     handle: Res<Handles>,
-    entity_query: Query<(Entity, &Transform, &EntityInstance)>,
+    entity_query: Query<(Entity, &Transform, &EntityInstance, &Parent), Added<EntityInstance>>,
+    transforms: Query<&Transform, (With<Children>, Without<EntityInstance>)>,
 ) {
-    for (entity, transform, instance) in &entity_query {
+    for (entity, transform, instance, parent) in &entity_query {
         // Despawn the marker entity
         commands.entity(entity).despawn_recursive();
 
+        // Since we're going to create a new entity, and we therefore will not inherit the parent's
+        // transform automatically, we need to manually add it.
+        let parent_transform = transforms.get(parent.get()).copied().unwrap_or_default();
+        let position = (transform.translation + parent_transform.translation).xy();
         // Replace with the actual entity
-        let position = transform.translation.xy();
         match instance.identifier.as_str() {
             "Player" => {
                 PlayerTemplate {
