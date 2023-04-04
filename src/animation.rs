@@ -220,38 +220,48 @@ impl DeathAnimation {
         }
     }
 
-	pub fn template() -> DeathAnimation {
-		DeathAnimation {
-			air_time: 0.7,
-			height: 6.0,
-			rotate_time: 0.5,
-			air_t: 0.0,
-			rot_t: 0.0,
-		}
-	}
+    pub fn template() -> DeathAnimation {
+        DeathAnimation {
+            air_time: 0.25,
+            height: 12.0,
+            rotate_time: 0.3,
+            air_t: 0.0,
+            rot_t: 0.0,
+        }
+    }
 }
 
 pub fn sum_animations(
     mut offset_query: Query<(
         &Offset,
         &mut Transform,
-		Option<&Parent>,
-		Option<&VirtualParent>,
+        Option<&Parent>,
+        Option<&VirtualParent>,
         Option<&Facing>,
         Option<&WalkAnimation>,
         Option<&DeathAnimation>,
     )>,
-	mut facing_query: Query<&Facing>
+    facing_query: Query<&Facing>,
+    transform_query: Query<&Transform, Without<Offset>>,
 ) {
-    for (offset, mut transform, parent, virtual_parent, facing, walk_animation, death_animation) in &mut offset_query {
+    for (
+		offset,
+		mut transform,
+		parent,
+		virtual_parent,
+		facing,
+		walk_animation,
+		death_animation
+	) in &mut offset_query
+    {
         // If we have a facing, use it.
-		// Otherwise use the parent's.
-		// Otherwise use the virtual parent's.
+        // Otherwise use the parent's.
+        // Otherwise use the virtual parent's.
         let facing_sign = facing
-			.or_else(|| parent.and_then(|p| facing_query.get(p.get()).ok()))
+            .or_else(|| parent.and_then(|p| facing_query.get(p.get()).ok()))
             .or_else(|| virtual_parent.and_then(|p| facing_query.get(p.0).ok()))
             .map_or(1.0, |f| f.sign());
-		
+
         let mut out_offset = offset.0.clone();
         let mut rot = 0.0;
 
@@ -261,10 +271,21 @@ pub fn sum_animations(
         }
         if let Some(death_animation) = death_animation {
             out_offset.y += death_animation.height * (death_animation.air_t * PI).sin();
-            rot += death_animation.rot_t * TAU / 4.0 * facing_sign;
+            rot += (death_animation.rot_t * TAU / 4.0 * facing_sign).sin() * TAU / 4.0;
         }
 
-        transform.translation.x = out_offset.x * facing_sign;
+		out_offset.x *= facing_sign;
+		rot *= facing_sign;
+
+		if let Some(vp) = virtual_parent {
+            if let Ok(parent_transform) = transform_query.get(vp.0) {
+                out_offset.x += parent_transform.translation.x;
+                out_offset.y += parent_transform.translation.y;
+            }
+        }
+
+        transform.translation.x = out_offset.x;
         transform.translation.y = out_offset.y;
+        transform.rotation = Quat::from_rotation_z(rot);
     }
 }

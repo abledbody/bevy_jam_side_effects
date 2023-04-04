@@ -41,11 +41,16 @@ impl Mob {
         }
     }
 
-    pub fn apply_input(mut mob_query: Query<(&Mob, &mut Velocity, &MobInputs)>, time: Res<Time>) {
+    pub fn apply_input(mut mob_query: Query<(&Mob, &mut Velocity, Option<&MobInputs>)>, time: Res<Time>) {
         let dt = time.delta_seconds();
         for (mob, mut velocity, mob_inputs) in &mut mob_query {
-            let input_direction = mob_inputs.movement.normalize_or_zero();
-            let input_magnitude = mob_inputs.movement.length().min(1.0);
+			let (input_direction, input_magnitude) = if let Some(mob_inputs) = mob_inputs {
+				(mob_inputs.movement.normalize_or_zero(),
+				mob_inputs.movement.length().min(1.0))
+			}
+			else {
+				(Vec2::ZERO, 0.0)
+			};
 
             let mut acceleration = mob.acceleration;
             if input_direction.dot(velocity.linvel) < 0.0 {

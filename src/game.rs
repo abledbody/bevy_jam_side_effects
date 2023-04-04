@@ -97,7 +97,9 @@ impl Plugin for GamePlugin {
             Facing::update_sprites.after(Mob::set_facing),
             WalkAnimation::update.after(Mob::set_facing),
             DeathAnimation::update.after(Mob::set_facing),
-            animation::sum_animations.after(WalkAnimation::update),
+            animation::sum_animations
+				.after(WalkAnimation::update)
+				.after(DeathAnimation::update),
         ));
 
         // UI systems
