@@ -1,8 +1,8 @@
-use bevy::{math::Vec3Swizzles, prelude::*};
+use bevy::prelude::*;
 use bevy_rapier2d::prelude::*;
 
 use crate::{
-    animation::{DeathAnimation, Lifetime, Offset, VirtualParent, WalkAnimation},
+    animation::{DeathAnimation, Lifetime, WalkAnimation},
     asset::{AudioKey, Handles},
     mob::{
         player::{Gold, PlayerControl},
@@ -47,32 +47,33 @@ impl Faction {
 }
 
 pub struct HitboxTemplate {
-    pub offset: Vec2,
+    pub position: Vec3,
+    pub direction: Vec2,
     pub radius: f32,
     pub damage: f32,
     pub knockback: f32,
     pub faction: Faction,
-    pub parent: Entity,
 }
 
 impl HitboxTemplate {
     pub fn spawn(self, commands: &mut Commands, handle: &Handles) -> Entity {
         let mut hitbox = commands.spawn((
-            Offset {
-                pos: self.offset,
+            TransformBundle {
+                local: Transform {
+                    translation: self.position,
+                    ..default()
+                },
                 ..default()
             },
-            TransformBundle::default(),
             Collider::ball(self.radius),
             Sensor,
             self.faction.hitbox_groups(),
             ActiveEvents::COLLISION_EVENTS,
             HitEffects {
                 damage: self.damage,
-                knockback: self.knockback,
+                knockback: self.knockback * self.direction,
                 sound: Some(handle.audio[&AudioKey::PlayerAttack2].clone()),
             },
-            VirtualParent(self.parent),
         ));
         #[cfg(feature = "debug_mode")]
         hitbox.insert(Name::new("Hitbox"));
@@ -82,7 +83,7 @@ impl HitboxTemplate {
 }
 
 pub struct HitEvent {
-    actor: Entity,
+    knockback: Vec2,
     hitbox: Entity,
     target: Entity,
 }
@@ -91,7 +92,7 @@ impl HitEvent {
     pub fn detect(
         mut collision_events: EventReader<CollisionEvent>,
         mut hit_events: EventWriter<HitEvent>,
-        hit_query: Query<&VirtualParent, With<HitEffects>>,
+        hit_query: Query<&HitEffects>,
     ) {
         for &event in collision_events.iter() {
             let CollisionEvent::Started(entity1, entity2, _) = event else {
@@ -99,9 +100,9 @@ impl HitEvent {
             };
 
             let mut handle_collision = |hitbox: Entity, target: Entity| {
-                let Ok(&VirtualParent(actor)) = hit_query.get(hitbox) else { return };
+                let Ok(hit_effects) = hit_query.get(hitbox) else { return };
                 hit_events.send(HitEvent {
-                    actor,
+                    knockback: hit_effects.knockback,
                     hitbox,
                     target,
                 });
@@ -116,7 +117,7 @@ impl HitEvent {
 #[derive(Component, Reflect)]
 pub struct HitEffects {
     damage: f32,
-    knockback: f32,
+    knockback: Vec2,
     sound: Option<Handle<AudioSource>>,
 }
 
@@ -127,11 +128,10 @@ impl HitEffects {
         hit_effects_query: Query<&HitEffects>,
         mut health_query: Query<&mut Health>,
         mut velocity_query: Query<&mut Velocity>,
-        transform_query: Query<&GlobalTransform>,
         audio: Res<Audio>,
     ) {
         for &HitEvent {
-            actor,
+            knockback,
             hitbox,
             target,
         } in hit_events.iter()
@@ -152,18 +152,8 @@ impl HitEffects {
 
             // Knockback
             if let Ok(mut velocity) = velocity_query.get_mut(target) {
-                let Ok(actor_transform) = transform_query.get(actor) else {
-                    return
-                };
-                let Ok(target_transform) = transform_query.get(target) else {
-                    return
-                };
-
                 let scale = 40.0;
-                let direction = (target_transform.translation().xy()
-                    - actor_transform.translation().xy())
-                .normalize_or_zero();
-                velocity.linvel = effect.knockback * scale * direction;
+                velocity.linvel = knockback * scale;
             }
         }
     }
@@ -176,18 +166,18 @@ impl HitEffects {
 
     pub fn spawn_from_inputs(
         mut commands: Commands,
-        mob_query: Query<(Entity, &Mob, &MobInputs)>,
+        mob_query: Query<(&Mob, &Transform, &MobInputs)>,
         handle: Res<Handles>,
     ) {
-        for (entity, mob, inputs) in &mob_query {
+        for (mob, transform, inputs) in &mob_query {
             if let Some(dir) = inputs.attack {
                 HitboxTemplate {
-                    offset: 15.0 * dir,
+                    position: transform.translation + Vec3::from((15.0 * dir, 0.0)),
+                    direction: dir,
                     radius: 7.0,
                     damage: 8.0,
                     knockback: 5.0,
                     faction: mob.faction,
-                    parent: entity,
                 }
                 .spawn(&mut commands, &handle);
             }
