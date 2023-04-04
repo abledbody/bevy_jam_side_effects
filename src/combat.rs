@@ -185,8 +185,8 @@ impl HitEffects {
         for (entity, mob, inputs) in &mob_query {
             if inputs.attack {
                 HitboxTemplate {
-                    offset: vec2(10.0, 4.0),
-                    radius: 7.0,
+                    offset: vec2(15.0, 0.0),
+                    radius: 9.0,
                     damage: 8.0,
                     knockback: 5.0,
                     faction: mob.faction,

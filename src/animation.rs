@@ -292,7 +292,7 @@ impl Default for AttackAnimation {
 	fn default() -> Self {
 		Self {
 			length: 0.2,
-			distance: 5.0,
+			distance: 7.5,
 			t: 1.0,
 		}
 	}
