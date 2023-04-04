@@ -183,7 +183,7 @@ impl HitEffects {
             if let Some(pos) = inputs.attack {
                 let dir = pos - gt.translation().xy();
                 HitboxTemplate {
-                    offset: 10.0 * dir,
+                    offset: 15.0 * dir,
                     radius: 7.0,
                     damage: 8.0,
                     knockback: 5.0,

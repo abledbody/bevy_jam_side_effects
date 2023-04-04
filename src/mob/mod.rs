@@ -2,7 +2,7 @@ use bevy::prelude::*;
 use bevy_rapier2d::prelude::*;
 
 use crate::{
-    animation::{Facing, Offset, WalkAnimation},
+    animation::{Facing, Offset, WalkAnimation, AttackAnimation},
     asset::{AudioKey, Handles, ImageKey},
     combat::{Faction, COLLISION_GROUP},
     math::MoveTowards,
@@ -51,7 +51,7 @@ impl Mob {
         }
     }
 
-    pub fn apply_input(
+    pub fn apply_movement(
         mut mob_query: Query<(&Mob, &mut Velocity, Option<&MobInputs>)>,
         time: Res<Time>,
     ) {
@@ -153,6 +153,23 @@ pub struct MobInputs {
     pub attack: Option<Vec2>,
 }
 
+impl MobInputs {
+	pub fn animate_attack(
+		mob_query: Query<(&MobInputs, &Children)>,
+		mut animation_query: Query<&mut AttackAnimation>,
+	) {
+		for (mob_inputs, children) in &mob_query {
+			if mob_inputs.attack {
+				for &child in children {
+					if let Ok(mut anim) = animation_query.get_mut(child) {
+						anim.t = 0.0;
+					}
+				}
+			}
+		}
+	}
+}
+
 pub struct BodyTemplate {
     texture: ImageKey,
     offset: Vec2,
@@ -175,6 +192,9 @@ impl BodyTemplate {
                 sound: Some(handle.audio[&AudioKey::GnollWalk].clone()),
                 ..default()
             },
+			AttackAnimation {
+				..default()
+			},
         ));
         #[cfg(feature = "debug_mode")]
         body.insert(Name::new("Body"));
