@@ -69,6 +69,84 @@ impl Offset {
     }
 }
 
+#[derive(Component, Reflect, Debug, Default)]
+pub enum Facing {
+    Left,
+    #[default]
+    Right,
+}
+
+impl Facing {
+    pub fn apply(
+        parent_query: Query<(Entity, &Parent)>,
+        virtual_parent_query: Query<(Entity, &VirtualParent)>,
+        facing_query: Query<&Facing>,
+        mut transform_query: Query<&mut Transform>,
+        mut sprite_query: Query<&mut Sprite>,
+    ) {
+        for (child, parent) in &parent_query {
+            let Ok(facing) = facing_query.get(parent.get()) else {
+                continue
+            };
+
+            if let Ok(mut sprite) = sprite_query.get_mut(child) {
+                sprite.flip_x = facing.left();
+            };
+
+            if let Ok(mut transform) = transform_query.get_mut(child) {
+                if facing.left() {
+                    transform.translation.x = -transform.translation.x;
+                    transform.rotation = -transform.rotation;
+                }
+            }
+        }
+
+        for (child, virtual_parent) in &virtual_parent_query {
+            let Ok(facing) = facing_query.get(virtual_parent.0) else {
+                continue
+            };
+            if facing.right() {
+                continue;
+            }
+            let parent_x = {
+                let Ok(parent_transform) = transform_query.get(virtual_parent.0) else {
+                    continue
+                };
+                parent_transform.translation.x
+            };
+            let Ok(mut child_transform) = transform_query.get_mut(child) else {
+                continue
+            };
+
+            // Reflect child's X about parent's X
+            child_transform.translation.x = 2.0 * parent_x - child_transform.translation.x;
+        }
+    }
+
+    pub fn sign(&self) -> f32 {
+        match self {
+            Facing::Left => -1.0,
+            Facing::Right => 1.0,
+        }
+    }
+
+    pub fn left(&self) -> bool {
+        if let Facing::Left = self {
+            true
+        } else {
+            false
+        }
+    }
+
+    pub fn right(&self) -> bool {
+        if let Facing::Right = self {
+            true
+        } else {
+            false
+        }
+    }
+}
+
 #[derive(Component, Reflect, Default)]
 pub struct WalkAnimation {
     pub air_time: f32,
@@ -182,80 +260,40 @@ impl DeathAnimation {
     }
 }
 
-#[derive(Component, Reflect, Debug, Default)]
-pub enum Facing {
-    Left,
-    #[default]
-    Right,
+#[derive(Component, Reflect)]
+pub struct AttackAnimation {
+	pub length: f32,
+	pub distance: f32,
+	pub t: f32,
 }
 
-impl Facing {
-    pub fn apply(
-        parent_query: Query<(Entity, &Parent)>,
-        virtual_parent_query: Query<(Entity, &VirtualParent)>,
-        facing_query: Query<&Facing>,
-        mut transform_query: Query<&mut Transform>,
-        mut sprite_query: Query<&mut Sprite>,
-    ) {
-        for (child, parent) in &parent_query {
-            let Ok(facing) = facing_query.get(parent.get()) else {
-                continue
-            };
+impl AttackAnimation {
+	pub fn update(
+		mut animation_query: Query<&mut AttackAnimation>,
+		time: Res<Time>
+	) {
+		let dt = time.delta_seconds();
 
-            if let Ok(mut sprite) = sprite_query.get_mut(child) {
-                sprite.flip_x = facing.left();
-            };
+		for mut anim in &mut animation_query {
+			anim.t = (anim.t + dt / anim.length).min(1.0);
+		}
+	}
 
-            if let Ok(mut transform) = transform_query.get_mut(child) {
-                if facing.left() {
-                    transform.translation.x = -transform.translation.x;
-                    transform.rotation = -transform.rotation;
-                }
-            }
-        }
+	pub fn apply(
+		mut animation_query: Query<(&AttackAnimation, &mut Transform)>,
+	) {
+		for (anim, mut transform) in &mut animation_query {
+			transform.translation.x += anim.distance * (1.0 - anim.t);
+		}
+	}
+}
 
-        for (child, virtual_parent) in &virtual_parent_query {
-            let Ok(facing) = facing_query.get(virtual_parent.0) else {
-                continue
-            };
-            if facing.right() {
-                continue;
-            }
-            let parent_x = {
-                let Ok(parent_transform) = transform_query.get(virtual_parent.0) else {
-                    continue
-                };
-                parent_transform.translation.x
-            };
-            let Ok(mut child_transform) = transform_query.get_mut(child) else {
-                continue
-            };
-
-            // Reflect child's X about parent's X
-            child_transform.translation.x = 2.0 * parent_x - child_transform.translation.x;
-        }
-    }
-
-    pub fn sign(&self) -> f32 {
-        match self {
-            Facing::Left => -1.0,
-            Facing::Right => 1.0,
-        }
-    }
-
-    pub fn left(&self) -> bool {
-        if let Facing::Left = self {
-            true
-        } else {
-            false
-        }
-    }
-
-    pub fn right(&self) -> bool {
-        if let Facing::Right = self {
-            true
-        } else {
-            false
-        }
-    }
+impl Default for AttackAnimation {
+	fn default() -> Self {
+		Self {
+			length: 0.2,
+			distance: 5.0,
+			t: 1.0,
+		}
+	}
 }

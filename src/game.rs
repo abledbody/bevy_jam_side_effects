@@ -3,7 +3,7 @@ use bevy_ecs_ldtk::prelude::*;
 use bevy_rapier2d::prelude::*;
 
 use crate::{
-    animation::{DeathAnimation, Facing, Lifetime, Offset, VirtualParent, WalkAnimation},
+    animation::{DeathAnimation, Facing, Lifetime, Offset, VirtualParent, WalkAnimation, AttackAnimation},
     asset::{Handles, LevelKey},
     camera::{CameraPlugin, GameCameraTemplate},
     combat::{DeathEffects, DeathEvent, HitEffects, HitEvent},
@@ -12,7 +12,7 @@ use crate::{
     mob::{
         enemy::EnemyTemplate,
         player::{PlayerControl, PlayerTemplate},
-        Mob,
+        Mob, MobInputs,
     },
     util::{DespawnSet, ZRampByY},
 };
@@ -81,7 +81,7 @@ impl Plugin for GamePlugin {
         app.add_systems(
             (
                 PlayerControl::record_inputs,
-                Mob::apply_input,
+                Mob::apply_movement,
                 Mob::set_facing,
             )
                 .chain()
@@ -96,6 +96,7 @@ impl Plugin for GamePlugin {
                 DeathEffects::apply.after(HitEffects::apply),
                 HitEffects::cleanup.after(DeathEffects::apply),
                 HitEffects::spawn_from_inputs.after(HitEffects::cleanup),
+				MobInputs::animate_attack,
                 Lifetime::apply,
             )
                 .in_set(UpdateSet::Combat),
@@ -119,6 +120,11 @@ impl Plugin for GamePlugin {
                     .after(Offset::apply)
                     .before(Facing::apply)
                     .after(DeathAnimation::update),
+				AttackAnimation::update,
+				AttackAnimation::apply
+					.after(Offset::apply)
+					.before(Facing::apply)
+					.after(AttackAnimation::update),
                 Facing::apply,
             )
                 .in_set(UpdateSet::Animate),
