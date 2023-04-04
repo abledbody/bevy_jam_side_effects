@@ -58,7 +58,10 @@ pub struct HitboxTemplate {
 impl HitboxTemplate {
     pub fn spawn(self, commands: &mut Commands, handle: &Handles) -> Entity {
         let mut entity = commands.spawn((
-            Offset(self.offset),
+            Offset {
+				pos: self.offset,
+				..default()
+			},
             TransformBundle::default(),
             Collider::ball(self.radius),
             Sensor,

@@ -27,7 +27,10 @@ impl DropShadowTemplate {
                 transform: Transform::from_xyz(0.0, 0.0, -0.01),
                 ..default()
             },
-            Offset(self.offset),
+            Offset {
+				pos: self.offset,
+				..default()
+			},
         ));
         #[cfg(feature = "debug_mode")]
         drop_shadow.insert(Name::new("DropShadow"));
@@ -83,7 +86,10 @@ impl NametagTemplate {
                     .with_translation(vec3(0.0, 0.0, 500.0)),
                 ..default()
             },
-            Offset(self.offset),
+            Offset {
+				pos: self.offset,
+				..default()
+			},
         ));
         #[cfg(feature = "debug_mode")]
         nametag.insert(Name::new("Nametag"));
