@@ -8,6 +8,7 @@ mod camera;
 mod combat;
 mod debug;
 mod game;
+mod hud;
 mod map;
 mod math;
 mod mob;

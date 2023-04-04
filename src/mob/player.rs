@@ -4,6 +4,7 @@ use super::{Health, Mob, MobBundle, MobInputs};
 use crate::{
     asset::{Handles, ImageKey},
     combat::{Faction, HitboxTemplate},
+    hud::HealthBarTemplate,
     mob::BodyTemplate,
     vfx::{DropShadowTemplate, NametagTemplate},
 };
@@ -76,6 +77,10 @@ impl PlayerTemplate {
             name: PLAYER_NAME.to_string(),
         }
         .spawn(commands, handle);
+        let health_bar = HealthBarTemplate {
+            offset: vec2(0.0, -6.0),
+        }
+        .spawn(commands);
 
         // Parent
         let mut player = commands.spawn((
@@ -85,7 +90,7 @@ impl PlayerTemplate {
             },
             MobBundle {
                 mob: Mob::player(),
-                health: Health(HEALTH),
+                health: Health::full(HEALTH),
                 ..default()
             }
             .with_faction(FACTION),
@@ -97,6 +102,7 @@ impl PlayerTemplate {
         player.add_child(body);
         player.add_child(drop_shadow);
         player.add_child(nametag);
+        player.add_child(health_bar);
         let player = player.id();
 
         // Axe hitbox

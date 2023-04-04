@@ -7,6 +7,7 @@ use crate::{
     asset::{Handles, LevelKey},
     camera::{CameraPlugin, GameCameraTemplate},
     combat::{DeathEffects, DeathEvent, HitEffects, HitEvent},
+    hud::HealthBar,
     map::MapPlugin,
     mob::{
         enemy::EnemyTemplate,
@@ -99,6 +100,7 @@ impl Plugin for GamePlugin {
         // Animation systems
         app.add_systems(
             (
+                HealthBar::update,
                 ZRampByY::apply,
                 VirtualParent::copy_transform.after(ZRampByY::apply),
                 Offset::apply.after(VirtualParent::copy_transform),

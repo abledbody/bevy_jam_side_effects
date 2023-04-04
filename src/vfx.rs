@@ -28,9 +28,9 @@ impl DropShadowTemplate {
                 ..default()
             },
             Offset {
-				pos: self.offset,
-				..default()
-			},
+                pos: self.offset,
+                ..default()
+            },
         ));
         #[cfg(feature = "debug_mode")]
         drop_shadow.insert(Name::new("DropShadow"));
@@ -87,9 +87,9 @@ impl NametagTemplate {
                 ..default()
             },
             Offset {
-				pos: self.offset,
-				..default()
-			},
+                pos: self.offset,
+                ..default()
+            },
         ));
         #[cfg(feature = "debug_mode")]
         nametag.insert(Name::new("Nametag"));

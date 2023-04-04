@@ -57,7 +57,7 @@ pub struct HitboxTemplate {
 
 impl HitboxTemplate {
     pub fn spawn(self, commands: &mut Commands, handle: &Handles) -> Entity {
-        let mut entity = commands.spawn((
+        let mut hitbox = commands.spawn((
             Offset {
                 pos: self.offset,
                 ..default()
@@ -76,9 +76,9 @@ impl HitboxTemplate {
             VirtualParent(self.parent),
         ));
         #[cfg(feature = "debug_mode")]
-        entity.insert(Name::new("Hitbox"));
+        hitbox.insert(Name::new("Hitbox"));
 
-        entity.id()
+        hitbox.id()
     }
 }
 
@@ -145,10 +145,10 @@ impl HitEffects {
 
             // Damage
             if let Ok(mut health) = health_query.get_mut(target) {
-                if 0.0 < health.0 && health.0 <= effect.damage {
+                if 0.0 < health.current && health.current <= effect.damage {
                     death_events.send(DeathEvent(target));
                 }
-                health.0 -= effect.damage;
+                health.current -= effect.damage;
             }
 
             // Knockback
