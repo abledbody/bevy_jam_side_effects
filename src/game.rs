@@ -20,7 +20,7 @@ use crate::{
 
 // TODO: Come up with a title.
 const TITLE: &str = "My Title";
-const CLEAR_COLOR: Color = Color::DARK_GRAY;
+const CLEAR_COLOR: Color = Color::rgba(0.18, 0.15, 0.23, 1.0);
 pub const TIME_STEP: f32 = 1.0 / 60.0;
 const TIME_STEP_DURATION: Duration = Duration::from_nanos((TIME_STEP * 1_000_000_000.0) as u64);
 
