@@ -4,6 +4,7 @@ use rand::{seq::SliceRandom, thread_rng, Rng};
 use crate::{
     asset::{Handles, ImageKey},
     combat::{DeathEffects, Faction},
+    hud::HealthBarTemplate,
     mob::{BodyTemplate, Health, MobBundle},
     vfx::{DropShadowTemplate, NametagTemplate},
 };
@@ -113,6 +114,10 @@ impl EnemyTemplate {
             name: self.name,
         }
         .spawn(commands, handle);
+        let health_bar = HealthBarTemplate {
+            offset: vec2(0.0, -6.0),
+        }
+        .spawn(commands);
 
         // Parent entity
         let mut enemy = commands.spawn((
@@ -121,7 +126,7 @@ impl EnemyTemplate {
                 ..default()
             },
             MobBundle {
-                health: Health(self.health),
+                health: Health::full(self.health),
                 ..default()
             }
             .with_faction(FACTION),
@@ -136,6 +141,7 @@ impl EnemyTemplate {
         enemy.add_child(body);
         enemy.add_child(drop_shadow);
         enemy.add_child(nametag);
+        enemy.add_child(health_bar);
 
         enemy.id()
     }

@@ -13,7 +13,16 @@ pub mod enemy;
 pub mod player;
 
 #[derive(Debug, Component, Reflect)]
-pub struct Health(pub f32);
+pub struct Health {
+    pub max: f32,
+    pub current: f32,
+}
+
+impl Health {
+    pub fn full(max: f32) -> Self {
+        Self { max, current: max }
+    }
+}
 
 #[derive(Debug, Component, Reflect)]
 pub struct Mob {
@@ -41,16 +50,20 @@ impl Mob {
         }
     }
 
-    pub fn apply_input(mut mob_query: Query<(&Mob, &mut Velocity, Option<&MobInputs>)>, time: Res<Time>) {
+    pub fn apply_input(
+        mut mob_query: Query<(&Mob, &mut Velocity, Option<&MobInputs>)>,
+        time: Res<Time>,
+    ) {
         let dt = time.delta_seconds();
         for (mob, mut velocity, mob_inputs) in &mut mob_query {
-			let (input_direction, input_magnitude) = if let Some(mob_inputs) = mob_inputs {
-				(mob_inputs.movement.normalize_or_zero(),
-				mob_inputs.movement.length().min(1.0))
-			}
-			else {
-				(Vec2::ZERO, 0.0)
-			};
+            let (input_direction, input_magnitude) = if let Some(mob_inputs) = mob_inputs {
+                (
+                    mob_inputs.movement.normalize_or_zero(),
+                    mob_inputs.movement.length().min(1.0),
+                )
+            } else {
+                (Vec2::ZERO, 0.0)
+            };
 
             let mut acceleration = mob.acceleration;
             if input_direction.dot(velocity.linvel) < 0.0 {
@@ -103,7 +116,7 @@ impl Default for MobBundle {
             mob: Mob::default(),
             mob_inputs: MobInputs::default(),
             facing: Facing::default(),
-            health: Health(100.0),
+            health: Health::full(100.0),
             z_ramp_by_y: ZRampByY,
             velocity: Velocity::default(),
             rigid_body: RigidBody::default(),
@@ -134,6 +147,7 @@ impl MobBundle {
 #[derive(Debug, Component, Reflect, Default)]
 pub struct MobInputs {
     pub movement: Vec2,
+    pub attack: bool,
 }
 
 pub struct BodyTemplate {
@@ -149,9 +163,9 @@ impl BodyTemplate {
                 ..default()
             },
             Offset {
-				pos: self.offset,
-				..default()
-			},
+                pos: self.offset,
+                ..default()
+            },
             WalkAnimation {
                 air_time: 0.18,
                 height: 3.0,
