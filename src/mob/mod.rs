@@ -147,7 +147,6 @@ impl BodyTemplate {
             WalkAnimation {
                 air_time: 0.18,
                 height: 3.0,
-                base_height: self.offset.y,
                 sound: Some(handle.audio[&AudioKey::GnollWalk].clone()),
                 ..default()
             },

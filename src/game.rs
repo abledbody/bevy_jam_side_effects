@@ -72,7 +72,6 @@ impl Plugin for GamePlugin {
             (
                 PlayerControl::record_inputs,
                 Mob::apply_input.after(PlayerControl::record_inputs),
-                Offset::apply_to_non_sprites,
             )
                 .in_set(UpdateSet::Input),
         );
@@ -96,9 +95,8 @@ impl Plugin for GamePlugin {
             ZRampByY::apply,
             Mob::set_facing,
             Facing::update_sprites.after(Mob::set_facing),
-            Offset::apply_to_sprites.after(Mob::set_facing),
-            WalkAnimation::update,
-            DeathAnimation::update,
+            WalkAnimation::update.after(Mob::set_facing),
+            DeathAnimation::update.after(Mob::set_facing),
             animation::sum_animations.after(WalkAnimation::update),
         ));
 

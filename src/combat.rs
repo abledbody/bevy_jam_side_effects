@@ -193,7 +193,7 @@ impl DeathEffects {
             // Turn into a dead body
             commands
                 .entity(entity)
-                .insert((DeadBody, DeathAnimation::default(), Lifetime(10.0)))
+                .insert((DeadBody, DeathAnimation::template(), Lifetime(10.0)))
                 .remove::<Mob>();
 
             let Ok(death_effects) = death_effects_query.get(entity) else {

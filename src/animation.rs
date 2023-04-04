@@ -1,4 +1,4 @@
-use std::f32::consts::PI;
+use std::f32::consts::{PI, TAU};
 
 use bevy::prelude::*;
 
@@ -56,7 +56,7 @@ impl Facing {
 
 #[derive(Component, Reflect)]
 pub struct Offset(pub Vec2);
-
+/*
 impl Offset {
     pub fn apply_to_sprites(
         mut parent_query: Query<
@@ -116,6 +116,7 @@ impl Offset {
         }
     }
 }
+*/
 
 #[derive(Component, Reflect)]
 pub struct Lifetime(pub f32);
@@ -136,42 +137,10 @@ impl Lifetime {
     }
 }
 
-#[derive(Component, Reflect)]
-pub struct DeathAnimation {
-    pub fall_time: f32,
-    pub t: f32,
-}
-
-impl Default for DeathAnimation {
-    fn default() -> Self {
-        Self {
-            fall_time: 0.2,
-            t: Default::default(),
-        }
-    }
-}
-
-impl DeathAnimation {
-    pub fn update(
-        mut commands: Commands,
-        mut body_query: Query<(Entity, &mut Transform, &mut DeathAnimation), With<DeadBody>>,
-        time: Res<Time>,
-    ) {
-        for (entity, mut transform, mut animation) in &mut body_query {
-            transform.rotate_z(time.delta_seconds() * (0.5 * PI / animation.fall_time));
-            animation.t += time.delta_seconds();
-            if animation.t >= animation.fall_time {
-                commands.entity(entity).remove::<DeathAnimation>();
-            }
-        }
-    }
-}
-
 #[derive(Component, Reflect, Default)]
 pub struct WalkAnimation {
     pub air_time: f32,
     pub height: f32,
-    pub base_height: f32,
     pub t: f32,
     pub sound: Option<Handle<AudioSource>>,
 }
@@ -231,10 +200,71 @@ impl WalkAnimation {
     }
 }
 
-pub fn sum_animations(mut sprite_query: Query<(&mut Offset, &WalkAnimation)>) {
-    for (mut offset, walk_animation) in &mut sprite_query {
-        // PI is used here because we only want half a rotation.
-        offset.0.y =
-            walk_animation.base_height + walk_animation.height * (walk_animation.t * PI).sin();
+#[derive(Component, Reflect)]
+pub struct DeathAnimation {
+    pub air_time: f32,
+    pub height: f32,
+    pub rotate_time: f32,
+    pub air_t: f32,
+    pub rot_t: f32,
+}
+
+impl DeathAnimation {
+    pub fn update(mut animator_query: Query<&mut DeathAnimation>, time: Res<Time>) {
+        for mut death_animation in &mut animator_query {
+            death_animation.air_t =
+                (death_animation.air_t + time.delta_seconds() / death_animation.air_time).min(1.0);
+            death_animation.rot_t = (death_animation.rot_t
+                + time.delta_seconds() / death_animation.rotate_time)
+                .min(1.0);
+        }
+    }
+
+	pub fn template() -> DeathAnimation {
+		DeathAnimation {
+			air_time: 0.7,
+			height: 6.0,
+			rotate_time: 0.5,
+			air_t: 0.0,
+			rot_t: 0.0,
+		}
+	}
+}
+
+pub fn sum_animations(
+    mut offset_query: Query<(
+        &Offset,
+        &mut Transform,
+		Option<&Parent>,
+		Option<&VirtualParent>,
+        Option<&Facing>,
+        Option<&WalkAnimation>,
+        Option<&DeathAnimation>,
+    )>,
+	mut facing_query: Query<&Facing>
+) {
+    for (offset, mut transform, parent, virtual_parent, facing, walk_animation, death_animation) in &mut offset_query {
+        // If we have a facing, use it.
+		// Otherwise use the parent's.
+		// Otherwise use the virtual parent's.
+        let facing_sign = facing
+			.or_else(|| parent.and_then(|p| facing_query.get(p.get()).ok()))
+            .or_else(|| virtual_parent.and_then(|p| facing_query.get(p.0).ok()))
+            .map_or(1.0, |f| f.sign());
+		
+        let mut out_offset = offset.0.clone();
+        let mut rot = 0.0;
+
+        if let Some(walk_animation) = walk_animation {
+            // PI is used here because we only want half a rotation.
+            out_offset.y += walk_animation.height * (walk_animation.t * PI).sin();
+        }
+        if let Some(death_animation) = death_animation {
+            out_offset.y += death_animation.height * (death_animation.air_t * PI).sin();
+            rot += death_animation.rot_t * TAU / 4.0 * facing_sign;
+        }
+
+        transform.translation.x = out_offset.x * facing_sign;
+        transform.translation.y = out_offset.y;
     }
 }
