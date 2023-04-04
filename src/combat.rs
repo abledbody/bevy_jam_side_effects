@@ -1,3 +1,5 @@
+use std::f32::consts::PI;
+
 use bevy::prelude::*;
 use bevy_rapier2d::prelude::*;
 
@@ -171,8 +173,10 @@ impl HitEffects {
     ) {
         for (mob, transform, inputs) in &mob_query {
             if let Some(dir) = inputs.attack {
+                // Make the hitbox offset slightly ovular
+                let ovular_dir = Quat::from_axis_angle(Vec3::X, 0.5 * PI * 0.3) * dir.extend(0.0);
                 HitboxTemplate {
-                    position: transform.translation + Vec3::from((15.0 * dir, 0.0)),
+                    position: transform.translation + 15.0 * ovular_dir,
                     direction: dir,
                     radius: 7.0,
                     damage: 8.0,
