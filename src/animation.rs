@@ -42,7 +42,7 @@ impl VirtualParent {
     }
 }
 
-#[derive(Component, Reflect)]
+#[derive(Component, Reflect, Default)]
 pub struct Offset {
 	pub pos: Vec2,
 	pub rot: f32,
@@ -67,15 +67,6 @@ impl Offset {
             }
         }
     }
-}
-
-impl Default for Offset {
-	fn default() -> Self {
-		Self {
-			pos: Vec2::ZERO,
-			rot: 0.0,
-		}
-	}
 }
 
 #[derive(Component, Reflect, Default)]
