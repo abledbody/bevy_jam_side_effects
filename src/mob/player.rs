@@ -2,6 +2,11 @@ use bevy::{
     math::{vec2, Vec3Swizzles},
     prelude::*,
 };
+use leafwing_input_manager::{
+    prelude::{ActionState, DualAxis, InputMap, VirtualDPad},
+    Actionlike,
+    InputManagerBundle,
+};
 
 use super::{Health, Mob, MobBundle, MobInputs};
 use crate::{
@@ -18,40 +23,43 @@ const PLAYER_NAME: &str = "Sai";
 #[derive(Component, Reflect, Default)]
 pub struct Gold(pub f32);
 
+#[derive(Debug, Copy, Clone, PartialEq, Actionlike)]
+pub enum PlayerAction {
+    Move,
+    Attack,
+}
+
 #[derive(Component, Reflect, Default, Debug)]
 pub struct PlayerControl;
 
 impl PlayerControl {
     pub fn record_inputs(
-        mut player_query: Query<(&mut MobInputs, &GlobalTransform), With<PlayerControl>>,
-        key_input_resource: Res<Input<KeyCode>>,
+        mut player_query: Query<
+            (&ActionState<PlayerAction>, &mut MobInputs, &GlobalTransform),
+            With<PlayerControl>,
+        >,
         mouse_input_resource: Res<Input<MouseButton>>,
         windows: Query<&Window>,
         camera: Query<(&Camera, &GlobalTransform), With<CameraFollow<PlayerControl>>>,
     ) {
-        for (mut mob_inputs, mob_gt) in &mut player_query {
-            let mut movement = Vec2::ZERO;
+        for (action_state, mut mob_inputs, mob_gt) in &mut player_query {
+            mob_inputs.movement = Vec2::ZERO;
+            if action_state.pressed(PlayerAction::Move) {
+                if let Some(axis_pair) = action_state.clamped_axis_pair(PlayerAction::Move) {
+                    mob_inputs.movement = axis_pair.xy();
+                }
+            }
 
-            // It'd be nice to make bindings for this, but hey, it's a gamejam.
-            // we could look at leafwing_input_manager
-            if key_input_resource.pressed(KeyCode::A) {
-                movement.x -= 1.0;
+            mob_inputs.attack = None;
+            if action_state.pressed(PlayerAction::Attack) {
+                if let Some(axis_pair) = action_state.clamped_axis_pair(PlayerAction::Attack) {
+                    mob_inputs.attack = Some(axis_pair.xy());
+                }
             }
-            if key_input_resource.pressed(KeyCode::D) {
-                movement.x += 1.0;
-            }
-            if key_input_resource.pressed(KeyCode::W) {
-                movement.y += 1.0;
-            }
-            if key_input_resource.pressed(KeyCode::S) {
-                movement.y -= 1.0;
-            }
-            mob_inputs.movement = movement;
 
             let window = windows.single();
             let (camera, cam_gt) = camera.single();
 
-            mob_inputs.attack = None;
             if mouse_input_resource.just_pressed(MouseButton::Left) {
                 if let Some(position) = window.cursor_position() {
                     if let Some(pos) = camera.viewport_to_world_2d(cam_gt, position) {
@@ -114,6 +122,14 @@ impl PlayerTemplate {
             }
             .with_faction(FACTION),
             PlayerControl,
+            InputManagerBundle::<PlayerAction> {
+                input_map: InputMap::default()
+                    .insert(VirtualDPad::wasd(), PlayerAction::Move)
+                    .insert(DualAxis::left_stick(), PlayerAction::Move)
+                    .insert(DualAxis::right_stick(), PlayerAction::Attack)
+                    .build(),
+                ..default()
+            },
         ));
         #[cfg(feature = "debug_mode")]
         player.insert(Name::new("Player"));

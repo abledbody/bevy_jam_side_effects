@@ -1,9 +1,18 @@
 use bevy::{math::Vec3Swizzles, prelude::*};
 use bevy_ecs_ldtk::prelude::*;
 use bevy_rapier2d::prelude::*;
+use leafwing_input_manager::prelude::InputManagerPlugin;
 
 use crate::{
-    animation::{DeathAnimation, Facing, Lifetime, Offset, VirtualParent, WalkAnimation, AttackAnimation},
+    animation::{
+        AttackAnimation,
+        DeathAnimation,
+        Facing,
+        Lifetime,
+        Offset,
+        VirtualParent,
+        WalkAnimation,
+    },
     asset::{Handles, LevelKey},
     camera::{CameraPlugin, GameCameraTemplate},
     combat::{DeathEffects, DeathEvent, HitEffects, HitEvent},
@@ -11,8 +20,9 @@ use crate::{
     map::MapPlugin,
     mob::{
         enemy::{Alarm, EnemyTemplate},
-        player::{PlayerControl, PlayerTemplate},
-        Mob, MobInputs,
+        player::{PlayerAction, PlayerControl, PlayerTemplate},
+        Mob,
+        MobInputs,
     },
     util::{DespawnSet, ZRampByY},
 };
@@ -57,6 +67,7 @@ impl Plugin for GamePlugin {
                 .set(ImagePlugin::default_nearest()),
         )
         .add_plugin(RapierPhysicsPlugin::<NoUserData>::default())
+        .add_plugin(InputManagerPlugin::<PlayerAction>::default())
         .add_plugin(MapPlugin)
         .add_plugin(CameraPlugin);
         #[cfg(feature = "debug_mode")]
@@ -97,7 +108,7 @@ impl Plugin for GamePlugin {
                 DeathEffects::apply.after(HitEffects::apply),
                 HitEffects::cleanup.after(DeathEffects::apply),
                 HitEffects::spawn_from_inputs.after(HitEffects::cleanup),
-				MobInputs::animate_attack,
+                MobInputs::animate_attack,
                 Lifetime::apply,
             )
                 .in_set(UpdateSet::Combat),
@@ -122,11 +133,11 @@ impl Plugin for GamePlugin {
                     .after(Offset::apply)
                     .before(Facing::apply)
                     .after(DeathAnimation::update),
-				AttackAnimation::update,
-				AttackAnimation::apply
-					.after(Offset::apply)
-					.before(Facing::apply)
-					.after(AttackAnimation::update),
+                AttackAnimation::update,
+                AttackAnimation::apply
+                    .after(Offset::apply)
+                    .before(Facing::apply)
+                    .after(AttackAnimation::update),
                 Facing::apply,
             )
                 .in_set(UpdateSet::Animate),
