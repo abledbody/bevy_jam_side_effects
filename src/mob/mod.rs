@@ -150,7 +150,7 @@ impl MobBundle {
 #[derive(Debug, Component, Reflect, Default)]
 pub struct MobInputs {
     pub movement: Vec2,
-    pub attack: bool,
+    pub attack: Option<Vec2>,
 }
 
 pub struct BodyTemplate {

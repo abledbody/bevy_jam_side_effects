@@ -1,7 +1,4 @@
-use bevy::{
-    math::{vec2, Vec3Swizzles},
-    prelude::*,
-};
+use bevy::{math::Vec3Swizzles, prelude::*};
 use bevy_rapier2d::prelude::*;
 
 use crate::{
@@ -179,13 +176,14 @@ impl HitEffects {
 
     pub fn spawn_from_inputs(
         mut commands: Commands,
-        mob_query: Query<(Entity, &Mob, &MobInputs)>,
+        mob_query: Query<(Entity, &Mob, &MobInputs, &GlobalTransform)>,
         handle: Res<Handles>,
     ) {
-        for (entity, mob, inputs) in &mob_query {
-            if inputs.attack {
+        for (entity, mob, inputs, gt) in &mob_query {
+            if let Some(pos) = inputs.attack {
+                let dir = pos - gt.translation().xy();
                 HitboxTemplate {
-                    offset: vec2(10.0, 4.0),
+                    offset: 10.0 * dir,
                     radius: 7.0,
                     damage: 8.0,
                     knockback: 5.0,

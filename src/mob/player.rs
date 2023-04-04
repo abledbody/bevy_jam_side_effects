@@ -3,7 +3,8 @@ use bevy::{math::vec2, prelude::*};
 use super::{Health, Mob, MobBundle, MobInputs};
 use crate::{
     asset::{Handles, ImageKey},
-    combat::{Faction, HitboxTemplate},
+    camera::CameraFollow,
+    combat::Faction,
     hud::HealthBarTemplate,
     mob::BodyTemplate,
     vfx::{DropShadowTemplate, NametagTemplate},
@@ -20,27 +21,39 @@ pub struct PlayerControl;
 impl PlayerControl {
     pub fn record_inputs(
         mut player_query: Query<&mut MobInputs, With<PlayerControl>>,
-        input_resource: Res<Input<KeyCode>>,
+        key_input_resource: Res<Input<KeyCode>>,
+        mouse_input_resource: Res<Input<MouseButton>>,
+        windows: Query<&Window>,
+        camera: Query<(&Camera, &GlobalTransform), With<CameraFollow<PlayerControl>>>,
     ) {
         for mut mob_inputs in &mut player_query {
             let mut movement = Vec2::ZERO;
 
             // It'd be nice to make bindings for this, but hey, it's a gamejam.
             // we could look at leafwing_input_manager
-            if input_resource.pressed(KeyCode::A) {
+            if key_input_resource.pressed(KeyCode::A) {
                 movement.x -= 1.0;
             }
-            if input_resource.pressed(KeyCode::D) {
+            if key_input_resource.pressed(KeyCode::D) {
                 movement.x += 1.0;
             }
-            if input_resource.pressed(KeyCode::W) {
+            if key_input_resource.pressed(KeyCode::W) {
                 movement.y += 1.0;
             }
-            if input_resource.pressed(KeyCode::S) {
+            if key_input_resource.pressed(KeyCode::S) {
                 movement.y -= 1.0;
             }
             mob_inputs.movement = movement;
-            mob_inputs.attack = input_resource.just_pressed(KeyCode::Space);
+
+            let window = windows.single();
+            let (camera, cam_gt) = camera.single();
+
+            mob_inputs.attack = None;
+            if mouse_input_resource.just_pressed(MouseButton::Left) {
+                if let Some(position) = window.cursor_position() {
+                    mob_inputs.attack = camera.viewport_to_world_2d(cam_gt, position);
+                }
+            }
         }
     }
 }
