@@ -125,6 +125,7 @@ impl PlayerTemplate {
             InputManagerBundle::<PlayerAction> {
                 input_map: InputMap::default()
                     .insert(VirtualDPad::wasd(), PlayerAction::Move)
+                    .insert(VirtualDPad::arrow_keys(), PlayerAction::Attack)
                     .insert(DualAxis::left_stick(), PlayerAction::Move)
                     .insert(DualAxis::right_stick(), PlayerAction::Attack)
                     .build(),
