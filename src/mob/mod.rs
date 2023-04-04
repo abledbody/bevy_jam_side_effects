@@ -14,13 +14,13 @@ pub mod player;
 
 #[derive(Debug, Component, Reflect)]
 pub struct Health {
-    pub max: f32,
     pub current: f32,
+    pub max: f32,
 }
 
 impl Health {
     pub fn full(max: f32) -> Self {
-        Self { max, current: max }
+        Self { current: max, max }
     }
 }
 

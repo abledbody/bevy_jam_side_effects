@@ -8,9 +8,9 @@ use crate::{
     asset::{Handles, ImageKey},
     camera::CameraFollow,
     combat::Faction,
-    hud::HealthBarTemplate,
+    hud::{HealthBarTemplate, NametagTemplate},
     mob::BodyTemplate,
-    vfx::{DropShadowTemplate, NametagTemplate},
+    vfx::DropShadowTemplate,
 };
 
 const PLAYER_NAME: &str = "Sai";

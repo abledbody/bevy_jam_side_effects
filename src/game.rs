@@ -7,10 +7,10 @@ use crate::{
     asset::{Handles, LevelKey},
     camera::{CameraPlugin, GameCameraTemplate},
     combat::{DeathEffects, DeathEvent, HitEffects, HitEvent},
-    hud::HealthBar,
+    hud::{AlarmMeter, AlarmMeterTemplate, HealthBar},
     map::MapPlugin,
     mob::{
-        enemy::EnemyTemplate,
+        enemy::{Alarm, EnemyTemplate},
         player::{PlayerControl, PlayerTemplate},
         Mob, MobInputs,
     },
@@ -38,7 +38,8 @@ impl Plugin for GamePlugin {
             ..default()
         })
         .init_resource::<Handles>()
-        .init_resource::<DespawnSet>();
+        .init_resource::<DespawnSet>()
+        .insert_resource(Alarm::empty(100.0));
 
         // Events
         app.add_event::<HitEvent>().add_event::<DeathEvent>();
@@ -107,6 +108,7 @@ impl Plugin for GamePlugin {
         app.add_systems(
             (
                 HealthBar::update,
+                AlarmMeter::update,
                 ZRampByY::apply,
                 VirtualParent::copy_transform.after(ZRampByY::apply),
                 Offset::apply.after(VirtualParent::copy_transform),
@@ -144,6 +146,9 @@ fn spawn_scene(mut commands: Commands, handle: Res<Handles>) {
         ldtk_handle: handle.levels[&LevelKey::TestLevel].clone(),
         ..default()
     });
+
+    // HUD
+    AlarmMeterTemplate.spawn(&mut commands);
 
     // Camera
     GameCameraTemplate::<PlayerControl>::default().spawn(&mut commands);
