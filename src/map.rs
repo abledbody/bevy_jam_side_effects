@@ -67,13 +67,22 @@ pub fn update_level_selection(
             };
 
             for player_transform in &player_query {
-                if player_transform.translation.x < level_bounds.max.x
-                    && player_transform.translation.x >= level_bounds.min.x
-                    && player_transform.translation.y < level_bounds.max.y
-                    && player_transform.translation.y >= level_bounds.min.y
-                    && !level_selection.is_match(&0, &ldtk_level.level)
-                {
-                    *level_selection = LevelSelection::Iid(ldtk_level.level.iid.clone());
+                if !match &*level_selection {
+                    // Ignore the first level, which is specified by index 0. From here on out they
+                    // will be specified using the Iid.
+                    LevelSelection::Index(_) => false,
+                    LevelSelection::Identifier(s) => *s == ldtk_level.level.identifier,
+                    LevelSelection::Iid(i) => *i == ldtk_level.level.iid,
+                    LevelSelection::Uid(u) => *u == ldtk_level.level.uid,
+                } {
+                    if player_transform.translation.x < level_bounds.max.x
+                        && player_transform.translation.x >= level_bounds.min.x
+                        && player_transform.translation.y < level_bounds.max.y
+                        && player_transform.translation.y >= level_bounds.min.y
+                    {
+                        println!("Updating level to {}", ldtk_level.level.identifier);
+                        *level_selection = LevelSelection::Iid(ldtk_level.level.iid.clone());
+                    }
                 }
             }
         }

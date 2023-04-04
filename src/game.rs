@@ -142,20 +142,27 @@ pub fn spawn_instances(
     mut commands: Commands,
     handle: Res<Handles>,
     entity_query: Query<(Entity, &Transform, &EntityInstance, &Parent), Added<EntityInstance>>,
-    transforms: Query<&Transform, (With<Children>, Without<EntityInstance>)>,
+    transform_query: Query<&Transform, (With<Children>, Without<EntityInstance>)>,
+    player_query: Query<&PlayerControl>,
 ) {
     for (entity, transform, instance, parent) in &entity_query {
         match instance.identifier.as_str() {
             "Player" => {
-                // Since we're going to create a new entity, and we therefore will not inherit the parent's
-                // transform automatically, we need to manually add it.
-                let parent_transform = transforms.get(parent.get()).copied().unwrap_or_default();
-                let position = (transform.translation + parent_transform.translation).xy();
-                PlayerTemplate {
-                    position,
-                    ..default()
+                // We only want one player and LDtk doesn't know that
+                if player_query.is_empty() {
+                    // Since we're going to create a new entity, and we therefore will not inherit the parent's
+                    // transform automatically, we need to manually add it.
+                    let parent_transform = transform_query
+                        .get(parent.get())
+                        .copied()
+                        .unwrap_or_default();
+                    let position = (transform.translation + parent_transform.translation).xy();
+                    PlayerTemplate {
+                        position,
+                        ..default()
+                    }
+                    .spawn(&mut commands, &handle);
                 }
-                .spawn(&mut commands, &handle);
                 // Despawn the marker entity
                 commands.entity(entity).despawn_recursive();
             },
