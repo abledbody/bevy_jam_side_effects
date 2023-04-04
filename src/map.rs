@@ -73,7 +73,6 @@ pub fn update_level_selection(
                     && player_transform.translation.y >= level_bounds.min.y
                     && !level_selection.is_match(&0, &ldtk_level.level)
                 {
-                    println!("Updating level to {}", ldtk_level.level.identifier);
                     *level_selection = LevelSelection::Iid(ldtk_level.level.iid.clone());
                 }
             }
