@@ -39,8 +39,8 @@ impl PlayerControl {
             if input_resource.pressed(KeyCode::S) {
                 movement.y -= 1.0;
             }
-
             mob_inputs.movement = movement;
+            mob_inputs.attack = input_resource.just_pressed(KeyCode::Space);
         }
     }
 }
@@ -104,18 +104,6 @@ impl PlayerTemplate {
         player.add_child(nametag);
         player.add_child(health_bar);
         let player = player.id();
-
-        // Axe hitbox
-        HitboxTemplate {
-            offset: vec2(10.0, 4.0),
-            radius: 7.0,
-            damage: 8.0,
-            knockback: 5.0,
-            faction: FACTION,
-            lifetime: f32::INFINITY,
-            parent: player,
-        }
-        .spawn(commands, handle);
 
         player
     }

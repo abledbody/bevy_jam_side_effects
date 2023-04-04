@@ -30,6 +30,7 @@ pub struct Mob {
     acceleration: f32,
     brake_deceleration: f32,
     idle_threshold: f32,
+    pub faction: Faction,
 }
 
 impl Mob {
@@ -83,6 +84,7 @@ impl Mob {
             acceleration: 900.0,
             brake_deceleration: 1800.0,
             idle_threshold: 10.0,
+            faction: Faction::Player,
         }
     }
 }
@@ -140,6 +142,7 @@ impl MobBundle {
         let hurtbox_groups = faction.hurtbox_groups();
         self.collision_groups.memberships |= hurtbox_groups.memberships;
         self.collision_groups.filters |= hurtbox_groups.filters;
+        self.mob.faction = faction;
         self
     }
 }

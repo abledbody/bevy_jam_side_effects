@@ -1,4 +1,7 @@
-use bevy::{math::Vec3Swizzles, prelude::*};
+use bevy::{
+    math::{vec2, Vec3Swizzles},
+    prelude::*,
+};
 use bevy_rapier2d::prelude::*;
 
 use crate::{
@@ -8,6 +11,7 @@ use crate::{
         player::{Gold, PlayerControl},
         DeadBody,
         Health,
+        Mob,
         MobInputs,
     },
 };
@@ -17,7 +21,7 @@ pub const HITBOX_GROUP: Group = Group::GROUP_2;
 pub const PLAYER_HURTBOX_GROUP: Group = Group::GROUP_3;
 pub const ENEMY_HURTBOX_GROUP: Group = Group::GROUP_4;
 
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, Debug, Reflect)]
 pub enum Faction {
     Player,
     Enemy,
@@ -51,7 +55,6 @@ pub struct HitboxTemplate {
     pub damage: f32,
     pub knockback: f32,
     pub faction: Faction,
-    pub lifetime: f32,
     pub parent: Entity,
 }
 
@@ -72,7 +75,6 @@ impl HitboxTemplate {
                 knockback: self.knockback,
                 sound: Some(handle.audio[&AudioKey::PlayerAttack2].clone()),
             },
-            Lifetime(self.lifetime),
             VirtualParent(self.parent),
         ));
         #[cfg(feature = "debug_mode")]
@@ -165,6 +167,32 @@ impl HitEffects {
                     - actor_transform.translation().xy())
                 .normalize_or_zero();
                 velocity.linvel = effect.knockback * scale * direction;
+            }
+        }
+    }
+
+    pub fn cleanup(mut commands: Commands, hit_effects_query: Query<Entity, With<HitEffects>>) {
+        for entity in &hit_effects_query {
+            commands.entity(entity).despawn_recursive();
+        }
+    }
+
+    pub fn spawn_from_inputs(
+        mut commands: Commands,
+        mob_query: Query<(Entity, &Mob, &MobInputs)>,
+        handle: Res<Handles>,
+    ) {
+        for (entity, mob, inputs) in &mob_query {
+            if inputs.attack {
+                HitboxTemplate {
+                    offset: vec2(10.0, 4.0),
+                    radius: 7.0,
+                    damage: 8.0,
+                    knockback: 5.0,
+                    faction: mob.faction,
+                    parent: entity,
+                }
+                .spawn(&mut commands, &handle);
             }
         }
     }
