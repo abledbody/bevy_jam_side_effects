@@ -5,8 +5,10 @@ use crate::{
     asset::{Handles, ImageKey},
     combat::{Faction, HitboxTemplate},
     mob::BodyTemplate,
-    vfx::DropShadowTemplate,
+    vfx::{DropShadowTemplate, NametagTemplate},
 };
+
+const PLAYER_NAME: &str = "Sai";
 
 #[derive(Component, Reflect, Default)]
 pub struct Gold(pub f32);
@@ -69,6 +71,11 @@ impl PlayerTemplate {
         }
         .spawn(commands, handle);
         let drop_shadow = DropShadowTemplate::default().spawn(commands, handle);
+        let nametag = NametagTemplate {
+            offset: vec2(0.0, 26.0),
+            name: PLAYER_NAME.to_string(),
+        }
+        .spawn(commands, handle);
 
         // Parent
         let mut player = commands.spawn((
@@ -89,6 +96,7 @@ impl PlayerTemplate {
 
         player.add_child(body);
         player.add_child(drop_shadow);
+        player.add_child(nametag);
         let player = player.id();
 
         // Axe hitbox

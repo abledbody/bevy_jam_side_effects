@@ -4,6 +4,8 @@ use bevy::prelude::*;
 
 use crate::mob::player::PlayerControl;
 
+pub const CAMERA_SCALE: f32 = 1.0 / 4.0;
+
 pub struct CameraPlugin;
 
 impl Plugin for CameraPlugin {
@@ -31,7 +33,7 @@ impl<C: Component> GameCameraTemplate<C> {
     pub fn spawn(self, commands: &mut Commands) -> Entity {
         let projection = OrthographicProjection {
             // TODO: Scale to screen resolution
-            scale: 1.0 / 4.0,
+            scale: CAMERA_SCALE,
             ..default()
         };
 
@@ -42,7 +44,7 @@ impl<C: Component> GameCameraTemplate<C> {
             },
             CameraFollow::<C> {
                 target: self.target,
-				rate: 5.0,
+                rate: 5.0,
                 ..default()
             },
         ));
@@ -56,7 +58,7 @@ impl<C: Component> GameCameraTemplate<C> {
 #[derive(Component, Reflect)]
 pub struct CameraFollow<C: Component> {
     pub target: Entity,
-	pub rate: f32,
+    pub rate: f32,
     #[reflect(ignore)]
     _c: PhantomData<C>,
 }
@@ -65,7 +67,7 @@ impl<C: Component> Default for CameraFollow<C> {
     fn default() -> Self {
         Self {
             target: Entity::PLACEHOLDER,
-			rate: 0.0,
+            rate: 0.0,
             _c: PhantomData,
         }
     }
@@ -86,23 +88,31 @@ impl<C: Component> CameraFollow<C> {
     fn apply(
         mut camera_query: Query<(&CameraFollow<C>, &mut Transform)>,
         transform_query: Query<&Transform, Without<CameraFollow<C>>>,
-		time: Res<Time>,
+        time: Res<Time>,
     ) {
         for (follow, mut transform) in &mut camera_query {
             if let Ok(&target) = transform_query.get(follow.target) {
-                transform.translation.x = transform.translation.x.smooth_approach(target.translation.x, follow.rate, time.delta_seconds());
-                transform.translation.y = transform.translation.y.smooth_approach(target.translation.y, follow.rate, time.delta_seconds());
+                transform.translation.x = transform.translation.x.smooth_approach(
+                    target.translation.x,
+                    follow.rate,
+                    time.delta_seconds(),
+                );
+                transform.translation.y = transform.translation.y.smooth_approach(
+                    target.translation.y,
+                    follow.rate,
+                    time.delta_seconds(),
+                );
             }
         }
     }
 }
 
 pub trait SmoothApproach {
-	fn smooth_approach(self, target: Self, rate: f32, dt: f32) -> Self;
+    fn smooth_approach(self, target: Self, rate: f32, dt: f32) -> Self;
 }
 
 impl SmoothApproach for f32 {
-	fn smooth_approach(self, target: Self, rate: f32, dt: f32) -> Self {
-		(self - target) / ((rate * dt) + 1.0) + target
-	}
+    fn smooth_approach(self, target: Self, rate: f32, dt: f32) -> Self {
+        (self - target) / ((rate * dt) + 1.0) + target
+    }
 }
