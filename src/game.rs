@@ -15,7 +15,7 @@ use crate::{
     },
     asset::{Handles, LevelKey},
     camera::{CameraPlugin, GameCameraTemplate},
-    combat::{DeathEffects, DeathEvent, HitEffects, HitEvent},
+    combat::{DeathEffects, DeathEvent, HitBox, HitEvent},
     hud::{AlarmMeter, AlarmMeterTemplate, HealthBar},
     map::MapPlugin,
     mob::{
@@ -104,10 +104,10 @@ impl Plugin for GamePlugin {
         app.add_systems(
             (
                 HitEvent::detect,
-                HitEffects::apply.after(HitEvent::detect),
-                DeathEffects::apply.after(HitEffects::apply),
-                HitEffects::cleanup.after(DeathEffects::apply),
-                HitEffects::spawn_from_inputs.after(HitEffects::cleanup),
+                HitBox::apply.after(HitEvent::detect),
+                DeathEffects::apply.after(HitBox::apply),
+                HitBox::cleanup.after(DeathEffects::apply),
+                HitBox::spawn_from_inputs.after(HitBox::cleanup),
                 MobInputs::animate_attack,
                 Lifetime::apply,
             )
