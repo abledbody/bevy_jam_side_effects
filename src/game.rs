@@ -23,6 +23,7 @@ const TITLE: &str = "Sai Defects";
 enum UpdateSet {
     Input,
     Combat,
+    CombatFlush,
     Animate,
     SpawnDespawn,
 }
@@ -69,6 +70,7 @@ impl Plugin for GamePlugin {
             (
                 UpdateSet::Input,
                 UpdateSet::Combat,
+                UpdateSet::CombatFlush,
                 UpdateSet::Animate,
                 UpdateSet::SpawnDespawn,
             )
@@ -92,10 +94,13 @@ impl Plugin for GamePlugin {
                 HitEvent::detect,
                 HitEffects::apply.after(HitEvent::detect),
                 DeathEffects::apply.after(HitEffects::apply),
+                HitEffects::cleanup.after(DeathEffects::apply),
+                HitEffects::spawn_from_inputs.after(HitEffects::cleanup),
                 Lifetime::apply,
             )
                 .in_set(UpdateSet::Combat),
         );
+        app.add_system(apply_system_buffers.in_set(UpdateSet::CombatFlush));
 
         // Animation systems
         app.add_systems(
