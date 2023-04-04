@@ -8,20 +8,22 @@ use crate::{
     vfx::{DropShadowTemplate, NametagTemplate},
 };
 
-const CASUAL_NAMES: [&str; 45] = [
-    "Alex", "Amy", "Ashley", "Ben", "Carol", "Chris", "Danny", "Diane", "Eli", "Emma", "Finn",
-    "Fiona", "Gloria", "Greg", "Gus", "Heather", "Henry", "Ian", "Ike", "Ivy", "Jessica", "John",
-    "Joy", "Kim", "Kyle", "Liam", "Lisa", "Megan", "Mike", "Natalie", "Ned", "Nick", "Pete",
-    "Quinn", "Rebecca", "Roy", "Ryan", "Sam", "Sasha", "Steve", "Ted", "Tina", "Tom", "Wanda",
-    "Will",
+const CASUAL_NAMES: [&str; 50] = [
+    "Alex", "Amy", "Ashley", "Becca", "Benny", "Cindy", "Chris", "Danny", "Diane", "Eli", "Emma",
+    "Finn", "Fiona", "Gloria", "Greg", "Gus", "Heather", "Henry", "Ian", "Ike", "Ivy", "Jack",
+    "Jake", "Jessica", "John", "Joy", "Katie", "Kim", "Kyle", "Liam", "Lily", "Lisa", "Lucy",
+    "Megan", "Mike", "Ned", "Nick", "Pete", "Quinn", "Rick", "Roy", "Ryan", "Sam", "Sasha",
+    "Steve", "Ted", "Tina", "Tom", "Wanda", "Will",
 ];
 // Max length = 8
-const FANTASY_FIRST_NAMES: [&str; 8] = [
-    "Augustus", "Benedict", "Cornelia", "Gideon", "Leonardo", "Octavia", "Penelope", "Vivian",
+const FANTASY_FIRST_NAMES: [&str; 11] = [
+    "Augustus", "Benedict", "Claudius", "Cornelia", "Gideon", "Leonardo", "Lucius", "Octavia",
+    "Penelope", "Tatiana", "Vivian",
 ];
 // Max length = 8
-const FANTASY_LAST_NAMES_P1: [&str; 10] = [
-    "Battle", "Blood", "Bone", "Brute", "Death", "Dusk", "Gloom", "Night", "Scraggle", "War",
+const FANTASY_LAST_NAMES_P1: [&str; 18] = [
+    "Battle", "Beast", "Blood", "Bone", "Brave", "Brute", "Death", "Dusk", "Fierce", "Gloom",
+    "Grim", "Night", "Noble", "Proud", "Rough", "Scraggle", "War", "Wild",
 ];
 // Max length = 5
 const FANTASY_LAST_NAMES_P2: [&str; 8] = [
@@ -31,7 +33,7 @@ const FANTASY_LAST_NAMES_P2: [&str; 8] = [
 // TODO: Generate dark fantasy names occasionally
 fn random_name() -> String {
     let mut rng = thread_rng();
-    if rng.gen_ratio(70, 100) {
+    if rng.gen_ratio(80, 100) {
         format!(
             "{} {}{}",
             FANTASY_FIRST_NAMES.choose(&mut rng).unwrap(),
