@@ -7,9 +7,9 @@ pub const Z_SCALE: f32 = 0.001;
 pub struct ZRampByY;
 
 impl ZRampByY {
-    pub fn apply(mut transform_query: Query<&mut Transform, With<ZRampByY>>) {
-        for mut transform in &mut transform_query {
-            transform.translation.z = Z_MAX - Z_SCALE * transform.translation.y;
+    pub fn apply(mut transform_query: Query<(&mut Transform, &GlobalTransform), With<ZRampByY>>) {
+        for (mut transform, gt) in &mut transform_query {
+            transform.translation.z = Z_MAX - Z_SCALE * gt.translation().y;
         }
     }
 }
