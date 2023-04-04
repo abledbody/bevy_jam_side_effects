@@ -142,6 +142,7 @@ pub fn spawn_instances(
                     position,
                     ..default()
                 }
+                .with_random_name()
                 .spawn(&mut commands, &handle);
             },
             _ => (),

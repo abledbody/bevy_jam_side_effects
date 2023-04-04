@@ -1,4 +1,5 @@
 use bevy::{math::vec2, prelude::*};
+use rand::{seq::SliceRandom, thread_rng};
 
 use crate::{
     asset::{Handles, ImageKey},
@@ -6,6 +7,20 @@ use crate::{
     mob::{BodyTemplate, Health, MobBundle},
     vfx::{DropShadowTemplate, NametagTemplate},
 };
+
+const NORMAL_NAMES: [&str; 51] = [
+    "Anthony", "Ashley", "Ben", "Brenda", "Charlie", "Carol", "Daniel", "Diane", "Eugene", "Emily",
+    "Frank", "Flora", "George", "Gloria", "Henry", "Heather", "Isaac", "Isabelle", "James",
+    "Jessica", "Kyle", "Kimberly", "Liam", "Lisa", "Michael", "Megan", "Nicholas", "Natalie",
+    "Oliver", "Olivia", "Patrick", "Penelope", "Quincy", "Ryan", "Rebecca", "Steven", "Samantha",
+    "Timothy", "Tina", "Ulysses", "Ursula", "Vincent", "Vivian", "Walter", "Willow", "Xander",
+    "Xena", "Yahir", "Yael", "Zachary", "Zoe",
+];
+
+// TODO: Generate dark fantasy names occasionally
+fn random_name() -> String {
+    NORMAL_NAMES.choose(&mut thread_rng()).unwrap().to_string()
+}
 
 #[derive(Default, Component, Reflect)]
 pub struct EnemyAi;
@@ -31,6 +46,11 @@ impl Default for EnemyTemplate {
 }
 
 impl EnemyTemplate {
+    pub fn with_random_name(mut self) -> Self {
+        self.name = random_name();
+        self
+    }
+
     pub fn spawn(self, commands: &mut Commands, handle: &Handles) -> Entity {
         const FACTION: Faction = Faction::Enemy;
 
