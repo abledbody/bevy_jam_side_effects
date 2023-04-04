@@ -1,5 +1,5 @@
 use bevy::{math::vec2, prelude::*};
-use rand::{seq::SliceRandom, thread_rng};
+use rand::{seq::SliceRandom, thread_rng, Rng};
 
 use crate::{
     asset::{Handles, ImageKey},
@@ -8,18 +8,39 @@ use crate::{
     vfx::{DropShadowTemplate, NametagTemplate},
 };
 
-const NORMAL_NAMES: [&str; 51] = [
-    "Anthony", "Ashley", "Ben", "Brenda", "Charlie", "Carol", "Daniel", "Diane", "Eugene", "Emily",
-    "Frank", "Flora", "George", "Gloria", "Henry", "Heather", "Isaac", "Isabelle", "James",
-    "Jessica", "Kyle", "Kimberly", "Liam", "Lisa", "Michael", "Megan", "Nicholas", "Natalie",
-    "Oliver", "Olivia", "Patrick", "Penelope", "Quincy", "Ryan", "Rebecca", "Steven", "Samantha",
-    "Timothy", "Tina", "Ulysses", "Ursula", "Vincent", "Vivian", "Walter", "Willow", "Xander",
-    "Xena", "Yahir", "Yael", "Zachary", "Zoe",
+const CASUAL_NAMES: [&str; 45] = [
+    "Alex", "Amy", "Ashley", "Ben", "Carol", "Chris", "Danny", "Diane", "Eli", "Emma", "Finn",
+    "Fiona", "Gloria", "Greg", "Gus", "Heather", "Henry", "Ian", "Ike", "Ivy", "Jessica", "John",
+    "Joy", "Kim", "Kyle", "Liam", "Lisa", "Megan", "Mike", "Natalie", "Ned", "Nick", "Pete",
+    "Quinn", "Rebecca", "Roy", "Ryan", "Sam", "Sasha", "Steve", "Ted", "Tina", "Tom", "Wanda",
+    "Will",
+];
+// Max length = 8
+const FANTASY_FIRST_NAMES: [&str; 8] = [
+    "Augustus", "Benedict", "Cornelia", "Gideon", "Leonardo", "Octavia", "Penelope", "Vivian",
+];
+// Max length = 8
+const FANTASY_LAST_NAMES_P1: [&str; 10] = [
+    "Battle", "Blood", "Bone", "Brute", "Death", "Dusk", "Gloom", "Night", "Scraggle", "War",
+];
+// Max length = 5
+const FANTASY_LAST_NAMES_P2: [&str; 8] = [
+    "borne", "claw", "heart", "fang", "jaw", "maw", "snarl", "tooth",
 ];
 
 // TODO: Generate dark fantasy names occasionally
 fn random_name() -> String {
-    NORMAL_NAMES.choose(&mut thread_rng()).unwrap().to_string()
+    let mut rng = thread_rng();
+    if rng.gen_ratio(70, 100) {
+        format!(
+            "{} {}{}",
+            FANTASY_FIRST_NAMES.choose(&mut rng).unwrap(),
+            FANTASY_LAST_NAMES_P1.choose(&mut rng).unwrap(),
+            FANTASY_LAST_NAMES_P2.choose(&mut rng).unwrap()
+        )
+    } else {
+        CASUAL_NAMES.choose(&mut rng).unwrap().to_string()
+    }
 }
 
 #[derive(Default, Component, Reflect)]

@@ -65,7 +65,7 @@ impl NametagTemplate {
             .spawn(SpriteBundle {
                 sprite: Sprite {
                     color: Self::BACKDROP_COLOR,
-                    custom_size: Some(vec2(70.0, 14.0)),
+                    custom_size: Some(vec2(100.0, 14.0)),
                     ..default()
                 },
                 transform: Transform::from_xyz(0.0, 0.0, -0.1),
