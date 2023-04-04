@@ -36,14 +36,18 @@ pub struct Mob {
 impl Mob {
     pub fn set_facing(mut mob_query: Query<(&Mob, &MobInputs, &Velocity, &mut Facing)>) {
         for (mob, mob_inputs, velocity, mut facing) in &mut mob_query {
-            if mob_inputs.movement.x == 0.0 {
-                continue;
-            }
+			if mob_inputs.movement.x == 0.0 && mob_inputs.attack.is_none() {continue;}
 
             let idle = velocity.linvel.x.abs() < mob.idle_threshold;
             let input_left = mob_inputs.movement.x < 0.0;
             let move_left = velocity.linvel.x < 0.0;
-            *facing = if (idle && input_left) || (!idle && move_left) {
+			let attack_left = mob_inputs.attack.map(|dir| dir.x < 0.0).unwrap_or(false);
+
+            *facing = if
+				(idle && input_left)
+				|| (!idle && move_left)
+				|| attack_left
+			{
                 Facing::Left
             } else {
                 Facing::Right
