@@ -1,5 +1,3 @@
-use std::time::Duration;
-
 use bevy::{math::Vec3Swizzles, prelude::*};
 use bevy_ecs_ldtk::prelude::*;
 use bevy_rapier2d::prelude::*;
@@ -19,17 +17,12 @@ use crate::{
 };
 
 // TODO: Come up with a title.
-const TITLE: &str = "My Title";
+const TITLE: &str = "Gnoll Place Like Home";
 const CLEAR_COLOR: Color = Color::rgba(0.18, 0.15, 0.23, 1.0);
-pub const TIME_STEP: f32 = 1.0 / 60.0;
-const TIME_STEP_DURATION: Duration = Duration::from_nanos((TIME_STEP * 1_000_000_000.0) as u64);
-
-type Physics = RapierPhysicsPlugin<NoUserData>;
 
 #[derive(SystemSet, Clone, Debug, Eq, PartialEq, Hash)]
 enum UpdateSet {
     Input,
-    // <-- Physics
     Combat,
     SpawnDespawn,
 }
@@ -39,14 +32,9 @@ pub struct GamePlugin;
 impl Plugin for GamePlugin {
     fn build(&self, app: &mut App) {
         // Resources
-        app.insert_resource(FixedTime::new(TIME_STEP_DURATION))
-            .insert_resource(ClearColor(CLEAR_COLOR))
+        app.insert_resource(ClearColor(CLEAR_COLOR))
             .insert_resource(RapierConfiguration {
                 gravity: Vec2::ZERO,
-                timestep_mode: TimestepMode::Fixed {
-                    dt: TIME_STEP,
-                    substeps: 1,
-                },
                 ..default()
             })
             .init_resource::<Handles>()
@@ -67,7 +55,7 @@ impl Plugin for GamePlugin {
                 })
                 .set(ImagePlugin::default_nearest()),
         )
-        .add_plugin(Physics::default().with_default_system_setup(false))
+        .add_plugin(RapierPhysicsPlugin::<NoUserData>::default())
         .add_plugin(MapPlugin)
         .add_plugin(CameraPlugin);
         #[cfg(feature = "debug_mode")]
@@ -77,56 +65,32 @@ impl Plugin for GamePlugin {
         app.add_startup_system(Handles::load.in_base_set(StartupSet::PreStartup));
         app.add_startup_system(spawn_scene);
 
-        // Game logic systems (fixed timestep)
-        app.edit_schedule(CoreSchedule::FixedUpdate, |schedule| {
-            schedule.configure_sets(
-                (
-                    UpdateSet::Input,
-                    PhysicsSet::SyncBackend,
-                    PhysicsSet::SyncBackendFlush,
-                    PhysicsSet::StepSimulation,
-                    PhysicsSet::Writeback,
-                    UpdateSet::Combat,
-                    UpdateSet::SpawnDespawn,
-                )
-                    .chain(),
-            );
+        // Game logic system sets
+        app.configure_sets((UpdateSet::Input, UpdateSet::Combat, UpdateSet::SpawnDespawn).chain());
 
-            // Input
-            schedule.add_systems(
-                (
-                    PlayerControl::record_inputs,
-                    Mob::apply_input.after(PlayerControl::record_inputs),
-                    Offset::apply_to_non_sprites,
-                )
-                    .in_set(UpdateSet::Input),
-            );
+        // Input systems
+        app.add_systems(
+            (
+                PlayerControl::record_inputs,
+                Mob::apply_input.after(PlayerControl::record_inputs),
+                Offset::apply_to_non_sprites,
+            )
+                .in_set(UpdateSet::Input),
+        );
 
-            // Physics
-            for set in [
-                PhysicsSet::SyncBackend,
-                PhysicsSet::SyncBackendFlush,
-                PhysicsSet::StepSimulation,
-                PhysicsSet::Writeback,
-            ] {
-                schedule.add_systems(Physics::get_systems(set.clone()).in_base_set(set));
-            }
+        // Combat systems
+        app.add_systems(
+            (
+                HitEvent::detect,
+                HitEffects::apply.after(HitEvent::detect),
+                DeathEffects::apply.after(HitEffects::apply),
+                Lifetime::apply,
+            )
+                .in_set(UpdateSet::Combat),
+        );
 
-            // Combat
-            schedule.add_systems(
-                (
-                    HitEvent::detect,
-                    HitEffects::apply.after(HitEvent::detect),
-                    DeathEffects::apply.after(HitEffects::apply),
-                    Lifetime::apply,
-                )
-                    .in_set(UpdateSet::Combat),
-            );
-
-            // Spawn / Despawn
-            schedule
-                .add_systems((DespawnSet::apply, spawn_instances).in_set(UpdateSet::SpawnDespawn));
-        });
+        // Spawn / despawn systems
+        app.add_systems((DespawnSet::apply, spawn_instances).in_set(UpdateSet::SpawnDespawn));
 
         // Visual systems
         app.add_systems((

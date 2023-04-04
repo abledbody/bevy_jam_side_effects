@@ -3,11 +3,12 @@ use bevy_rapier2d::prelude::*;
 
 use crate::{
     animation::{Lifetime, Offset},
+    asset::{AudioKey, Handles},
     mob::{
         player::{Gold, PlayerControl},
         Health,
     },
-    util::{DespawnSet, VirtualParent}, asset::{Handles, AudioKey},
+    util::{DespawnSet, VirtualParent},
 };
 
 pub const COLLISION_GROUP: Group = Group::GROUP_1;
@@ -65,7 +66,7 @@ impl HitboxTemplate {
             HitEffects {
                 damage: self.damage,
                 knockback: self.knockback,
-				sound: Some(handle.audio[&AudioKey::PlayerAttack2].clone()),
+                sound: Some(handle.audio[&AudioKey::PlayerAttack2].clone()),
             },
             Lifetime(self.lifetime),
             VirtualParent(self.parent),
@@ -113,7 +114,7 @@ impl HitEvent {
 pub struct HitEffects {
     damage: f32,
     knockback: f32,
-	sound: Option<Handle<AudioSource>>,
+    sound: Option<Handle<AudioSource>>,
 }
 
 impl HitEffects {
@@ -124,7 +125,7 @@ impl HitEffects {
         mut health_query: Query<&mut Health>,
         mut velocity_query: Query<&mut Velocity>,
         transform_query: Query<&Transform>,
-		mut audio: ResMut<Audio>,
+        audio: Res<Audio>,
     ) {
         for &HitEvent {
             actor,
@@ -133,10 +134,10 @@ impl HitEffects {
         } in hit_events.iter()
         {
             let Ok(effect) = hit_effects_query.get(hitbox) else { return };
-			
-			if let Some(sound) = &effect.sound {
-				audio.play(sound.clone());
-			}
+
+            if let Some(sound) = &effect.sound {
+                audio.play(sound.clone());
+            }
 
             // Damage
             if let Ok(mut health) = health_query.get_mut(target) {

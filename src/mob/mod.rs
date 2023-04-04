@@ -5,7 +5,6 @@ use crate::{
     animation::{Facing, Offset, WalkAnimation},
     asset::{AudioKey, Handles, ImageKey},
     combat::{Faction, COLLISION_GROUP},
-    game::TIME_STEP,
     math::MoveTowards,
     util::ZRampByY,
 };
@@ -42,7 +41,8 @@ impl Mob {
         }
     }
 
-    pub fn apply_input(mut mob_query: Query<(&Mob, &mut Velocity, &MobInputs)>) {
+    pub fn apply_input(mut mob_query: Query<(&Mob, &mut Velocity, &MobInputs)>, time: Res<Time>) {
+        let dt = time.delta_seconds();
         for (mob, mut velocity, mob_inputs) in &mut mob_query {
             let input_direction = mob_inputs.movement.normalize_or_zero();
             let input_magnitude = mob_inputs.movement.length().min(1.0);
@@ -55,7 +55,7 @@ impl Mob {
             let target_velocity = input_direction * input_magnitude * mob.speed;
             velocity.linvel = velocity
                 .linvel
-                .move_towards(target_velocity, acceleration * TIME_STEP);
+                .move_towards(target_velocity, acceleration * dt);
         }
     }
 
