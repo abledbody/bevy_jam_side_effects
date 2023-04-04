@@ -16,8 +16,7 @@ use crate::{
     util::{DespawnSet, ZRampByY},
 };
 
-// TODO: Come up with a title.
-const TITLE: &str = "Gnoll Place Like Home";
+const TITLE: &str = "Sai Defects";
 const CLEAR_COLOR: Color = Color::rgba(0.18, 0.15, 0.23, 1.0);
 
 #[derive(SystemSet, Clone, Debug, Eq, PartialEq, Hash)]
