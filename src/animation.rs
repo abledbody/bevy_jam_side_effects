@@ -264,6 +264,7 @@ impl DeathAnimation {
 pub struct AttackAnimation {
 	pub length: f32,
 	pub distance: f32,
+	pub direction: Vec2,
 	pub t: f32,
 }
 
@@ -283,7 +284,7 @@ impl AttackAnimation {
 		mut animation_query: Query<(&AttackAnimation, &mut Transform)>,
 	) {
 		for (anim, mut transform) in &mut animation_query {
-			transform.translation.x += anim.distance * (1.0 - anim.t);
+			transform.translation += Vec3::from((anim.direction * anim.distance * (1.0 - anim.t), 0.0));
 		}
 	}
 }
@@ -293,6 +294,7 @@ impl Default for AttackAnimation {
 		Self {
 			length: 0.2,
 			distance: 7.5,
+			direction: Vec2::ZERO,
 			t: 1.0,
 		}
 	}

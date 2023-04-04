@@ -1,4 +1,4 @@
-use bevy::prelude::*;
+use bevy::{prelude::*, math::vec2};
 use bevy_rapier2d::prelude::*;
 
 use crate::{
@@ -163,10 +163,12 @@ impl MobInputs {
         mut animation_query: Query<&mut AttackAnimation>,
     ) {
         for (mob_inputs, children) in &mob_query {
-            if mob_inputs.attack.is_some() {
+            if let Some(attack_direction) = mob_inputs.attack {
+				let attack_direction = vec2(attack_direction.x.abs(), attack_direction.y);
                 for &child in children {
                     if let Ok(mut anim) = animation_query.get_mut(child) {
                         anim.t = 0.0;
+						anim.direction = attack_direction;
                     }
                 }
             }
