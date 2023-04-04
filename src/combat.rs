@@ -7,6 +7,7 @@ use crate::{
     animation::{DeathAnimation, Lifetime, WalkAnimation},
     asset::{AudioKey, Handles},
     mob::{
+        enemy::Alarm,
         player::{Gold, PlayerControl},
         DeadBody,
         Health,
@@ -194,12 +195,16 @@ pub struct DeathEvent(pub Entity);
 #[derive(Component, Reflect)]
 pub struct DeathEffects {
     pub reward_gold: f32,
+    pub increase_alarm: f32,
     // TODO: Animation, sound effect
 }
 
 impl Default for DeathEffects {
     fn default() -> Self {
-        Self { reward_gold: 10.0 }
+        Self {
+            reward_gold: 10.0,
+            increase_alarm: 5.0,
+        }
     }
 }
 
@@ -208,6 +213,7 @@ impl DeathEffects {
         mut commands: Commands,
         mut death_events: EventReader<DeathEvent>,
         death_effects_query: Query<&DeathEffects>,
+        mut alarm: ResMut<Alarm>,
         mut player_query: Query<&mut Gold, With<PlayerControl>>,
         children_query: Query<&Children>,
         animation_query: Query<(), With<WalkAnimation>>, // And you can use animation_query.contains(child)
@@ -235,6 +241,9 @@ impl DeathEffects {
             for mut player_gold in &mut player_query {
                 player_gold.0 += death_effects.reward_gold;
             }
+
+            // Increase alarm
+            alarm.increase(death_effects.increase_alarm);
         }
     }
 }

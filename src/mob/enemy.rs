@@ -4,9 +4,9 @@ use rand::{seq::SliceRandom, thread_rng, Rng};
 use crate::{
     asset::{Handles, ImageKey},
     combat::{DeathEffects, Faction},
-    hud::HealthBarTemplate,
+    hud::{HealthBarTemplate, NametagTemplate},
     mob::{BodyTemplate, Health, MobBundle},
-    vfx::{DropShadowTemplate, NametagTemplate},
+    vfx::DropShadowTemplate,
 };
 
 const CASUAL_NAMES: [&str; 51] = [
@@ -70,15 +70,13 @@ fn random_name() -> String {
     }
 }
 
-#[derive(Default, Component, Reflect)]
-pub struct EnemyAi;
-
 pub struct EnemyTemplate {
     pub position: Vec2,
     pub name: String,
     pub variant: ImageKey,
     pub health: f32,
-    pub gold: f32,
+    pub reward_gold: f32,
+    pub increase_alarm: f32,
 }
 
 impl Default for EnemyTemplate {
@@ -88,7 +86,8 @@ impl Default for EnemyTemplate {
             name: "Unnamed".to_string(),
             variant: ImageKey::RedGnoll,
             health: 20.0,
-            gold: 10.0,
+            reward_gold: 10.0,
+            increase_alarm: 5.0,
         }
     }
 }
@@ -142,7 +141,8 @@ impl EnemyTemplate {
             .with_faction(FACTION),
             EnemyAi,
             DeathEffects {
-                reward_gold: self.gold,
+                reward_gold: self.reward_gold,
+                ..default()
             },
         ));
         #[cfg(feature = "debug_mode")]
@@ -156,3 +156,22 @@ impl EnemyTemplate {
         enemy.id()
     }
 }
+
+#[derive(Resource, Reflect)]
+pub struct Alarm {
+    pub current: f32,
+    pub max: f32,
+}
+
+impl Alarm {
+    pub fn empty(max: f32) -> Self {
+        Self { current: 0.0, max }
+    }
+
+    pub fn increase(&mut self, value: f32) {
+        self.current = (self.current + value).min(self.max);
+    }
+}
+
+#[derive(Component, Reflect, Default)]
+pub struct EnemyAi;

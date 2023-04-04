@@ -6,13 +6,14 @@ use bevy::{
 use bevy_rapier2d::prelude::*;
 
 use crate::{
-    animation::{Facing, Lifetime, Offset, VirtualParent, WalkAnimation},
+    animation::{DeathAnimation, Facing, Lifetime, Offset, VirtualParent, WalkAnimation},
     asset::Handles,
     camera::CameraFollow,
     combat::{DeathEffects, HitEffects},
+    hud::{AlarmMeter, HealthBar},
     map::Wall,
     mob::{
-        enemy::EnemyAi,
+        enemy::{Alarm, EnemyAi},
         player::{Gold, PlayerControl},
         Health,
         Mob,
@@ -49,20 +50,24 @@ impl Plugin for DebugPlugin {
         app.register_type::<Handles>()
             .register_type::<Health>()
             .register_type::<Gold>()
-            .register_type::<DeathEffects>()
             .register_type::<Mob>()
             .register_type::<MobInputs>()
             .register_type::<PlayerControl>()
+            .register_type::<Alarm>()
             .register_type::<EnemyAi>()
-            .register_type::<Facing>()
+            .register_type::<HitEffects>()
+            .register_type::<DeathEffects>()
+            .register_type::<VirtualParent>()
+            .register_type::<ZRampByY>()
             .register_type::<Offset>()
             .register_type::<WalkAnimation>()
-            .register_type::<HitEffects>()
+            .register_type::<DeathAnimation>()
+            .register_type::<Facing>()
             .register_type::<Lifetime>()
             .register_type::<Wall>()
             .register_type::<CameraFollow<PlayerControl>>()
-            .register_type::<ZRampByY>()
-            .register_type::<VirtualParent>();
+            .register_type::<HealthBar>()
+            .register_type::<AlarmMeter>();
 
         // Disable Rapier debug initially
         app.world.resource_mut::<DebugRenderContext>().enabled = false;
