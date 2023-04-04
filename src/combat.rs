@@ -2,13 +2,15 @@ use bevy::{math::Vec3Swizzles, prelude::*};
 use bevy_rapier2d::prelude::*;
 
 use crate::{
-    animation::{Lifetime, Offset},
+    animation::{DeathAnimation, Lifetime, Offset},
     asset::{AudioKey, Handles},
     mob::{
         player::{Gold, PlayerControl},
+        DeadBody,
         Health,
+        Mob,
     },
-    util::{DespawnSet, VirtualParent},
+    util::VirtualParent,
 };
 
 pub const COLLISION_GROUP: Group = Group::GROUP_1;
@@ -182,14 +184,17 @@ impl Default for DeathEffects {
 
 impl DeathEffects {
     pub fn apply(
+        mut commands: Commands,
         mut death_events: EventReader<DeathEvent>,
-        mut despawn: ResMut<DespawnSet>,
         death_effects_query: Query<&DeathEffects>,
         mut player_query: Query<&mut Gold, With<PlayerControl>>,
     ) {
         for &DeathEvent(entity) in death_events.iter() {
-            // Despawn
-            despawn.0.insert(entity);
+            // Turn into a dead body
+            commands
+                .entity(entity)
+                .insert((DeadBody, DeathAnimation::default(), Lifetime(10.0)))
+                .remove::<Mob>();
 
             let Ok(death_effects) = death_effects_query.get(entity) else {
                 continue

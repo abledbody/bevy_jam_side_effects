@@ -158,3 +158,6 @@ impl BodyTemplate {
         body.id()
     }
 }
+
+#[derive(Component)]
+pub struct DeadBody;

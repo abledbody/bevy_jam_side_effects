@@ -3,7 +3,7 @@ use bevy_ecs_ldtk::prelude::*;
 use bevy_rapier2d::prelude::*;
 
 use crate::{
-    animation::{self, Facing, Lifetime, Offset, WalkAnimation},
+    animation::{self, DeathAnimation, Facing, Lifetime, Offset, WalkAnimation},
     asset::{Handles, LevelKey},
     camera::{CameraPlugin, GameCameraTemplate},
     combat::{DeathEffects, DeathEvent, HitEffects, HitEvent},
@@ -98,6 +98,7 @@ impl Plugin for GamePlugin {
             Facing::update_sprites.after(Mob::set_facing),
             Offset::apply_to_sprites.after(Mob::set_facing),
             WalkAnimation::update,
+            DeathAnimation::update,
             animation::sum_animations.after(WalkAnimation::update),
         ));
 

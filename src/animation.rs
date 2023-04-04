@@ -3,7 +3,7 @@ use std::f32::consts::PI;
 use bevy::prelude::*;
 
 use crate::{
-    mob::MobInputs,
+    mob::{DeadBody, MobInputs},
     util::{DespawnSet, VirtualParent},
 };
 
@@ -131,6 +131,37 @@ impl Lifetime {
             lifetime.0 -= dt;
             if lifetime.0 <= 0.0 {
                 despawn.0.insert(entity);
+            }
+        }
+    }
+}
+
+#[derive(Component, Reflect)]
+pub struct DeathAnimation {
+    pub fall_time: f32,
+    pub t: f32,
+}
+
+impl Default for DeathAnimation {
+    fn default() -> Self {
+        Self {
+            fall_time: 0.2,
+            t: Default::default(),
+        }
+    }
+}
+
+impl DeathAnimation {
+    pub fn update(
+        mut commands: Commands,
+        mut body_query: Query<(Entity, &mut Transform, &mut DeathAnimation), With<DeadBody>>,
+        time: Res<Time>,
+    ) {
+        for (entity, mut transform, mut animation) in &mut body_query {
+            transform.rotate_z(time.delta_seconds() * (0.5 * PI / animation.fall_time));
+            animation.t += time.delta_seconds();
+            if animation.t >= animation.fall_time {
+                commands.entity(entity).remove::<DeathAnimation>();
             }
         }
     }
