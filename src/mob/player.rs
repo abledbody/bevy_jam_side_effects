@@ -1,4 +1,7 @@
-use bevy::{math::vec2, prelude::*};
+use bevy::{
+    math::{vec2, Vec3Swizzles},
+    prelude::*,
+};
 
 use super::{Health, Mob, MobBundle, MobInputs};
 use crate::{
@@ -20,13 +23,13 @@ pub struct PlayerControl;
 
 impl PlayerControl {
     pub fn record_inputs(
-        mut player_query: Query<&mut MobInputs, With<PlayerControl>>,
+        mut player_query: Query<(&mut MobInputs, &GlobalTransform), With<PlayerControl>>,
         key_input_resource: Res<Input<KeyCode>>,
         mouse_input_resource: Res<Input<MouseButton>>,
         windows: Query<&Window>,
         camera: Query<(&Camera, &GlobalTransform), With<CameraFollow<PlayerControl>>>,
     ) {
-        for mut mob_inputs in &mut player_query {
+        for (mut mob_inputs, mob_gt) in &mut player_query {
             let mut movement = Vec2::ZERO;
 
             // It'd be nice to make bindings for this, but hey, it's a gamejam.
@@ -51,7 +54,10 @@ impl PlayerControl {
             mob_inputs.attack = None;
             if mouse_input_resource.just_pressed(MouseButton::Left) {
                 if let Some(position) = window.cursor_position() {
-                    mob_inputs.attack = camera.viewport_to_world_2d(cam_gt, position);
+                    if let Some(pos) = camera.viewport_to_world_2d(cam_gt, position) {
+                        let dir = pos - mob_gt.translation().xy();
+                        mob_inputs.attack = Some(dir.normalize());
+                    }
                 }
             }
         }

@@ -176,12 +176,11 @@ impl HitEffects {
 
     pub fn spawn_from_inputs(
         mut commands: Commands,
-        mob_query: Query<(Entity, &Mob, &MobInputs, &GlobalTransform)>,
+        mob_query: Query<(Entity, &Mob, &MobInputs)>,
         handle: Res<Handles>,
     ) {
-        for (entity, mob, inputs, gt) in &mob_query {
-            if let Some(pos) = inputs.attack {
-                let dir = pos - gt.translation().xy();
+        for (entity, mob, inputs) in &mob_query {
+            if let Some(dir) = inputs.attack {
                 HitboxTemplate {
                     offset: 15.0 * dir,
                     radius: 7.0,
