@@ -52,26 +52,28 @@ impl Default for NametagTemplate {
 
 impl NametagTemplate {
     const BACKDROP_COLOR: Color = Color::rgba(0.2, 0.1, 0.2, 0.7);
+    const TEXT_COLOR: Color = Color::rgba(0.9, 0.9, 0.85, 0.8);
 
     pub fn spawn(self, commands: &mut Commands, handle: &Handles) -> Entity {
         let style = TextStyle {
-            font: handle.font[&FontKey::Regular].clone(),
+            font: handle.font[&FontKey::Bold].clone(),
             font_size: 14.0,
-            color: Color::WHITE,
+            color: Self::TEXT_COLOR,
         };
 
         // Children
-        let backdrop = commands
-            .spawn(SpriteBundle {
-                sprite: Sprite {
-                    color: Self::BACKDROP_COLOR,
-                    custom_size: Some(vec2(100.0, 14.0)),
-                    ..default()
-                },
-                transform: Transform::from_xyz(0.0, 0.0, -0.1),
+        let mut backdrop = commands.spawn(SpriteBundle {
+            sprite: Sprite {
+                color: Self::BACKDROP_COLOR,
+                custom_size: Some(vec2(110.0, 14.0)),
                 ..default()
-            })
-            .id();
+            },
+            transform: Transform::from_xyz(0.0, 0.0, -0.1),
+            ..default()
+        });
+        #[cfg(feature = "debug_mode")]
+        backdrop.insert(Name::new("Backdrop"));
+        let backdrop = backdrop.id();
 
         // Parent
         let mut nametag = commands.spawn((

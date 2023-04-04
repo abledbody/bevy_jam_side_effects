@@ -8,26 +8,50 @@ use crate::{
     vfx::{DropShadowTemplate, NametagTemplate},
 };
 
-const CASUAL_NAMES: [&str; 50] = [
-    "Alex", "Amy", "Ashley", "Becca", "Benny", "Cindy", "Chris", "Danny", "Diane", "Eli", "Emma",
-    "Finn", "Fiona", "Gloria", "Greg", "Gus", "Heather", "Henry", "Ian", "Ike", "Ivy", "Jack",
-    "Jake", "Jessica", "John", "Joy", "Katie", "Kim", "Kyle", "Liam", "Lily", "Lisa", "Lucy",
-    "Megan", "Mike", "Ned", "Nick", "Pete", "Quinn", "Rick", "Roy", "Ryan", "Sam", "Sasha",
+const CASUAL_NAMES: [&str; 51] = [
+    "Alex", "Amy", "Abby", "Ashley", "Becca", "Ben", "Cindy", "Chloe", "Chris", "Danny", "Diane",
+    "Eli", "Emma", "Greg", "Heather", "Henry", "Ian", "Ike", "Ivy", "Jack", "Jake", "Jenny",
+    "Jessica", "Joe", "John", "Jordan", "Kate", "Kim", "Kyle", "Liam", "Lily", "Lisa", "Lucy",
+    "Mary", "Megan", "Mike", "Ned", "Nick", "Pete", "Rick", "Rose", "Roy", "Ryan", "Sam", "Sarah",
     "Steve", "Ted", "Tina", "Tom", "Wanda", "Will",
 ];
 // Max length = 8
-const FANTASY_FIRST_NAMES: [&str; 11] = [
-    "Augustus", "Benedict", "Claudius", "Cornelia", "Gideon", "Leonardo", "Lucius", "Octavia",
-    "Penelope", "Tatiana", "Vivian",
+const FANTASY_FIRST_NAMES: [&str; 26] = [
+    "Ambrosia",
+    "Anastasia",
+    "Augustus",
+    "Benedict",
+    "Claudius",
+    "Cornelia",
+    "Delphine",
+    "Eurydice",
+    "Flavius",
+    "Gideon",
+    "Gloria",
+    "Hyperion",
+    "Leonardo",
+    "Lucius",
+    "Lucretia",
+    "Marcella",
+    "Octavia",
+    "Pandora",
+    "Penelope",
+    "Tatiana",
+    "Tiberius",
+    "Theodore",
+    "Ulysses",
+    "Victoria",
+    "Vivian",
+    "Wolfgang",
 ];
 // Max length = 8
-const FANTASY_LAST_NAMES_P1: [&str; 18] = [
-    "Battle", "Beast", "Blood", "Bone", "Brave", "Brute", "Death", "Dusk", "Fierce", "Gloom",
-    "Grim", "Night", "Noble", "Proud", "Rough", "Scraggle", "War", "Wild",
+const FANTASY_LAST_NAMES_P1: [&str; 19] = [
+    "Battle", "Beast", "Blood", "Bone", "Brave", "Brute", "Death", "Dread", "Dusk", "Fierce",
+    "Gloom", "Grim", "Night", "Noble", "Proud", "Rough", "Scraggle", "War", "Wild",
 ];
 // Max length = 5
-const FANTASY_LAST_NAMES_P2: [&str; 8] = [
-    "borne", "claw", "heart", "fang", "jaw", "maw", "snarl", "tooth",
+const FANTASY_LAST_NAMES_P2: [&str; 9] = [
+    "borne", "claw", "heart", "hide", "fang", "jaw", "maw", "snarl", "tooth",
 ];
 
 // TODO: Generate dark fantasy names occasionally
