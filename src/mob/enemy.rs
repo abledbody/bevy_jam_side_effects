@@ -98,7 +98,12 @@ impl EnemyTemplate {
         self
     }
 
-    pub fn spawn(self, commands: &mut Commands, handle: &Handles) -> Entity {
+    pub fn spawn(
+        self,
+        commands: &mut Commands,
+        handle: &Handles,
+        attach: impl Into<Option<Entity>>,
+    ) -> Entity {
         const FACTION: Faction = Faction::Enemy;
 
         // Children
@@ -115,7 +120,12 @@ impl EnemyTemplate {
         .spawn(commands, handle);
 
         // Parent entity
-        let mut enemy = commands.spawn((
+        let mut enemy = if let Some(e) = attach.into() {
+            commands.entity(e)
+        } else {
+            commands.spawn_empty()
+        };
+        enemy.insert((
             SpatialBundle {
                 transform: Transform::from_translation(self.position.extend(0.0)),
                 ..default()

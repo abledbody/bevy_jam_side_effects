@@ -59,9 +59,9 @@ impl HitboxTemplate {
     pub fn spawn(self, commands: &mut Commands, handle: &Handles) -> Entity {
         let mut entity = commands.spawn((
             Offset {
-				pos: self.offset,
-				..default()
-			},
+                pos: self.offset,
+                ..default()
+            },
             TransformBundle::default(),
             Collider::ball(self.radius),
             Sensor,
@@ -128,7 +128,7 @@ impl HitEffects {
         hit_effects_query: Query<&HitEffects>,
         mut health_query: Query<&mut Health>,
         mut velocity_query: Query<&mut Velocity>,
-        transform_query: Query<&Transform>,
+        transform_query: Query<&GlobalTransform>,
         audio: Res<Audio>,
     ) {
         for &HitEvent {
@@ -161,8 +161,8 @@ impl HitEffects {
                 };
 
                 let scale = 40.0;
-                let direction = (target_transform.translation.xy()
-                    - actor_transform.translation.xy())
+                let direction = (target_transform.translation().xy()
+                    - actor_transform.translation().xy())
                 .normalize_or_zero();
                 velocity.linvel = effect.knockback * scale * direction;
             }

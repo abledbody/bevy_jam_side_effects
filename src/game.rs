@@ -143,29 +143,27 @@ pub fn spawn_instances(
     transforms: Query<&Transform, (With<Children>, Without<EntityInstance>)>,
 ) {
     for (entity, transform, instance, parent) in &entity_query {
-        // Despawn the marker entity
-        commands.entity(entity).despawn_recursive();
-
-        // Since we're going to create a new entity, and we therefore will not inherit the parent's
-        // transform automatically, we need to manually add it.
-        let parent_transform = transforms.get(parent.get()).copied().unwrap_or_default();
-        let position = (transform.translation + parent_transform.translation).xy();
-        // Replace with the actual entity
         match instance.identifier.as_str() {
             "Player" => {
+                // Since we're going to create a new entity, and we therefore will not inherit the parent's
+                // transform automatically, we need to manually add it.
+                let parent_transform = transforms.get(parent.get()).copied().unwrap_or_default();
+                let position = (transform.translation + parent_transform.translation).xy();
                 PlayerTemplate {
                     position,
                     ..default()
                 }
                 .spawn(&mut commands, &handle);
+                // Despawn the marker entity
+                commands.entity(entity).despawn_recursive();
             },
             "Enemy" => {
                 EnemyTemplate {
-                    position,
+                    position: transform.translation.xy(),
                     ..default()
                 }
                 .with_random_name()
-                .spawn(&mut commands, &handle);
+                .spawn(&mut commands, &handle, entity);
             },
             _ => (),
         }
