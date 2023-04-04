@@ -6,7 +6,7 @@ use bevy::{
 use bevy_rapier2d::prelude::*;
 
 use crate::{
-    animation::{Facing, Lifetime, Offset, WalkAnimation},
+    animation::{Facing, Lifetime, Offset, VirtualParent, WalkAnimation},
     asset::Handles,
     camera::CameraFollow,
     combat::{DeathEffects, HitEffects},
@@ -18,7 +18,7 @@ use crate::{
         Mob,
         MobInputs,
     },
-    util::{VirtualParent, ZRampByY},
+    util::ZRampByY,
 };
 
 const TOGGLE_KEY: KeyCode = KeyCode::F3;

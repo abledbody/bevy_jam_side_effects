@@ -2,15 +2,14 @@ use bevy::{math::Vec3Swizzles, prelude::*};
 use bevy_rapier2d::prelude::*;
 
 use crate::{
-    animation::{DeathAnimation, Lifetime, Offset, WalkAnimation},
+    animation::{DeathAnimation, Lifetime, Offset, VirtualParent, WalkAnimation},
     asset::{AudioKey, Handles},
     mob::{
         player::{Gold, PlayerControl},
         DeadBody,
         Health,
-        Mob, MobInputs,
+        MobInputs,
     },
-    util::VirtualParent,
 };
 
 pub const COLLISION_GROUP: Group = Group::GROUP_1;
@@ -189,7 +188,7 @@ impl DeathEffects {
         death_effects_query: Query<&DeathEffects>,
         mut player_query: Query<&mut Gold, With<PlayerControl>>,
         children_query: Query<&Children>,
-        animation_query: Query<(), With<WalkAnimation>>,  // And you can use animation_query.contains(child)
+        animation_query: Query<(), With<WalkAnimation>>, // And you can use animation_query.contains(child)
     ) {
         for &DeathEvent(entity) in death_events.iter() {
             // Turn into a dead body
@@ -201,7 +200,7 @@ impl DeathEffects {
             if let Ok(children) = children_query.get(entity) {
                 for &child in children {
                     if animation_query.contains(child) {
-                        commands.entity(child).insert(DeathAnimation::template());
+                        commands.entity(child).insert(DeathAnimation::default());
                     }
                 }
             }

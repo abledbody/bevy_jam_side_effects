@@ -3,7 +3,7 @@ use bevy_ecs_ldtk::prelude::*;
 use bevy_rapier2d::prelude::*;
 
 use crate::{
-    animation::{self, DeathAnimation, Facing, Lifetime, Offset, WalkAnimation},
+    animation::{DeathAnimation, Facing, Lifetime, Offset, VirtualParent, WalkAnimation},
     asset::{Handles, LevelKey},
     camera::{CameraPlugin, GameCameraTemplate},
     combat::{DeathEffects, DeathEvent, HitEffects, HitEvent},
@@ -23,6 +23,7 @@ const CLEAR_COLOR: Color = Color::rgba(0.18, 0.15, 0.23, 1.0);
 enum UpdateSet {
     Input,
     Combat,
+    Animate,
     SpawnDespawn,
 }
 
@@ -65,14 +66,24 @@ impl Plugin for GamePlugin {
         app.add_startup_system(spawn_scene);
 
         // Game logic system sets
-        app.configure_sets((UpdateSet::Input, UpdateSet::Combat, UpdateSet::SpawnDespawn).chain());
+        app.configure_sets(
+            (
+                UpdateSet::Input,
+                UpdateSet::Combat,
+                UpdateSet::Animate,
+                UpdateSet::SpawnDespawn,
+            )
+                .chain(),
+        );
 
         // Input systems
         app.add_systems(
             (
                 PlayerControl::record_inputs,
-                Mob::apply_input.after(PlayerControl::record_inputs),
+                Mob::apply_input,
+                Mob::set_facing,
             )
+                .chain()
                 .in_set(UpdateSet::Input),
         );
 
@@ -87,20 +98,29 @@ impl Plugin for GamePlugin {
                 .in_set(UpdateSet::Combat),
         );
 
+        // Animation systems
+        app.add_systems(
+            (
+                ZRampByY::apply,
+                VirtualParent::copy_transform.after(ZRampByY::apply),
+                Offset::apply.after(VirtualParent::copy_transform),
+                WalkAnimation::update,
+                WalkAnimation::apply
+                    .after(Offset::apply)
+                    .before(Facing::apply)
+                    .after(WalkAnimation::update),
+                DeathAnimation::update,
+                DeathAnimation::apply
+                    .after(Offset::apply)
+                    .before(Facing::apply)
+                    .after(DeathAnimation::update),
+                Facing::apply,
+            )
+                .in_set(UpdateSet::Animate),
+        );
+
         // Spawn / despawn systems
         app.add_systems((DespawnSet::apply, spawn_instances).in_set(UpdateSet::SpawnDespawn));
-
-        // Visual systems
-        app.add_systems((
-            ZRampByY::apply,
-            Mob::set_facing,
-            Facing::update_sprites.after(Mob::set_facing),
-            WalkAnimation::update.after(Mob::set_facing),
-            DeathAnimation::update.after(Mob::set_facing),
-            animation::sum_animations
-				.after(WalkAnimation::update)
-				.after(DeathAnimation::update),
-        ));
 
         // UI systems
         app.add_system(bevy::window::close_on_esc);
