@@ -51,7 +51,7 @@ impl PlayerControl {
             }
 
             mob_inputs.attack = None;
-            if action_state.pressed(PlayerAction::Attack) {
+            if action_state.just_pressed(PlayerAction::Attack) {
                 if let Some(axis_pair) = action_state.clamped_axis_pair(PlayerAction::Attack) {
                     mob_inputs.attack = Some(axis_pair.xy());
                 }
