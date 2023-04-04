@@ -1,3 +1,5 @@
+use std::f32::consts::PI;
+
 use bevy::{math::Vec3Swizzles, prelude::*};
 use bevy_rapier2d::prelude::*;
 
@@ -181,8 +183,10 @@ impl HitEffects {
     ) {
         for (entity, mob, inputs) in &mob_query {
             if let Some(dir) = inputs.attack {
+                // Make the hitbox offset slightly ovular
+                let dir = Quat::from_axis_angle(Vec3::X, 0.5 * PI * 0.3) * dir.extend(0.0);
                 HitboxTemplate {
-                    offset: 15.0 * dir,
+                    offset: 15.0 * dir.xy(),
                     radius: 7.0,
                     damage: 8.0,
                     knockback: 5.0,
