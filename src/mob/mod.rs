@@ -85,6 +85,7 @@ pub struct MobBundle {
     pub z_ramp_by_y: ZRampByY,
     pub rigid_body: RigidBody,
     pub locked_axes: LockedAxes,
+    pub friction: Friction,
     #[reflect(ignore)]
     pub collider: Collider,
     pub collision_groups: CollisionGroups,
@@ -102,7 +103,8 @@ impl Default for MobBundle {
             velocity: Velocity::default(),
             rigid_body: RigidBody::default(),
             locked_axes: LockedAxes::ROTATION_LOCKED,
-            collider: Collider::capsule_x(5.0, 3.0),
+            friction: Friction::new(0.0),
+            collider: Collider::ball(5.0),
             collision_groups: CollisionGroups {
                 memberships: COLLISION_GROUP,
                 filters: COLLISION_GROUP,
