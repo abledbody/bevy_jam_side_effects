@@ -148,7 +148,10 @@ impl BodyTemplate {
                 texture: handle.image[&self.texture].clone(),
                 ..default()
             },
-            Offset(self.offset),
+            Offset {
+				pos: self.offset,
+				..default()
+			},
             WalkAnimation {
                 air_time: 0.18,
                 height: 3.0,

@@ -42,8 +42,11 @@ impl VirtualParent {
     }
 }
 
-#[derive(Component, Reflect)]
-pub struct Offset(pub Vec2);
+#[derive(Component, Reflect, Default)]
+pub struct Offset {
+	pub pos: Vec2,
+	pub rot: f32,
+}
 
 impl Offset {
     pub fn apply(
@@ -51,15 +54,16 @@ impl Offset {
         virtual_parent_query: Query<(), With<VirtualParent>>,
     ) {
         for (entity, offset, mut transform) in &mut offset_query {
+			let rot_quat = Quat::from_rotation_z(offset.rot);
+
             if virtual_parent_query.contains(entity) {
-                transform.translation.x += offset.0.x;
-                transform.translation.y += offset.0.y;
+                transform.translation.x += offset.pos.x;
+                transform.translation.y += offset.pos.y;
+				transform.rotation *= rot_quat;
             } else {
-                transform.translation.x = offset.0.x;
-                transform.translation.y = offset.0.y;
-                // FIXME: This is a hack.
-                // Reset the rotation here so it can be animated each frame
-                transform.rotation = Quat::IDENTITY;
+                transform.translation.x = offset.pos.x;
+                transform.translation.y = offset.pos.y;
+                transform.rotation = rot_quat;
             }
         }
     }
