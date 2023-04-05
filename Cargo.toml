@@ -5,11 +5,12 @@ edition = "2021"
 
 [dependencies]
 bevy_editor_pls = { version = "0.4", optional = true }
-bevy_ecs_ldtk = "0.6"
+bevy_ecs_ldtk = { version = "0.6", features = ["atlas"] }
 bevy_rapier2d = "0.21"
 rand = "0.8"
 bevy = "0.10"
 leafwing-input-manager = "0.9"
+wee_alloc = { version = "0.4", optional = true }
 
 [features]
 default = [
@@ -30,3 +31,16 @@ opt-level = 1
 
 [profile.dev.package."*"]
 opt-level = 3
+
+[profile.wasm-release]
+# Use release profile as default values
+inherits = "release"
+# Optimize with size in mind, also try "s", sometimes it is better.
+# This doesn't increase compilation times compared to -O3, great improvements
+opt-level = "z"
+# Do a second optimization pass removing duplicate or unused code from dependencies.
+# Slows compile times, marginal improvements
+lto = "fat"
+# When building crates, optimize larger chunks at a time
+# Slows compile times, marginal improvements
+codegen-units = 1

@@ -7,3 +7,6 @@
 
 # Map backups
 /assets/maps/**/backups/*
+
+# WASM
+/wasm
