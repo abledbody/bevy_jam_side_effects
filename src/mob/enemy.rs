@@ -202,7 +202,7 @@ pub struct EnemyAi {
 impl Default for EnemyAi {
     fn default() -> Self {
         Self {
-            follow_distance: 100.0,
+            follow_distance: 200.0,
             attack_radius: 30.0,
             attack_cooldown: 0.5,
             t: Default::default(),
@@ -233,7 +233,7 @@ impl EnemyAi {
                     ai.t += time.delta_seconds();
                     let dir = target_gt.translation() - mob_gt.translation();
                     let dist = dir.length();
-                    let dir = dir.normalize().xy();
+                    let dir = dir.xy().normalize();
                     if dist > ai.follow_distance {
                         ai.target = None;
                     } else if dist > ai.attack_radius {
@@ -257,21 +257,19 @@ impl DetectionEvent {
     pub fn detect(
         mut collision_events: EventReader<CollisionEvent>,
         mut detect_events: EventWriter<DetectionEvent>,
-        detect_query: Query<Entity, With<Sensor>>,
+        detect_query: Query<Entity, With<Detector>>,
     ) {
         for &event in collision_events.iter() {
-            let CollisionEvent::Started(entity1, entity2, _) = event else {
-            continue
-        };
+            if let CollisionEvent::Started(entity1, entity2, _) = event {
+                let mut handle_collision = |sensor: Entity, target: Entity| {
+                    if detect_query.contains(sensor) {
+                        detect_events.send(DetectionEvent { sensor, target });
+                    }
+                };
 
-            let mut handle_collision = |sensor: Entity, target: Entity| {
-                if detect_query.get(sensor).is_ok() {
-                    detect_events.send(DetectionEvent { sensor, target });
-                }
-            };
-
-            handle_collision(entity1, entity2);
-            handle_collision(entity2, entity1);
+                handle_collision(entity1, entity2);
+                handle_collision(entity2, entity1);
+            }
         }
     }
 }
@@ -279,6 +277,9 @@ impl DetectionEvent {
 pub struct DetectionRadiusTemplate {
     radius: f32,
 }
+
+#[derive(Component)]
+pub struct Detector;
 
 impl DetectionRadiusTemplate {
     pub fn spawn(self, commands: &mut Commands) -> Entity {
@@ -288,6 +289,7 @@ impl DetectionRadiusTemplate {
             Sensor,
             Faction::Enemy.hitbox_groups(),
             ActiveEvents::COLLISION_EVENTS,
+            Detector,
         ));
         #[cfg(feature = "debug_mode")]
         entity.insert(Name::new("Detection Radius"));
