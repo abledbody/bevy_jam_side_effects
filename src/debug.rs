@@ -22,7 +22,7 @@ use crate::{
     hud::{AlarmMeter, HealthBar},
     map::Wall,
     mob::{
-        enemy::{Alarm, EnemyAi},
+        enemy::{Alarm, DifficultyCurve, EnemyAi},
         player::{Gold, PlayerControl},
         DeadBody,
         Health,
@@ -63,6 +63,7 @@ impl Plugin for DebugPlugin {
             .register_type::<Mob>()
             .register_type::<MobInputs>()
             .register_type::<PlayerControl>()
+            .register_type::<DifficultyCurve>()
             .register_type::<EnemyAi>()
             .register_type::<DeadBody>()
             .register_type::<HitEffects>()
