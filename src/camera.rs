@@ -1,6 +1,11 @@
 use std::marker::PhantomData;
 
-use bevy::prelude::*;
+use bevy::{
+    math::{vec2, vec3, Vec3Swizzles},
+    prelude::*,
+    render::camera::OrthographicProjection,
+};
+use bevy_ecs_ldtk::{LdtkLevel, LevelSelection};
 
 use crate::mob::player::PlayerControl;
 
@@ -11,7 +16,13 @@ pub struct CameraPlugin;
 impl Plugin for CameraPlugin {
     fn build(&self, app: &mut App) {
         app.add_system(CameraFollow::<PlayerControl>::apply)
-            .add_system(CameraFollow::<PlayerControl>::follow);
+            .add_systems(
+                (
+                    CameraFollow::<PlayerControl>::follow,
+                    camera_fit_inside_current_level,
+                )
+                    .chain(),
+            );
     }
 }
 
@@ -114,5 +125,54 @@ pub trait SmoothApproach {
 impl SmoothApproach for f32 {
     fn smooth_approach(self, target: Self, rate: f32, dt: f32) -> Self {
         (self - target) / ((rate * dt) + 1.0) + target
+    }
+}
+
+fn camera_fit_inside_current_level(
+    mut camera_query: Query<
+        (&Camera, &mut Transform, &GlobalTransform),
+        With<CameraFollow<PlayerControl>>,
+    >,
+    level_query: Query<
+        (&GlobalTransform, &Handle<LdtkLevel>),
+        Without<CameraFollow<PlayerControl>>,
+    >,
+    level_selection: Res<LevelSelection>,
+    ldtk_levels: Res<Assets<LdtkLevel>>,
+) {
+    let (camera, mut cam_transform, cam_gt) = camera_query.single_mut();
+
+    for (level_transform, level_handle) in &level_query {
+        if let Some(ldtk_level) = ldtk_levels.get(level_handle) {
+            let level = &ldtk_level.level;
+            let level_translation = level_transform.translation();
+            if level_selection.is_match(&0, level) {
+                let cam_bottom_left = camera
+                    .ndc_to_world(&cam_gt, -vec3(1.0, 1.0, 0.0))
+                    .unwrap()
+                    .xy();
+                let cam_top_right = camera
+                    .ndc_to_world(&cam_gt, vec3(1.0, 1.0, 0.0))
+                    .unwrap()
+                    .xy();
+                // The level's origin is at the bottom left corner
+                let level_extents = vec2(level.px_wid as f32, level.px_hei as f32);
+                let level_bottom_left = level_translation.xy();
+                let level_top_right = level_translation.xy() + level_extents;
+
+                // Vector pointing from camera bounds to level bounds
+                // If x or y are positive the screen is out of bounds and must shift
+                // If x or y are negative, ignore them as they are in bounds
+                let shift_up_right = (level_bottom_left - cam_bottom_left)
+                    .max(Vec2::ZERO)
+                    .extend(0.0);
+                // Same as above in reverse: use negative values ignore positive ones
+                let shift_down_left = (level_top_right - cam_top_right)
+                    .min(Vec2::ZERO)
+                    .extend(0.0);
+
+                cam_transform.translation += shift_up_right + shift_down_left;
+            }
+        }
     }
 }
