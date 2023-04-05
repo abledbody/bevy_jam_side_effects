@@ -188,7 +188,7 @@ impl HitEffects {
             };
 
             // Make the hitbox offset slightly ovular
-            let ovular_dir = Quat::from_rotation_z(0.5 * PI * 0.3) * direction.extend(0.0);
+            let ovular_dir = Quat::from_rotation_x(0.5 * PI * 0.3) * direction.extend(0.0);
             let radius = 12.0;
             let distance = radius;
 
@@ -234,20 +234,11 @@ impl HurtEffects {
 
 pub struct DeathEvent(pub Entity);
 
-#[derive(Component, Reflect)]
+#[derive(Component, Reflect, Default)]
 pub struct DeathEffects {
     pub reward_gold: f32,
     pub increase_alarm: f32,
     // TODO: Animation, sound effect
-}
-
-impl Default for DeathEffects {
-    fn default() -> Self {
-        Self {
-            reward_gold: 10.0,
-            increase_alarm: 5.0,
-        }
-    }
 }
 
 impl DeathEffects {
