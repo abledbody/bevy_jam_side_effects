@@ -82,7 +82,8 @@ pub struct EnemyTemplate {
     pub health: f32,
     pub reward_gold: f32,
     pub increase_alarm: f32,
-    pub detection_radius: f32,
+    pub follow_beyond_detect_radius: f32,
+    pub detect_radius: f32,
     pub attack_radius: f32,
 }
 
@@ -95,7 +96,8 @@ impl Default for EnemyTemplate {
             health: 20.0,
             reward_gold: 10.0,
             increase_alarm: 5.0,
-            detection_radius: 100.0,
+            follow_beyond_detect_radius: 100.0,
+            detect_radius: 100.0,
             attack_radius: 20.0,
         }
     }
@@ -131,8 +133,8 @@ impl EnemyTemplate {
             offset: vec2(0.0, -6.0),
         }
         .spawn(commands);
-        let detection_radius = DetectionRadiusTemplate {
-            radius: self.detection_radius,
+        let detection_radius = DetectorTemplate {
+            radius: self.detect_radius,
         }
         .spawn(commands);
 
@@ -154,7 +156,7 @@ impl EnemyTemplate {
             .with_faction(FACTION),
             EnemyAi {
                 attack_radius: self.attack_radius,
-                follow_distance: self.detection_radius + 100.0,
+                follow_radius: self.detect_radius + self.follow_beyond_detect_radius,
                 ..default()
             },
             DeathEffects {
@@ -193,7 +195,7 @@ impl Alarm {
 
 #[derive(Component, Reflect)]
 pub struct EnemyAi {
-    follow_distance: f32,
+    follow_radius: f32,
     attack_radius: f32,
     attack_cooldown: f32,
     t: f32,
@@ -203,7 +205,7 @@ pub struct EnemyAi {
 impl Default for EnemyAi {
     fn default() -> Self {
         Self {
-            follow_distance: 200.0,
+            follow_radius: 200.0,
             attack_radius: 30.0,
             attack_cooldown: 0.5,
             t: Default::default(),
@@ -215,76 +217,81 @@ impl Default for EnemyAi {
 impl EnemyAi {
     pub fn think(
         mut ai_query: Query<(&mut EnemyAi, &mut MobInputs, &GlobalTransform), With<EnemyAi>>,
-        mut detection_events: EventReader<DetectionEvent>,
-        children_query: Query<&Parent>,
+        mut detect_events: EventReader<DetectEvent>,
+        parent_query: Query<&Parent>,
         transform_query: Query<&GlobalTransform, Without<EnemyAi>>,
         time: Res<Time>,
     ) {
-        for DetectionEvent { sensor, target } in detection_events.iter() {
-            if let Ok(parent) = children_query.get(*sensor) {
+        for DetectEvent { sensor, target } in detect_events.iter() {
+            if let Ok(parent) = parent_query.get(*sensor) {
                 if let Ok((mut ai, _, _)) = ai_query.get_mut(parent.get()) {
                     ai.target = Some(*target);
                 }
             }
         }
+
+        let dt = time.delta_seconds();
         for (mut ai, mut mob_inputs, mob_gt) in &mut ai_query {
-            if let Some(target) = ai.target {
-                if let Ok(target_gt) = transform_query.get(target) {
-                    mob_inputs.attack = None;
-                    ai.t += time.delta_seconds();
-                    let dir = target_gt.translation() - mob_gt.translation();
-                    let dist = dir.length();
-                    let dir = dir.xy().normalize();
-                    if dist > ai.follow_distance {
-                        ai.target = None;
-                    } else if dist > ai.attack_radius {
-                        mob_inputs.movement = dir;
-                    } else if ai.t >= ai.attack_cooldown {
-                        mob_inputs.attack = Some(dir);
-                        ai.t = 0.0;
-                    }
-                }
+            let Some(target) = ai.target else { continue };
+            let Ok(target_gt) = transform_query.get(target) else { continue };
+
+            mob_inputs.attack = None;
+            ai.t += dt;
+
+            let delta = target_gt.translation() - mob_gt.translation();
+            let distance = delta.length();
+            let dir = delta.xy().normalize();
+
+            if distance > ai.follow_radius {
+                ai.target = None;
+            } else if distance > ai.attack_radius {
+                mob_inputs.movement = dir;
+            } else if ai.t >= ai.attack_cooldown {
+                mob_inputs.attack = Some(dir);
+                ai.t = 0.0;
             }
         }
     }
 }
 
-pub struct DetectionEvent {
+pub struct DetectEvent {
     sensor: Entity,
     target: Entity,
 }
 
-impl DetectionEvent {
+impl DetectEvent {
     pub fn detect(
         mut collision_events: EventReader<CollisionEvent>,
-        mut detect_events: EventWriter<DetectionEvent>,
-        detect_query: Query<Entity, With<Detector>>,
+        mut detect_events: EventWriter<DetectEvent>,
+        detector_query: Query<(), With<Detector>>,
     ) {
         for &event in collision_events.iter() {
-            if let CollisionEvent::Started(entity1, entity2, _) = event {
-                let mut handle_collision = |sensor: Entity, target: Entity| {
-                    if detect_query.contains(sensor) {
-                        detect_events.send(DetectionEvent { sensor, target });
-                    }
-                };
+            let CollisionEvent::Started(entity1, entity2, _) = event else {
+                continue
+            };
 
-                handle_collision(entity1, entity2);
-                handle_collision(entity2, entity1);
-            }
+            let mut handle_collision = |sensor: Entity, target: Entity| {
+                if detector_query.contains(sensor) {
+                    detect_events.send(DetectEvent { sensor, target });
+                }
+            };
+
+            handle_collision(entity1, entity2);
+            handle_collision(entity2, entity1);
         }
     }
 }
 
-pub struct DetectionRadiusTemplate {
+#[derive(Component, Reflect)]
+pub struct Detector;
+
+pub struct DetectorTemplate {
     radius: f32,
 }
 
-#[derive(Component)]
-pub struct Detector;
-
-impl DetectionRadiusTemplate {
+impl DetectorTemplate {
     pub fn spawn(self, commands: &mut Commands) -> Entity {
-        let mut entity = commands.spawn((
+        let mut detector = commands.spawn((
             TransformBundle::default(),
             Collider::ball(self.radius),
             Sensor,
@@ -293,8 +300,8 @@ impl DetectionRadiusTemplate {
             Detector,
         ));
         #[cfg(feature = "debug_mode")]
-        entity.insert(Name::new("Detection Radius"));
+        detector.insert(Name::new("DetectionSensor"));
 
-        entity.id()
+        detector.id()
     }
 }
