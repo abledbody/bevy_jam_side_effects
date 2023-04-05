@@ -154,6 +154,7 @@ impl EnemyTemplate {
             .with_faction(FACTION),
             EnemyAi {
                 attack_radius: self.attack_radius,
+                follow_distance: self.detection_radius + 100.0,
                 ..default()
             },
             DeathEffects {
