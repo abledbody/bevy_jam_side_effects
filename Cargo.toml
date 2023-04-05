@@ -4,17 +4,18 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-bevy_editor_pls = { version = "0.4", optional = true }
-bevy_ecs_ldtk = { version = "0.6", features = ["atlas"] }
-bevy_rapier2d = "0.21"
-rand = "0.8"
 bevy = "0.10"
+bevy_ecs_ldtk = { version = "0.6", features = ["atlas"] }
+bevy_editor_pls = { version = "0.4", optional = true }
+bevy_rapier2d = "0.21"
 leafwing-input-manager = "0.9"
+rand = { version = "0.8", features = [ "small_rng" ] }
+seldom_map_nav = "0.3"
 wee_alloc = { version = "0.4", optional = true }
 
 [features]
 default = [
-	"bevy/wav"
+	"bevy/wav",
 ]
 debug_mode = [
     "bevy/dynamic_linking",

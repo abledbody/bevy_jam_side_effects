@@ -160,6 +160,7 @@ impl EnemyTemplate {
             }
             .with_faction(FACTION),
             EnemyAi::default(),
+            DifficultyCurve::default(),
             HurtEffects {
                 increase_alarm: self.hurt_increase_alarm,
                 ..default()
@@ -197,19 +198,58 @@ impl Alarm {
     pub fn increase(&mut self, value: f32) {
         self.current = (self.current + value).min(self.max);
     }
+}
 
-    pub fn scale_difficulty(
+#[derive(Reflect, FromReflect)]
+pub struct Curve {
+    pub y0: f32,
+    pub y1: f32,
+}
+
+impl Curve {
+    pub fn new(y0: f32, y1: f32) -> Self {
+        Self { y0, y1 }
+    }
+
+    pub fn at(&self, t: f32) -> f32 {
+        self.y1 * t + self.y0 * (1.0 - t)
+    }
+}
+
+#[derive(Component, Reflect)]
+pub struct DifficultyCurve {
+    speed: Curve,
+    detect_radius: Curve,
+    follow_radius: Curve,
+    attack_radius: Curve,
+    attack_cooldown: Curve,
+}
+
+impl Default for DifficultyCurve {
+    fn default() -> Self {
+        Self {
+            speed: Curve::new(60.0, 100.0),
+            detect_radius: Curve::new(0.0, 1000.0),
+            follow_radius: Curve::new(100.0, 1100.0),
+            attack_radius: Curve::new(20.0, 40.0),
+            attack_cooldown: Curve::new(0.8, 0.4),
+        }
+    }
+}
+
+impl DifficultyCurve {
+    pub fn apply(
         alarm: Res<Alarm>,
-        mut enemy_query: Query<(&mut EnemyAi, &Children)>,
+        mut curve_query: Query<(&DifficultyCurve, &mut EnemyAi, &mut Mob, &Children)>,
         mut detector_query: Query<&mut Transform, With<Detector>>,
     ) {
-        let hi = alarm.current / alarm.max;
-        let lo = 1.0 - hi;
-        for (mut enemy, children) in &mut enemy_query {
-            let detect_radius = enemy.min_detect_radius * lo + enemy.max_detect_radius * hi;
-            enemy.follow_radius = enemy.min_follow_radius * lo + enemy.max_follow_radius * hi;
-            enemy.attack_radius = enemy.min_attack_radius * lo + enemy.max_attack_radius * hi;
-            enemy.attack_cooldown = enemy.min_attack_cooldown * lo + enemy.max_attack_cooldown * hi;
+        let t = alarm.current / alarm.max;
+        for (curve, mut enemy, mut mob, children) in &mut curve_query {
+            mob.speed = curve.speed.at(t);
+            let detect_radius = curve.detect_radius.at(t);
+            enemy.follow_radius = curve.follow_radius.at(t);
+            enemy.attack_radius = curve.attack_radius.at(t);
+            enemy.attack_cooldown = curve.attack_cooldown.at(t);
 
             for &child in children {
                 let Ok(mut transform) = detector_query.get_mut(child) else { continue };
@@ -221,45 +261,20 @@ impl Alarm {
 
 #[derive(Component, Reflect)]
 pub struct EnemyAi {
-    min_detect_radius: f32,
-    max_detect_radius: f32,
-
-    min_follow_radius: f32,
-    max_follow_radius: f32,
     follow_radius: f32,
-
-    min_attack_radius: f32,
-    max_attack_radius: f32,
     attack_radius: f32,
-
-    min_attack_cooldown: f32,
-    max_attack_cooldown: f32,
     attack_cooldown: f32,
     attack_cooldown_t: f32,
-
     target: Option<Entity>,
 }
 
 impl Default for EnemyAi {
     fn default() -> Self {
         Self {
-            min_detect_radius: 0.0,
-            max_detect_radius: 1000.0,
-
-            min_follow_radius: 100.0,
-            max_follow_radius: 1100.0,
             follow_radius: 100.0,
-
-            min_attack_radius: 20.0,
-            max_attack_radius: 40.0,
             attack_radius: 20.0,
-
-            // Ignore the fact that min > max here :)
-            min_attack_cooldown: 0.8,
-            max_attack_cooldown: 0.4,
             attack_cooldown: 0.8,
             attack_cooldown_t: 0.0,
-
             target: None,
         }
     }

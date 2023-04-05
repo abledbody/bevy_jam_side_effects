@@ -1,4 +1,4 @@
-use bevy::{math::Vec3Swizzles, prelude::*};
+use bevy::prelude::*;
 use bevy_ecs_ldtk::prelude::*;
 use bevy_rapier2d::prelude::*;
 use leafwing_input_manager::prelude::InputManagerPlugin;
@@ -20,8 +20,8 @@ use crate::{
     hud::{AlarmMeter, AlarmMeterTemplate, HealthBar},
     map::MapPlugin,
     mob::{
-        enemy::{Alarm, DetectEvent, EnemyAi, EnemyTemplate},
-        player::{PlayerAction, PlayerControl, PlayerTemplate},
+        enemy::{Alarm, DetectEvent, DifficultyCurve, EnemyAi},
+        player::{PlayerAction, PlayerControl},
         Mob,
     },
     util::{DespawnSet, ZRampByY},
@@ -101,7 +101,7 @@ impl Plugin for GamePlugin {
                 Offset::apply.after(VirtualParent::copy_transform),
                 HitEvent::detect.before(EnemyAi::think),
                 DetectEvent::detect.before(EnemyAi::think),
-                Alarm::scale_difficulty.before(EnemyAi::think),
+                DifficultyCurve::apply.before(EnemyAi::think),
                 EnemyAi::think,
                 PlayerControl::record_inputs,
             )
@@ -147,7 +147,7 @@ impl Plugin for GamePlugin {
         app.add_system(apply_system_buffers.in_set(UpdateSet::CombatFlush));
 
         // Spawn / despawn systems
-        app.add_systems((DespawnSet::apply, spawn_instances).in_base_set(CoreSet::Last));
+        app.add_system(DespawnSet::apply.in_base_set(CoreSet::Last));
 
         // UI systems
         app.add_systems((
@@ -170,50 +170,4 @@ fn spawn_scene(mut commands: Commands, handle: Res<Handles>) {
 
     // Camera
     GameCameraTemplate::<PlayerControl>::default().spawn(&mut commands);
-}
-
-pub fn spawn_instances(
-    mut commands: Commands,
-    handle: Res<Handles>,
-    entity_query: Query<(Entity, &Transform, &EntityInstance, &Parent), Added<EntityInstance>>,
-    transform_query: Query<&Transform, (With<Children>, Without<EntityInstance>)>,
-    player_query: Query<&PlayerControl>,
-) {
-    for (entity, transform, instance, parent) in &entity_query {
-        let parent_transform = transform_query
-            .get(parent.get())
-            .copied()
-            .unwrap_or_default();
-
-        // Despawn the marker entity
-        commands.entity(entity).despawn_recursive();
-
-        // Replace with the actual entity
-        match instance.identifier.as_str() {
-            "Player" => {
-                // We only want one player and LDtk doesn't know that
-                if player_query.is_empty() {
-                    // Since we're going to create a new entity, and we therefore will not inherit the parent's
-                    // transform automatically, we need to manually add it.
-                    let position = (transform.translation + parent_transform.translation).xy();
-                    PlayerTemplate {
-                        position,
-                        ..default()
-                    }
-                    .spawn(&mut commands, &handle);
-                }
-            },
-            "Enemy" => {
-                let enemy = EnemyTemplate {
-                    position: transform.translation.xy(),
-                    ..default()
-                }
-                .with_random_name()
-                .spawn(&mut commands, &handle);
-
-                commands.entity(parent.get()).add_child(enemy);
-            },
-            _ => (),
-        }
-    }
 }
