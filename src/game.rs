@@ -8,10 +8,11 @@ use crate::{
         AttackAnimation,
         DeathAnimation,
         Facing,
+        FlinchAnimation,
         Lifetime,
         Offset,
         VirtualParent,
-        WalkAnimation, FlinchAnimation,
+        WalkAnimation,
     },
     asset::{Handles, LevelKey},
     camera::{CameraPlugin, GameCameraTemplate},
@@ -119,8 +120,8 @@ impl Plugin for GamePlugin {
                 AttackAnimation::trigger,
                 AttackAnimation::update.after(AttackAnimation::trigger),
                 AttackAnimation::apply.after(AttackAnimation::update),
-				FlinchAnimation::update,
-				FlinchAnimation::apply.after(FlinchAnimation::update),
+                FlinchAnimation::update,
+                FlinchAnimation::apply.after(FlinchAnimation::update),
             )
                 .in_set(UpdateSet::Animate),
         );

@@ -149,7 +149,7 @@ pub struct WalkAnimation {
     pub air_time: f32,
     pub height: f32,
     pub t: f32,
-	pub start_frame: bool,
+    pub start_frame: bool,
     pub sound: Option<Handle<AudioSource>>,
 }
 
@@ -159,7 +159,7 @@ impl Default for WalkAnimation {
             air_time: 0.18,
             height: 3.0,
             t: 1.0,
-			start_frame: false,
+            start_frame: false,
             sound: None,
         }
     }
@@ -172,17 +172,17 @@ impl WalkAnimation {
     ) {
         for (mut anim, parent) in &mut animation_query {
             if anim.t < 1.0 {
-				anim.start_frame = false;
+                anim.start_frame = false;
                 continue;
             }
 
             let Ok(inputs) = inputs_query.get(parent.get()) else { continue };
             if inputs.movement.length() == 0.0 {
-				anim.t = 1.0;
+                anim.t = 1.0;
                 continue;
             }
 
-			anim.start_frame = true;
+            anim.start_frame = true;
             anim.t -= anim.t.floor();
         }
     }
@@ -284,46 +284,49 @@ impl Default for AttackAnimation {
 
 #[derive(Component, Reflect)]
 pub struct FlinchAnimation {
-	pub duration: f32,
-	pub distance: f32,
-	pub rotation: f32,
-	pub direction: Vec2,
-	pub t: f32,
+    pub duration: f32,
+    pub distance: f32,
+    pub rotation: f32,
+    pub direction: Vec2,
+    pub t: f32,
 }
 
 impl Default for FlinchAnimation {
-	fn default() -> Self {
-		Self {
-			duration: 0.15,
-			distance: 6.0,
-			rotation: TAU / 16.0,
-			direction: Vec2::ZERO,
-			t: 1.0,
-		}
-	}
+    fn default() -> Self {
+        Self {
+            duration: 0.15,
+            distance: 6.0,
+            rotation: TAU / 16.0,
+            direction: Vec2::ZERO,
+            t: 1.0,
+        }
+    }
 }
 
 impl FlinchAnimation {
-	pub fn trigger(&mut self, direction: Vec2) {
-		self.t = 0.0;
-		self.direction = direction
-	}
+    pub fn trigger(&mut self, direction: Vec2) {
+        self.t = 0.0;
+        self.direction = direction;
+    }
 
-	pub fn update(mut animation_query: Query<&mut FlinchAnimation>, time: Res<Time>) {
-		let dt = time.delta_seconds();
+    pub fn update(mut animation_query: Query<&mut FlinchAnimation>, time: Res<Time>) {
+        let dt = time.delta_seconds();
 
-		for mut anim in &mut animation_query {
-			anim.t = (anim.t + dt / anim.duration).min(1.0);
-		}
-	}
+        for mut anim in &mut animation_query {
+            anim.t = (anim.t + dt / anim.duration).min(1.0);
+        }
+    }
 
-	pub fn apply(mut animation_query: Query<(&FlinchAnimation, &mut Transform)>) {
-		for (anim, mut transform) in &mut animation_query {
-			let agnostic_direction = vec2(-anim.direction.x.abs(), anim.direction.y);
-			transform.translation += (agnostic_direction * anim.distance * (1.0 - anim.t)).extend(0.0);
-			transform.rotation *= Quat::from_rotation_z(-(anim.direction.x.signum()) * anim.rotation * (1.0 - anim.t));
-		}
-	}
+    pub fn apply(mut animation_query: Query<(&FlinchAnimation, &mut Transform)>) {
+        for (anim, mut transform) in &mut animation_query {
+            let agnostic_direction = vec2(-anim.direction.x.abs(), anim.direction.y);
+            transform.translation +=
+                (agnostic_direction * anim.distance * (1.0 - anim.t)).extend(0.0);
+            transform.rotation *= Quat::from_rotation_z(
+                -(anim.direction.x.signum()) * anim.rotation * (1.0 - anim.t),
+            );
+        }
+    }
 }
 
 #[derive(Component, Reflect)]

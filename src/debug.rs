@@ -10,10 +10,11 @@ use crate::{
         AttackAnimation,
         DeathAnimation,
         Facing,
+        FlinchAnimation,
         Lifetime,
         Offset,
         VirtualParent,
-        WalkAnimation, FlinchAnimation,
+        WalkAnimation,
     },
     asset::Handles,
     camera::CameraFollow,
@@ -73,7 +74,7 @@ impl Plugin for DebugPlugin {
             .register_type::<Offset>()
             .register_type::<WalkAnimation>()
             .register_type::<AttackAnimation>()
-			.register_type::<FlinchAnimation>()
+            .register_type::<FlinchAnimation>()
             .register_type::<DeathAnimation>()
             .register_type::<Facing>()
             .register_type::<Lifetime>()

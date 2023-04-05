@@ -4,7 +4,7 @@ use bevy::prelude::*;
 use bevy_rapier2d::prelude::*;
 
 use crate::{
-    animation::{DeathAnimation, Lifetime, WalkAnimation, FlinchAnimation},
+    animation::{DeathAnimation, FlinchAnimation, Lifetime, WalkAnimation},
     asset::{AudioKey, Handles},
     mob::{
         enemy::Alarm,
@@ -135,8 +135,8 @@ impl HitEffects {
         mut hit_effects: Query<&mut HitEffects>,
         mut health_query: Query<&mut Health>,
         mut velocity_query: Query<&mut Velocity>,
-		child_query: Query<&Children>,
-		mut flinch_query: Query<&mut FlinchAnimation>,
+        child_query: Query<&Children>,
+        mut flinch_query: Query<&mut FlinchAnimation>,
         audio: Res<Audio>,
     ) {
         for &HitEvent { hitbox, hurtbox } in hit_events.iter() {
@@ -161,14 +161,14 @@ impl HitEffects {
                 velocity.linvel = hit.knockback * scale;
             }
 
-			// Flinch
-			if let Ok(children) = child_query.get(hurtbox) {
-				for child in children.iter() {
-					if let Ok(mut flinch) = flinch_query.get_mut(*child) {
-						flinch.trigger(hit.knockback.normalize_or_zero());
-					}
-				}
-			}
+            // Flinch
+            if let Ok(children) = child_query.get(hurtbox) {
+                for child in children.iter() {
+                    if let Ok(mut flinch) = flinch_query.get_mut(*child) {
+                        flinch.trigger(hit.knockback.normalize_or_zero());
+                    }
+                }
+            }
         }
     }
 
