@@ -83,14 +83,13 @@ impl Default for PlayerTemplate {
     fn default() -> Self {
         Self {
             position: Vec2::ZERO,
-            health: 100.0,
+            health: 200.0,
         }
     }
 }
 
 impl PlayerTemplate {
     pub fn spawn(self, commands: &mut Commands, handle: &Handles) -> Entity {
-        const HEALTH: f32 = 100.0;
         const FACTION: Faction = Faction::Player;
 
         // Children
@@ -122,7 +121,7 @@ impl PlayerTemplate {
             },
             MobBundle {
                 mob: Mob::player(),
-                health: Health::full(HEALTH),
+                health: Health::full(self.health),
                 ..default()
             }
             .with_faction(FACTION),

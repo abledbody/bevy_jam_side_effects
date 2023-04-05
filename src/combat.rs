@@ -179,22 +179,22 @@ impl HitEffects {
 
     pub fn spawn_from_inputs(
         mut commands: Commands,
-        mob_query: Query<(&Mob, &Transform, &MobInputs)>,
+        mob_query: Query<(&Mob, &GlobalTransform, &MobInputs)>,
         handle: Res<Handles>,
     ) {
         for (mob, transform, inputs) in &mob_query {
-            let Some(dir) = inputs.attack else {
+            let Some(direction) = inputs.attack else {
                 continue
             };
 
             // Make the hitbox offset slightly ovular
-            let ovular_dir = Quat::from_axis_angle(Vec3::X, 0.5 * PI * 0.3) * dir.extend(0.0);
+            let ovular_dir = Quat::from_rotation_z(0.5 * PI * 0.3) * direction.extend(0.0);
             let radius = 12.0;
             let distance = radius;
 
             HitboxTemplate {
-                position: transform.translation + distance * ovular_dir,
-                direction: dir,
+                position: transform.translation() + distance * ovular_dir,
+                direction,
                 radius,
                 damage: 8.0,
                 knockback: 5.0,
