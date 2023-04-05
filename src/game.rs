@@ -98,7 +98,7 @@ impl Plugin for GamePlugin {
                 ZRampByY::apply,
                 VirtualParent::copy_transform.after(ZRampByY::apply),
                 Offset::apply.after(VirtualParent::copy_transform),
-                HitEvent::detect,
+                HitEvent::detect.before(EnemyAi::think),
                 DetectEvent::detect.before(EnemyAi::think),
                 Alarm::scale_difficulty.before(EnemyAi::think),
                 EnemyAi::think,

@@ -9,9 +9,9 @@ use super::MobInputs;
 use crate::{
     asset::{Handles, ImageKey},
     camera::CAMERA_SCALE,
-    combat::{DeathEffects, Faction, HurtEffects},
+    combat::{DeathEffects, Faction, HitEvent, HurtEffects},
     hud::{HealthBarTemplate, NametagTemplate},
-    mob::{BodyTemplate, Health, Mob, MobBundle},
+    mob::{player::PlayerControl, BodyTemplate, Health, Mob, MobBundle},
     vfx::DropShadowTemplate,
 };
 
@@ -263,16 +263,27 @@ impl EnemyAi {
     pub fn think(
         mut enemy_query: Query<(&mut EnemyAi, &mut MobInputs, &GlobalTransform)>,
         mut detect_events: EventReader<DetectEvent>,
+        mut hit_events: EventReader<HitEvent>,
         parent_query: Query<&Parent>,
+        player_query: Query<Entity, With<PlayerControl>>,
         transform_query: Query<&GlobalTransform, Without<EnemyAi>>,
         time: Res<Time>,
     ) {
+        let Ok(player) = player_query.get_single() else { return };
+
         // Detect target
-        for DetectEvent { sensor, target } in detect_events.iter() {
-            if let Ok(parent) = parent_query.get(*sensor) {
-                if let Ok((mut enemy, _, _)) = enemy_query.get_mut(parent.get()) {
-                    enemy.target = Some(*target);
-                }
+        for &DetectEvent { sensor, target } in detect_events.iter() {
+            if let Ok((mut enemy, ..)) = parent_query
+                .get(sensor)
+                .and_then(|parent| enemy_query.get_mut(parent.get()))
+            {
+                enemy.target = Some(target);
+            }
+        }
+        for &HitEvent { hitbox, hurtbox } in hit_events.iter() {
+            if let Ok((mut enemy, ..)) = enemy_query.get_mut(hurtbox) {
+                // Assume the hitbox originated from the player.
+                enemy.target = Some(player);
             }
         }
 

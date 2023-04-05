@@ -88,8 +88,8 @@ impl HitboxTemplate {
 }
 
 pub struct HitEvent {
-    hitbox: Entity,
-    hurtbox: Entity,
+    pub hitbox: Entity,
+    pub hurtbox: Entity,
 }
 
 impl HitEvent {
