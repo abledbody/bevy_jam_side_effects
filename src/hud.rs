@@ -24,7 +24,7 @@ impl BackdropTemplate {
                 custom_size: Some(self.size),
                 ..default()
             },
-            transform: Transform::from_xyz(0.0, 0.0, -0.1),
+            transform: Transform::from_xyz(0.0, 0.0, -0.001),
             ..default()
         });
         #[cfg(feature = "debug_mode")]
@@ -68,8 +68,7 @@ impl NametagTemplate {
         let mut nametag = commands.spawn((
             Text2dBundle {
                 text: Text::from_section(self.name, style),
-                transform: Transform::from_scale(vec3(CAMERA_SCALE, CAMERA_SCALE, 1.0))
-                    .with_translation(vec3(0.0, 0.0, 500.0)),
+                transform: Transform::from_scale(vec3(CAMERA_SCALE, CAMERA_SCALE, 1.0)),
                 ..default()
             },
             Offset {
@@ -130,10 +129,7 @@ impl HealthBarTemplate {
 
         // Parent
         let mut health_bar = commands.spawn((
-            SpriteBundle {
-                transform: Transform::from_xyz(0.0, 0.0, 500.0),
-                ..default()
-            },
+            SpriteBundle::default(),
             Offset {
                 pos: self.offset,
                 ..default()
