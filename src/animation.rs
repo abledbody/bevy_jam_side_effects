@@ -277,6 +277,7 @@ pub struct AttackAnimation {
     pub duration: f32,
     pub distance: f32,
     pub direction: Vec2,
+    pub x_sign: f32,
     pub t: f32,
 }
 
@@ -291,8 +292,7 @@ impl AttackAnimation {
 
     pub fn apply(mut animation_query: Query<(&AttackAnimation, &mut Transform)>) {
         for (anim, mut transform) in &mut animation_query {
-            transform.translation +=
-                Vec3::from((anim.direction * anim.distance * (1.0 - anim.t), 0.0));
+            transform.translation += (anim.direction * anim.distance * (1.0 - anim.t)).extend(0.0);
         }
     }
 }
@@ -303,6 +303,7 @@ impl Default for AttackAnimation {
             duration: 0.2,
             distance: 10.0,
             direction: Vec2::ZERO,
+            x_sign: 0.0,
             t: 1.0,
         }
     }

@@ -6,7 +6,15 @@ use bevy::{
 use bevy_rapier2d::prelude::*;
 
 use crate::{
-    animation::{DeathAnimation, Facing, Lifetime, Offset, VirtualParent, WalkAnimation},
+    animation::{
+        AttackAnimation,
+        DeathAnimation,
+        Facing,
+        Lifetime,
+        Offset,
+        VirtualParent,
+        WalkAnimation,
+    },
     asset::Handles,
     camera::CameraFollow,
     combat::{DeathEffects, HitEffects, HurtEffects},
@@ -15,6 +23,7 @@ use crate::{
     mob::{
         enemy::{Alarm, EnemyAi},
         player::{Gold, PlayerControl},
+        DeadBody,
         Health,
         Mob,
         MobInputs,
@@ -53,8 +62,8 @@ impl Plugin for DebugPlugin {
             .register_type::<Mob>()
             .register_type::<MobInputs>()
             .register_type::<PlayerControl>()
-            .register_type::<Alarm>()
             .register_type::<EnemyAi>()
+            .register_type::<DeadBody>()
             .register_type::<HitEffects>()
             .register_type::<HurtEffects>()
             .register_type::<DeathEffects>()
@@ -62,12 +71,14 @@ impl Plugin for DebugPlugin {
             .register_type::<ZRampByY>()
             .register_type::<Offset>()
             .register_type::<WalkAnimation>()
+            .register_type::<AttackAnimation>()
             .register_type::<DeathAnimation>()
             .register_type::<Facing>()
             .register_type::<Lifetime>()
             .register_type::<Wall>()
             .register_type::<CameraFollow<PlayerControl>>()
             .register_type::<HealthBar>()
+            .register_type::<Alarm>()
             .register_type::<AlarmMeter>();
 
         // Disable Rapier debug initially

@@ -12,7 +12,7 @@ use crate::{
 pub mod enemy;
 pub mod player;
 
-#[derive(Debug, Component, Reflect)]
+#[derive(Component, Reflect, Debug)]
 pub struct Health {
     pub current: f32,
     pub max: f32,
@@ -24,7 +24,7 @@ impl Health {
     }
 }
 
-#[derive(Debug, Component, Reflect)]
+#[derive(Component, Reflect, Debug)]
 pub struct Mob {
     speed: f32,
     acceleration: f32,
@@ -34,16 +34,31 @@ pub struct Mob {
 }
 
 impl Mob {
-    pub fn set_facing(mut mob_query: Query<(&MobInputs, &mut Facing)>) {
-        for (mob_inputs, mut facing) in &mut mob_query {
+    pub fn set_facing(
+        mut mob_query: Query<(&MobInputs, Option<&Children>, &mut Facing)>,
+        attack_animation_query: Query<&AttackAnimation>,
+    ) {
+        for (mob_inputs, children, mut facing) in &mut mob_query {
             if mob_inputs.movement.x == 0.0 && mob_inputs.attack.is_none() {
                 continue;
             }
 
-            let input_left = mob_inputs.movement.x < 0.0;
-            let attack_left = mob_inputs.attack.map(|dir| dir.x < 0.0).unwrap_or(false);
-
-            *facing = if input_left || attack_left {
+            *facing = if children
+                .map(|children| {
+                    children
+                        .iter()
+                        .filter_map(|&child| {
+                            attack_animation_query
+                                .get(child)
+                                .ok()
+                                .filter(|anim| anim.t < 1.0)
+                                .map(|anim| anim.x_sign < 0.0)
+                        })
+                        .next()
+                })
+                .flatten()
+                .unwrap_or_else(|| mob_inputs.movement.x < 0.0)
+            {
                 Facing::Left
             } else {
                 Facing::Right
@@ -105,7 +120,7 @@ impl Default for Mob {
     }
 }
 
-#[derive(Debug, Bundle, Reflect)]
+#[derive(Bundle, Reflect, Debug)]
 pub struct MobBundle {
     pub mob: Mob,
     pub mob_inputs: MobInputs,
@@ -157,7 +172,7 @@ impl MobBundle {
     }
 }
 
-#[derive(Debug, Component, Reflect, Default)]
+#[derive(Component, Reflect, Default, Debug)]
 pub struct MobInputs {
     pub movement: Vec2,
     pub attack: Option<Vec2>,
@@ -170,11 +185,13 @@ impl MobInputs {
     ) {
         for (mob_inputs, children) in &mob_query {
             if let Some(attack_direction) = mob_inputs.attack {
+                let x_sign = attack_direction.x.signum();
                 let attack_direction = vec2(attack_direction.x.abs(), attack_direction.y);
                 for &child in children {
                     if let Ok(mut anim) = animation_query.get_mut(child) {
                         anim.t = 0.0;
                         anim.direction = attack_direction;
+                        anim.x_sign = x_sign;
                     }
                 }
             }
@@ -213,5 +230,5 @@ impl BodyTemplate {
     }
 }
 
-#[derive(Component)]
+#[derive(Component, Reflect)]
 pub struct DeadBody;
