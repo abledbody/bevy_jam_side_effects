@@ -188,19 +188,23 @@ impl HitBox {
         handle: Res<Handles>,
     ) {
         for (mob, transform, inputs) in &mob_query {
-            if let Some(dir) = inputs.attack {
-                // Make the hitbox offset slightly ovular
-                let ovular_dir = Quat::from_axis_angle(Vec3::X, 0.5 * PI * 0.3) * dir.extend(0.0);
-                HitboxTemplate {
-                    position: transform.translation + 15.0 * ovular_dir,
-                    direction: dir,
-                    radius: 7.0,
-                    damage: 8.0,
-                    knockback: 5.0,
-                    faction: mob.faction,
-                }
-                .spawn(&mut commands, &handle);
+            let Some(dir) = inputs.attack else {
+                continue
+            };
+
+            // Make the hitbox offset slightly ovular
+            let ovular_dir = Quat::from_axis_angle(Vec3::X, 0.5 * PI * 0.3) * dir.extend(0.0);
+            let distance = 18.0;
+
+            HitboxTemplate {
+                position: transform.translation + distance * ovular_dir,
+                direction: dir,
+                radius: 9.0,
+                damage: 8.0,
+                knockback: 5.0,
+                faction: mob.faction,
             }
+            .spawn(&mut commands, &handle);
         }
     }
 }
