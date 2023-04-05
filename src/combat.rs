@@ -72,12 +72,12 @@ impl HitboxTemplate {
             Sensor,
             self.faction.hitbox_groups(),
             ActiveEvents::COLLISION_EVENTS,
-            HitBox {
+            HitEffects {
                 damage: self.damage,
                 knockback: self.knockback * self.direction,
-                hit: false,
-                hit_sound: Some(handle.audio[&AudioKey::PlayerAttack4].clone()),
-                miss_sound: Some(handle.audio[&AudioKey::PlayerAttackMiss].clone()),
+                success_sound: Some(handle.audio[&AudioKey::PlayerAttack4].clone()),
+                failure_sound: Some(handle.audio[&AudioKey::PlayerAttackMiss].clone()),
+                ..default()
             },
         ));
         #[cfg(feature = "debug_mode")]
@@ -88,16 +88,15 @@ impl HitboxTemplate {
 }
 
 pub struct HitEvent {
-    knockback: Vec2,
     hitbox: Entity,
-    target: Entity,
+    hurtbox: Entity,
 }
 
 impl HitEvent {
     pub fn detect(
         mut collision_events: EventReader<CollisionEvent>,
         mut hit_events: EventWriter<HitEvent>,
-        hit_query: Query<&HitBox>,
+        hit_query: Query<&HitEffects>,
     ) {
         for &event in collision_events.iter() {
             let CollisionEvent::Started(entity1, entity2, _) = event else {
@@ -105,11 +104,12 @@ impl HitEvent {
             };
 
             let mut handle_collision = |hitbox: Entity, target: Entity| {
-                let Ok(hit_effects) = hit_query.get(hitbox) else { return };
+                if !hit_query.contains(hitbox) {
+                    return;
+                }
                 hit_events.send(HitEvent {
-                    knockback: hit_effects.knockback,
                     hitbox,
-                    target,
+                    hurtbox: target,
                 });
             };
 
@@ -119,61 +119,56 @@ impl HitEvent {
     }
 }
 
-#[derive(Component, Reflect)]
-pub struct HitBox {
-    damage: f32,
-    knockback: Vec2,
-    hit: bool,
-    hit_sound: Option<Handle<AudioSource>>,
-    miss_sound: Option<Handle<AudioSource>>,
+#[derive(Component, Reflect, Default)]
+pub struct HitEffects {
+    pub damage: f32,
+    pub knockback: Vec2,
+    pub success: bool,
+    pub success_sound: Option<Handle<AudioSource>>,
+    pub failure_sound: Option<Handle<AudioSource>>,
 }
 
-impl HitBox {
+impl HitEffects {
     pub fn apply(
         mut hit_events: EventReader<HitEvent>,
         mut death_events: EventWriter<DeathEvent>,
-        mut hitbox_query: Query<&mut HitBox>,
+        mut hit_effects: Query<&mut HitEffects>,
         mut health_query: Query<&mut Health>,
         mut velocity_query: Query<&mut Velocity>,
         audio: Res<Audio>,
     ) {
-        for &HitEvent {
-            knockback,
-            hitbox,
-            target,
-        } in hit_events.iter()
-        {
-            let Ok(mut hitbox) = hitbox_query.get_mut(hitbox) else { return };
-            hitbox.hit = true;
+        for &HitEvent { hitbox, hurtbox } in hit_events.iter() {
+            let Ok(mut hit) = hit_effects.get_mut(hitbox) else { return };
 
-            if let Some(sound) = &hitbox.hit_sound {
+            if let Some(sound) = &hit.success_sound {
                 audio.play(sound.clone());
             }
+            hit.success = true;
 
             // Damage
-            if let Ok(mut health) = health_query.get_mut(target) {
-                if 0.0 < health.current && health.current <= hitbox.damage {
-                    death_events.send(DeathEvent(target));
+            if let Ok(mut health) = health_query.get_mut(hurtbox) {
+                if 0.0 < health.current && health.current <= hit.damage {
+                    death_events.send(DeathEvent(hurtbox));
                 }
-                health.current -= hitbox.damage;
+                health.current -= hit.damage;
             }
 
             // Knockback
-            if let Ok(mut velocity) = velocity_query.get_mut(target) {
+            if let Ok(mut velocity) = velocity_query.get_mut(hurtbox) {
                 let scale = 40.0;
-                velocity.linvel = knockback * scale;
+                velocity.linvel = hit.knockback * scale;
             }
         }
     }
 
     pub fn cleanup(
         mut commands: Commands,
-        hit_effects_query: Query<(Entity, &HitBox)>,
+        hit_effects_query: Query<(Entity, &HitEffects)>,
         audio: Res<Audio>,
     ) {
-        for (entity, hitbox) in &hit_effects_query {
-            if !hitbox.hit {
-                if let Some(sound) = &hitbox.miss_sound {
+        for (entity, effects) in &hit_effects_query {
+            if !effects.success {
+                if let Some(sound) = &effects.failure_sound {
                     audio.play(sound.clone());
                 }
             }
@@ -205,6 +200,33 @@ impl HitBox {
                 faction: mob.faction,
             }
             .spawn(&mut commands, &handle);
+        }
+    }
+}
+
+#[derive(Component, Reflect, Default)]
+pub struct HurtEffects {
+    pub increase_alarm: f32,
+    pub sound: Option<Handle<AudioSource>>,
+}
+
+impl HurtEffects {
+    pub fn apply(
+        mut hit_events: EventReader<HitEvent>,
+        hurt_effects_query: Query<&HurtEffects>,
+        mut alarm: ResMut<Alarm>,
+        audio: Res<Audio>,
+    ) {
+        for &HitEvent { hurtbox, .. } in hit_events.iter() {
+            let Ok(hurt) = hurt_effects_query.get(hurtbox) else { continue };
+
+            // Increase alarm
+            alarm.increase(hurt.increase_alarm);
+
+            // Play sound
+            if let Some(sound) = &hurt.sound {
+                audio.play(sound.clone());
+            }
         }
     }
 }
@@ -252,17 +274,17 @@ impl DeathEffects {
                 }
             }
 
-            let Ok(death_effects) = death_effects_query.get(entity) else {
+            let Ok(death) = death_effects_query.get(entity) else {
                 continue
             };
 
             // Reward gold
             for mut player_gold in &mut player_query {
-                player_gold.0 += death_effects.reward_gold;
+                player_gold.0 += death.reward_gold;
             }
 
             // Increase alarm
-            alarm.increase(death_effects.increase_alarm);
+            alarm.increase(death.increase_alarm);
         }
     }
 }
