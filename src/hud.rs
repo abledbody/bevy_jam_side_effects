@@ -1,12 +1,8 @@
-use bevy::{
-    math::{vec2, vec3},
-    prelude::*,
-};
+use bevy::{math::vec2, prelude::*};
 
 use crate::{
     animation::Offset,
     asset::{FontKey, Handles},
-    camera::CAMERA_SCALE,
     mob::{enemy::Alarm, Health},
 };
 
@@ -35,14 +31,14 @@ impl BackdropTemplate {
 }
 
 pub struct NametagTemplate {
-    pub offset: Vec2,
+    pub offset: Transform,
     pub name: String,
 }
 
 impl Default for NametagTemplate {
     fn default() -> Self {
         Self {
-            offset: Vec2::ZERO,
+            offset: default(),
             name: "Unnamed".to_string(),
         }
     }
@@ -68,13 +64,9 @@ impl NametagTemplate {
         let mut nametag = commands.spawn((
             Text2dBundle {
                 text: Text::from_section(self.name, style),
-                transform: Transform::from_scale(vec3(CAMERA_SCALE, CAMERA_SCALE, 1.0)),
                 ..default()
             },
-            Offset {
-                pos: self.offset,
-                ..default()
-            },
+            Offset(self.offset),
         ));
         #[cfg(feature = "debug_mode")]
         nametag.insert(Name::new("Nametag"));
@@ -116,7 +108,7 @@ impl HealthBar {
 }
 
 pub struct HealthBarTemplate {
-    pub offset: Vec2,
+    pub offset: Transform,
 }
 
 impl HealthBarTemplate {
@@ -128,14 +120,8 @@ impl HealthBarTemplate {
         .spawn(commands);
 
         // Parent
-        let mut health_bar = commands.spawn((
-            SpriteBundle::default(),
-            Offset {
-                pos: self.offset,
-                ..default()
-            },
-            HealthBar,
-        ));
+        let mut health_bar =
+            commands.spawn((SpriteBundle::default(), Offset(self.offset), HealthBar));
         #[cfg(feature = "debug_mode")]
         health_bar.insert(Name::new("HealthBar"));
 

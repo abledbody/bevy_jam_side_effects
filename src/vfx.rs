@@ -6,12 +6,14 @@ use crate::{
 };
 
 pub struct DropShadowTemplate {
-    pub offset: Vec2,
+    pub offset: Transform,
 }
 
 impl Default for DropShadowTemplate {
     fn default() -> Self {
-        Self { offset: Vec2::ZERO }
+        Self {
+            offset: Transform::from_xyz(0.0, 0.0, -0.01),
+        }
     }
 }
 
@@ -20,13 +22,9 @@ impl DropShadowTemplate {
         let mut drop_shadow = commands.spawn((
             SpriteBundle {
                 texture: handle.image[&ImageKey::DropShadow].clone(),
-                transform: Transform::from_xyz(0.0, 0.0, -0.01),
                 ..default()
             },
-            Offset {
-                pos: self.offset,
-                ..default()
-            },
+            Offset(self.offset),
         ));
         #[cfg(feature = "debug_mode")]
         drop_shadow.insert(Name::new("DropShadow"));

@@ -8,6 +8,7 @@ use crate::{
         AttackAnimation,
         DeathAnimation,
         Facing,
+        FlinchAnimation,
         Lifetime,
         Offset,
         VirtualParent,
@@ -22,7 +23,6 @@ use crate::{
         enemy::{Alarm, DetectEvent, EnemyAi, EnemyTemplate},
         player::{PlayerAction, PlayerControl, PlayerTemplate},
         Mob,
-        MobInputs,
     },
     util::{DespawnSet, ZRampByY},
 };
@@ -31,11 +31,13 @@ const TITLE: &str = "Sai Defects";
 
 #[derive(SystemSet, Clone, Debug, Eq, PartialEq, Hash)]
 enum UpdateSet {
-    Input,
+    Synchronize,
+    Animate,
+    PostAnimate,
     Combat,
     CombatFlush,
-    Animate,
-    SpawnDespawn,
+    // <-- Physics
+    // Spawn / Despawn
 }
 
 pub struct GamePlugin;
@@ -82,78 +84,77 @@ impl Plugin for GamePlugin {
         // Game logic system sets
         app.configure_sets(
             (
-                UpdateSet::Input,
+                UpdateSet::Synchronize,
+                UpdateSet::Animate,
+                UpdateSet::PostAnimate,
                 UpdateSet::Combat,
                 UpdateSet::CombatFlush,
-                UpdateSet::Animate,
-                UpdateSet::SpawnDespawn,
             )
                 .chain(),
         );
 
-        // Input systems
+        // Synchronization systems
         app.add_systems(
             (
-                DetectEvent::detect,
-                EnemyAi::think
-                    .after(DetectEvent::detect)
-                    .before(Mob::apply_movement),
-                PlayerControl::record_inputs.before(Mob::apply_movement),
-                Mob::apply_movement,
-                Mob::set_facing.after(Mob::apply_movement),
+                ZRampByY::apply,
+                VirtualParent::copy_transform.after(ZRampByY::apply),
+                Offset::apply.after(VirtualParent::copy_transform),
+                HitEvent::detect.before(EnemyAi::think),
+                DetectEvent::detect.before(EnemyAi::think),
+                Alarm::scale_difficulty.before(EnemyAi::think),
+                EnemyAi::think,
+                PlayerControl::record_inputs,
             )
-                .in_set(UpdateSet::Input),
+                .in_set(UpdateSet::Synchronize),
+        );
+
+        // Animation systems
+        app.add_systems(
+            (
+                WalkAnimation::trigger,
+                WalkAnimation::play_step_sound.after(WalkAnimation::trigger),
+                WalkAnimation::update.after(WalkAnimation::play_step_sound),
+                WalkAnimation::apply.after(WalkAnimation::update),
+                DeathAnimation::update,
+                DeathAnimation::apply.after(DeathAnimation::update),
+                AttackAnimation::trigger,
+                AttackAnimation::update.after(AttackAnimation::trigger),
+                AttackAnimation::apply.after(AttackAnimation::update),
+                FlinchAnimation::update,
+                FlinchAnimation::apply.after(FlinchAnimation::update),
+            )
+                .in_set(UpdateSet::Animate),
+        );
+
+        // Post-animation systems
+        app.add_systems(
+            (Mob::set_facing, Facing::apply.after(Mob::set_facing)).in_set(UpdateSet::PostAnimate),
         );
 
         // Combat systems
         app.add_systems(
             (
-                HitEvent::detect,
-                HurtEffects::apply.after(HitEvent::detect),
-                HitEffects::apply.after(HitEvent::detect),
+                Mob::apply_movement,
+                HitEffects::apply,
+                HurtEffects::apply,
                 DeathEffects::apply.after(HitEffects::apply),
                 HitEffects::cleanup.after(DeathEffects::apply),
                 HitEffects::spawn_from_inputs.after(HitEffects::cleanup),
-                MobInputs::animate_attack,
                 Lifetime::apply,
             )
                 .in_set(UpdateSet::Combat),
         );
         app.add_system(apply_system_buffers.in_set(UpdateSet::CombatFlush));
 
-        // Animation systems
-        app.add_systems(
-            (
-                HealthBar::update,
-                AlarmMeter::update,
-                ZRampByY::apply,
-                VirtualParent::copy_transform.after(ZRampByY::apply),
-                Offset::apply.after(VirtualParent::copy_transform),
-                WalkAnimation::update,
-                WalkAnimation::apply
-                    .after(Offset::apply)
-                    .before(Facing::apply)
-                    .after(WalkAnimation::update),
-                DeathAnimation::update,
-                DeathAnimation::apply
-                    .after(Offset::apply)
-                    .before(Facing::apply)
-                    .after(DeathAnimation::update),
-                AttackAnimation::update,
-                AttackAnimation::apply
-                    .after(Offset::apply)
-                    .before(Facing::apply)
-                    .after(AttackAnimation::update),
-                Facing::apply,
-            )
-                .in_set(UpdateSet::Animate),
-        );
-
         // Spawn / despawn systems
-        app.add_systems((DespawnSet::apply, spawn_instances).in_set(UpdateSet::SpawnDespawn));
+        app.add_systems((DespawnSet::apply, spawn_instances).in_base_set(CoreSet::Last));
 
         // UI systems
-        app.add_system(bevy::window::close_on_esc);
+        app.add_systems((
+            bevy::window::close_on_esc,
+            HealthBar::update,
+            AlarmMeter::update,
+        ));
     }
 }
 
@@ -179,16 +180,21 @@ pub fn spawn_instances(
     player_query: Query<&PlayerControl>,
 ) {
     for (entity, transform, instance, parent) in &entity_query {
+        let parent_transform = transform_query
+            .get(parent.get())
+            .copied()
+            .unwrap_or_default();
+
+        // Despawn the marker entity
+        commands.entity(entity).despawn_recursive();
+
+        // Replace with the actual entity
         match instance.identifier.as_str() {
             "Player" => {
                 // We only want one player and LDtk doesn't know that
                 if player_query.is_empty() {
                     // Since we're going to create a new entity, and we therefore will not inherit the parent's
                     // transform automatically, we need to manually add it.
-                    let parent_transform = transform_query
-                        .get(parent.get())
-                        .copied()
-                        .unwrap_or_default();
                     let position = (transform.translation + parent_transform.translation).xy();
                     PlayerTemplate {
                         position,
@@ -196,16 +202,16 @@ pub fn spawn_instances(
                     }
                     .spawn(&mut commands, &handle);
                 }
-                // Despawn the marker entity
-                commands.entity(entity).despawn_recursive();
             },
             "Enemy" => {
-                EnemyTemplate {
+                let enemy = EnemyTemplate {
                     position: transform.translation.xy(),
                     ..default()
                 }
                 .with_random_name()
-                .spawn(&mut commands, &handle, entity);
+                .spawn(&mut commands, &handle);
+
+                commands.entity(parent.get()).add_child(enemy);
             },
             _ => (),
         }

@@ -3,7 +3,7 @@ use bevy::{prelude::*, utils::HashSet};
 pub const Z_MAX: f32 = 10.0;
 pub const Z_SCALE: f32 = 0.001;
 
-#[derive(Default, Clone, Debug, Component, Reflect)]
+#[derive(Component, Reflect, Default, Clone, Debug)]
 pub struct ZRampByY;
 
 impl ZRampByY {
@@ -15,6 +15,7 @@ impl ZRampByY {
 }
 
 #[derive(Resource, Reflect, Default)]
+#[reflect(Resource)]
 pub struct DespawnSet(pub HashSet<Entity>);
 
 impl DespawnSet {

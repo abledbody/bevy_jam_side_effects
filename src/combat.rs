@@ -4,7 +4,7 @@ use bevy::prelude::*;
 use bevy_rapier2d::prelude::*;
 
 use crate::{
-    animation::{DeathAnimation, Lifetime, WalkAnimation},
+    animation::{DeathAnimation, FlinchAnimation, Lifetime, WalkAnimation},
     asset::{AudioKey, Handles},
     mob::{
         enemy::Alarm,
@@ -88,8 +88,8 @@ impl HitboxTemplate {
 }
 
 pub struct HitEvent {
-    hitbox: Entity,
-    hurtbox: Entity,
+    pub hitbox: Entity,
+    pub hurtbox: Entity,
 }
 
 impl HitEvent {
@@ -135,6 +135,8 @@ impl HitEffects {
         mut hit_effects: Query<&mut HitEffects>,
         mut health_query: Query<&mut Health>,
         mut velocity_query: Query<&mut Velocity>,
+        child_query: Query<&Children>,
+        mut flinch_query: Query<&mut FlinchAnimation>,
         audio: Res<Audio>,
     ) {
         for &HitEvent { hitbox, hurtbox } in hit_events.iter() {
@@ -158,6 +160,15 @@ impl HitEffects {
                 let scale = 40.0;
                 velocity.linvel = hit.knockback * scale;
             }
+
+            // Flinch
+            if let Ok(children) = child_query.get(hurtbox) {
+                for child in children.iter() {
+                    if let Ok(mut flinch) = flinch_query.get_mut(*child) {
+                        flinch.trigger(hit.knockback.normalize_or_zero());
+                    }
+                }
+            }
         }
     }
 
@@ -179,22 +190,22 @@ impl HitEffects {
 
     pub fn spawn_from_inputs(
         mut commands: Commands,
-        mob_query: Query<(&Mob, &Transform, &MobInputs)>,
+        mob_query: Query<(&Mob, &GlobalTransform, &MobInputs)>,
         handle: Res<Handles>,
     ) {
         for (mob, transform, inputs) in &mob_query {
-            let Some(dir) = inputs.attack else {
+            let Some(direction) = inputs.attack else {
                 continue
             };
 
             // Make the hitbox offset slightly ovular
-            let ovular_dir = Quat::from_axis_angle(Vec3::X, 0.5 * PI * 0.3) * dir.extend(0.0);
+            let ovular_dir = Quat::from_rotation_x(0.5 * PI * 0.3) * direction.extend(0.0);
             let radius = 12.0;
             let distance = radius;
 
             HitboxTemplate {
-                position: transform.translation + distance * ovular_dir,
-                direction: dir,
+                position: transform.translation() + distance * ovular_dir,
+                direction,
                 radius,
                 damage: 8.0,
                 knockback: 5.0,
@@ -234,20 +245,11 @@ impl HurtEffects {
 
 pub struct DeathEvent(pub Entity);
 
-#[derive(Component, Reflect)]
+#[derive(Component, Reflect, Default)]
 pub struct DeathEffects {
     pub reward_gold: f32,
     pub increase_alarm: f32,
     // TODO: Animation, sound effect
-}
-
-impl Default for DeathEffects {
-    fn default() -> Self {
-        Self {
-            reward_gold: 10.0,
-            increase_alarm: 5.0,
-        }
-    }
 }
 
 impl DeathEffects {

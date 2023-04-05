@@ -1,8 +1,8 @@
-use bevy::{math::vec2, prelude::*};
+use bevy::prelude::*;
 use bevy_rapier2d::prelude::*;
 
 use crate::{
-    animation::{AttackAnimation, Facing, Offset, WalkAnimation},
+    animation::{AttackAnimation, Facing, FlinchAnimation, Offset, WalkAnimation},
     asset::{AudioKey, Handles, ImageKey},
     combat::{Faction, COLLISION_GROUP},
     math::MoveTowards,
@@ -12,7 +12,7 @@ use crate::{
 pub mod enemy;
 pub mod player;
 
-#[derive(Debug, Component, Reflect)]
+#[derive(Component, Reflect, Debug)]
 pub struct Health {
     pub current: f32,
     pub max: f32,
@@ -24,7 +24,7 @@ impl Health {
     }
 }
 
-#[derive(Debug, Component, Reflect)]
+#[derive(Component, Reflect, Debug)]
 pub struct Mob {
     speed: f32,
     acceleration: f32,
@@ -34,16 +34,31 @@ pub struct Mob {
 }
 
 impl Mob {
-    pub fn set_facing(mut mob_query: Query<(&MobInputs, &mut Facing)>) {
-        for (mob_inputs, mut facing) in &mut mob_query {
-            if mob_inputs.movement.x == 0.0 && mob_inputs.attack.is_none() {
+    pub fn set_facing(
+        mut mob_query: Query<(&MobInputs, Option<&Children>, &mut Facing)>,
+        attack_animation_query: Query<&AttackAnimation>,
+    ) {
+        for (inputs, children, mut facing) in &mut mob_query {
+            if inputs.movement.x == 0.0 && inputs.attack.is_none() {
                 continue;
             }
 
-            let input_left = mob_inputs.movement.x < 0.0;
-            let attack_left = mob_inputs.attack.map(|dir| dir.x < 0.0).unwrap_or(false);
-
-            *facing = if input_left || attack_left {
+            *facing = if children
+                .map(|children| {
+                    children
+                        .iter()
+                        .filter_map(|&child| {
+                            attack_animation_query
+                                .get(child)
+                                .ok()
+                                .filter(|anim| anim.t < 1.0)
+                                .map(|anim| anim.x_sign < 0.0)
+                        })
+                        .next()
+                })
+                .flatten()
+                .unwrap_or_else(|| inputs.movement.x < 0.0)
+            {
                 Facing::Left
             } else {
                 Facing::Right
@@ -56,11 +71,11 @@ impl Mob {
         time: Res<Time>,
     ) {
         let dt = time.delta_seconds();
-        for (mob, mut velocity, mob_inputs) in &mut mob_query {
-            let (input_direction, input_magnitude) = if let Some(mob_inputs) = mob_inputs {
+        for (mob, mut velocity, inputs) in &mut mob_query {
+            let (input_direction, input_magnitude) = if let Some(inputs) = inputs {
                 (
-                    mob_inputs.movement.normalize_or_zero(),
-                    mob_inputs.movement.length().min(1.0),
+                    inputs.movement.normalize_or_zero(),
+                    inputs.movement.length().min(1.0),
                 )
             } else {
                 (Vec2::ZERO, 0.0)
@@ -105,7 +120,7 @@ impl Default for Mob {
     }
 }
 
-#[derive(Debug, Bundle, Reflect)]
+#[derive(Bundle, Reflect, Debug)]
 pub struct MobBundle {
     pub mob: Mob,
     pub mob_inputs: MobInputs,
@@ -125,13 +140,13 @@ pub struct MobBundle {
 impl Default for MobBundle {
     fn default() -> Self {
         Self {
-            mob: Mob::default(),
-            mob_inputs: MobInputs::default(),
-            facing: Facing::default(),
+            mob: default(),
+            mob_inputs: default(),
+            facing: default(),
             health: Health::full(100.0),
             z_ramp_by_y: ZRampByY,
-            velocity: Velocity::default(),
-            rigid_body: RigidBody::default(),
+            velocity: default(),
+            rigid_body: default(),
             locked_axes: LockedAxes::ROTATION_LOCKED,
             friction: Friction::new(0.0),
             collider: Collider::ball(5.0),
@@ -157,34 +172,15 @@ impl MobBundle {
     }
 }
 
-#[derive(Debug, Component, Reflect, Default)]
+#[derive(Component, Reflect, Default, Debug)]
 pub struct MobInputs {
     pub movement: Vec2,
     pub attack: Option<Vec2>,
 }
 
-impl MobInputs {
-    pub fn animate_attack(
-        mob_query: Query<(&MobInputs, &Children)>,
-        mut animation_query: Query<&mut AttackAnimation>,
-    ) {
-        for (mob_inputs, children) in &mob_query {
-            if let Some(attack_direction) = mob_inputs.attack {
-                let attack_direction = vec2(attack_direction.x.abs(), attack_direction.y);
-                for &child in children {
-                    if let Ok(mut anim) = animation_query.get_mut(child) {
-                        anim.t = 0.0;
-                        anim.direction = attack_direction;
-                    }
-                }
-            }
-        }
-    }
-}
-
 pub struct BodyTemplate {
     texture: ImageKey,
-    offset: Vec2,
+    offset: Transform,
 }
 
 impl BodyTemplate {
@@ -194,17 +190,13 @@ impl BodyTemplate {
                 texture: handle.image[&self.texture].clone(),
                 ..default()
             },
-            Offset {
-                pos: self.offset,
-                ..default()
-            },
+            Offset(self.offset),
             WalkAnimation {
-                air_time: 0.18,
-                height: 3.0,
                 sound: Some(handle.audio[&AudioKey::GnollWalk].clone()),
                 ..default()
             },
-            AttackAnimation { ..default() },
+            AttackAnimation::default(),
+            FlinchAnimation::default(),
         ));
         #[cfg(feature = "debug_mode")]
         body.insert(Name::new("Body"));
@@ -213,5 +205,5 @@ impl BodyTemplate {
     }
 }
 
-#[derive(Component)]
+#[derive(Component, Reflect)]
 pub struct DeadBody;

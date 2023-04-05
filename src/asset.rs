@@ -35,7 +35,7 @@ pub enum AudioKey {
     PlayerAttack1,
     PlayerAttack2,
     PlayerAttack3,
-	PlayerAttack4,
+    PlayerAttack4,
     PlayerHit,
     PlayerAttackMiss,
 }
@@ -44,10 +44,10 @@ const AUDIO_MAP: [(AudioKey, &str); 7] = [
     (AudioKey::GnollWalk, "sfx/walk.wav"),
     (AudioKey::PlayerAttack1, "sfx/player_attack_1.wav"),
     (AudioKey::PlayerAttack2, "sfx/player_attack_2.wav"),
-	(AudioKey::PlayerAttack3, "sfx/player_attack_3.wav"),
-	(AudioKey::PlayerAttack4, "sfx/player_attack_4.wav"),
+    (AudioKey::PlayerAttack3, "sfx/player_attack_3.wav"),
+    (AudioKey::PlayerAttack4, "sfx/player_attack_4.wav"),
     (AudioKey::PlayerHit, "sfx/player_hit.wav"),
-	(AudioKey::PlayerAttackMiss, "sfx/player_attack_miss.wav"),
+    (AudioKey::PlayerAttackMiss, "sfx/player_attack_miss.wav"),
 ];
 
 #[derive(Reflect, FromReflect, Eq, PartialEq, Hash)]
@@ -58,6 +58,7 @@ pub enum LevelKey {
 const LEVEL_MAP: [(LevelKey, &str); 1] = [(LevelKey::TestLevel, "maps/test_map.ldtk")];
 
 #[derive(Resource, Reflect, Default)]
+#[reflect(Resource)]
 pub struct Handles {
     pub font: HashMap<FontKey, Handle<Font>>,
     pub image: HashMap<ImageKey, Handle<Image>>,

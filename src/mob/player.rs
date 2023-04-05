@@ -1,6 +1,7 @@
 use bevy::{
-    math::{vec2, Vec3Swizzles},
+    math::{vec3, Vec3Swizzles},
     prelude::*,
+    window::PrimaryWindow,
 };
 use leafwing_input_manager::{
     prelude::{ActionState, DualAxis, InputMap, VirtualDPad},
@@ -11,7 +12,7 @@ use leafwing_input_manager::{
 use super::{Health, Mob, MobBundle, MobInputs};
 use crate::{
     asset::{Handles, ImageKey},
-    camera::CameraFollow,
+    camera::{CameraFollow, CAMERA_SCALE},
     combat::Faction,
     hud::{HealthBarTemplate, NametagTemplate},
     mob::BodyTemplate,
@@ -39,32 +40,32 @@ impl PlayerControl {
             With<PlayerControl>,
         >,
         mouse_input_resource: Res<Input<MouseButton>>,
-        windows: Query<&Window>,
+        primary_window_query: Query<&Window, With<PrimaryWindow>>,
         camera: Query<(&Camera, &GlobalTransform), With<CameraFollow<PlayerControl>>>,
     ) {
-        for (action_state, mut mob_inputs, mob_gt) in &mut player_query {
-            mob_inputs.movement = Vec2::ZERO;
+        let window = primary_window_query.single();
+        let (camera, cam_gt) = camera.single();
+
+        for (action_state, mut inputs, mob_gt) in &mut player_query {
+            inputs.movement = Vec2::ZERO;
             if action_state.pressed(PlayerAction::Move) {
                 if let Some(axis_pair) = action_state.clamped_axis_pair(PlayerAction::Move) {
-                    mob_inputs.movement = axis_pair.xy();
+                    inputs.movement = axis_pair.xy();
                 }
             }
 
-            mob_inputs.attack = None;
+            inputs.attack = None;
             if action_state.just_pressed(PlayerAction::Attack) {
                 if let Some(axis_pair) = action_state.clamped_axis_pair(PlayerAction::Attack) {
-                    mob_inputs.attack = Some(axis_pair.xy());
+                    inputs.attack = Some(axis_pair.xy());
                 }
             }
-
-            let window = windows.single();
-            let (camera, cam_gt) = camera.single();
 
             if mouse_input_resource.just_pressed(MouseButton::Left) {
                 if let Some(position) = window.cursor_position() {
                     if let Some(pos) = camera.viewport_to_world_2d(cam_gt, position) {
                         let dir = pos - mob_gt.translation().xy();
-                        mob_inputs.attack = Some(dir.normalize());
+                        inputs.attack = Some(dir.normalize());
                     }
                 }
             }
@@ -82,30 +83,33 @@ impl Default for PlayerTemplate {
     fn default() -> Self {
         Self {
             position: Vec2::ZERO,
-            health: 100.0,
+            health: 200.0,
         }
     }
 }
 
 impl PlayerTemplate {
     pub fn spawn(self, commands: &mut Commands, handle: &Handles) -> Entity {
-        const HEALTH: f32 = 100.0;
         const FACTION: Faction = Faction::Player;
 
         // Children
         let body = BodyTemplate {
             texture: ImageKey::GreenGnoll,
-            offset: vec2(2.0, 11.0),
+            offset: Transform::from_xyz(2.0, 11.0, 0.0),
         }
         .spawn(commands, handle);
         let drop_shadow = DropShadowTemplate::default().spawn(commands, handle);
         let nametag = NametagTemplate {
-            offset: vec2(0.0, 26.0),
+            offset: Transform::from_xyz(0.0, 26.0, 0.0).with_scale(vec3(
+                CAMERA_SCALE,
+                CAMERA_SCALE,
+                1.0,
+            )),
             name: PLAYER_NAME.to_string(),
         }
         .spawn(commands, handle);
         let health_bar = HealthBarTemplate {
-            offset: vec2(0.0, -6.0),
+            offset: Transform::from_xyz(0.0, -6.0, 0.0),
         }
         .spawn(commands);
 
@@ -117,7 +121,7 @@ impl PlayerTemplate {
             },
             MobBundle {
                 mob: Mob::player(),
-                health: Health::full(HEALTH),
+                health: Health::full(self.health),
                 ..default()
             }
             .with_faction(FACTION),
