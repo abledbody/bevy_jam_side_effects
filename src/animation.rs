@@ -44,8 +44,8 @@ impl VirtualParent {
 
 #[derive(Component, Reflect, Default)]
 pub struct Offset {
-	pub pos: Vec2,
-	pub rot: f32,
+    pub pos: Vec2,
+    pub rot: f32,
 }
 
 impl Offset {
@@ -54,12 +54,12 @@ impl Offset {
         virtual_parent_query: Query<(), With<VirtualParent>>,
     ) {
         for (entity, offset, mut transform) in &mut offset_query {
-			let rot_quat = Quat::from_rotation_z(offset.rot);
+            let rot_quat = Quat::from_rotation_z(offset.rot);
 
             if virtual_parent_query.contains(entity) {
                 transform.translation.x += offset.pos.x;
                 transform.translation.y += offset.pos.y;
-				transform.rotation *= rot_quat;
+                transform.rotation *= rot_quat;
             } else {
                 transform.translation.x = offset.pos.x;
                 transform.translation.y = offset.pos.y;
@@ -223,8 +223,9 @@ impl WalkAnimation {
 
 #[derive(Component, Reflect)]
 pub struct DeathAnimation {
-    pub air_time: f32,
     pub height: f32,
+    pub final_height: f32,
+    pub air_time: f32,
     pub rotate_time: f32,
     pub air_t: f32,
     pub rot_t: f32,
@@ -234,7 +235,8 @@ impl Default for DeathAnimation {
     fn default() -> Self {
         Self {
             air_time: 0.25,
-            height: 12.0,
+            height: 16.0,
+            final_height: -10.0,
             rotate_time: 0.3,
             air_t: 0.0,
             rot_t: 0.0,
@@ -254,7 +256,8 @@ impl DeathAnimation {
 
     pub fn apply(mut animation_query: Query<(&DeathAnimation, &mut Transform)>) {
         for (anim, mut transform) in &mut animation_query {
-            transform.translation.y += anim.height * (anim.air_t * PI).sin();
+            transform.translation.y +=
+                anim.height * (anim.air_t * PI).sin() + anim.final_height * anim.air_t;
             transform.rotation *= Quat::from_rotation_z((anim.rot_t * TAU / 4.0).sin() * TAU / 4.0);
         }
     }
@@ -262,40 +265,36 @@ impl DeathAnimation {
 
 #[derive(Component, Reflect)]
 pub struct AttackAnimation {
-	pub length: f32,
-	pub distance: f32,
-	pub direction: Vec2,
-	pub t: f32,
+    pub length: f32,
+    pub distance: f32,
+    pub direction: Vec2,
+    pub t: f32,
 }
 
 impl AttackAnimation {
-	pub fn update(
-		mut animation_query: Query<&mut AttackAnimation>,
-		time: Res<Time>
-	) {
-		let dt = time.delta_seconds();
+    pub fn update(mut animation_query: Query<&mut AttackAnimation>, time: Res<Time>) {
+        let dt = time.delta_seconds();
 
-		for mut anim in &mut animation_query {
-			anim.t = (anim.t + dt / anim.length).min(1.0);
-		}
-	}
+        for mut anim in &mut animation_query {
+            anim.t = (anim.t + dt / anim.length).min(1.0);
+        }
+    }
 
-	pub fn apply(
-		mut animation_query: Query<(&AttackAnimation, &mut Transform)>,
-	) {
-		for (anim, mut transform) in &mut animation_query {
-			transform.translation += Vec3::from((anim.direction * anim.distance * (1.0 - anim.t), 0.0));
-		}
-	}
+    pub fn apply(mut animation_query: Query<(&AttackAnimation, &mut Transform)>) {
+        for (anim, mut transform) in &mut animation_query {
+            transform.translation +=
+                Vec3::from((anim.direction * anim.distance * (1.0 - anim.t), 0.0));
+        }
+    }
 }
 
 impl Default for AttackAnimation {
-	fn default() -> Self {
-		Self {
-			length: 0.2,
-			distance: 7.5,
-			direction: Vec2::ZERO,
-			t: 1.0,
-		}
-	}
+    fn default() -> Self {
+        Self {
+            length: 0.2,
+            distance: 7.5,
+            direction: Vec2::ZERO,
+            t: 1.0,
+        }
+    }
 }
