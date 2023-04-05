@@ -236,7 +236,7 @@ impl Default for DeathAnimation {
         Self {
             air_time: 0.25,
             height: 16.0,
-            final_height: -10.0,
+            final_height: -8.0,
             rotate_time: 0.3,
             air_t: 0.0,
             rot_t: 0.0,
@@ -265,7 +265,7 @@ impl DeathAnimation {
 
 #[derive(Component, Reflect)]
 pub struct AttackAnimation {
-    pub length: f32,
+    pub duration: f32,
     pub distance: f32,
     pub direction: Vec2,
     pub t: f32,
@@ -276,7 +276,7 @@ impl AttackAnimation {
         let dt = time.delta_seconds();
 
         for mut anim in &mut animation_query {
-            anim.t = (anim.t + dt / anim.length).min(1.0);
+            anim.t = (anim.t + dt / anim.duration).min(1.0);
         }
     }
 
@@ -291,8 +291,8 @@ impl AttackAnimation {
 impl Default for AttackAnimation {
     fn default() -> Self {
         Self {
-            length: 0.2,
-            distance: 7.5,
+            duration: 0.2,
+            distance: 10.0,
             direction: Vec2::ZERO,
             t: 1.0,
         }
