@@ -1,6 +1,9 @@
 use std::f32::consts::{PI, TAU};
 
-use bevy::{math::Vec3Swizzles, prelude::*};
+use bevy::{
+    math::{vec2, Vec3Swizzles},
+    prelude::*,
+};
 
 use crate::{
     mob::{player::PlayerControl, MobInputs},
@@ -166,57 +169,56 @@ impl WalkAnimation {
         time: Res<Time>,
         audio: Res<Audio>,
     ) {
-        if let Ok(player) = player_query.get_single() {
-            let dt = time.delta_seconds();
-            let player_transform = *mob_query.get(player).unwrap().0;
-            for (transform, mob_inputs, children) in &mob_query {
-                let dist_to_player =
-                    (player_transform.translation().xy() - transform.translation().xy()).length();
-                let volume = |max_volume: f32| max_volume / (0.2 * dist_to_player).max(1.0);
-                let moving = mob_inputs.movement.length() != 0.0;
+        let Ok(player) = player_query.get_single() else { return };
+        let Ok((&player_transform, ..)) = mob_query.get(player) else { return };
+        let player_pos = player_transform.translation().xy();
 
-                for &child in children {
-                    let Ok(mut anim) = animation_query.get_mut(child) else {
+        let dt = time.delta_seconds();
+        for (transform, mob_inputs, children) in &mob_query {
+            let dist_to_player = (player_pos - transform.translation().xy()).length();
+            let volume = |max_volume: f32| max_volume / (0.2 * dist_to_player).max(1.0);
+            let moving = mob_inputs.movement.length() != 0.0;
+
+            for &child in children {
+                let Ok(mut anim) = animation_query.get_mut(child) else {
                     continue
                 };
+                if anim.t <= 0.0 && !moving {
+                    continue;
+                }
 
-                    if anim.t <= 0.0 && !moving {
-                        continue;
+                if let Some(sound) = &anim.sound {
+                    if anim.t <= 0.0 {
+                        audio.play_with_settings(
+                            sound.clone(),
+                            PlaybackSettings {
+                                volume: volume(0.3),
+                                ..default()
+                            },
+                        );
                     }
+                }
+
+                anim.t += dt / anim.air_time;
+
+                // The rest of this manages the loop, or lack thereof.
+                if anim.t < 1.0 {
+                    continue;
+                }
+                if moving {
+                    anim.t = anim.t.fract();
 
                     if let Some(sound) = &anim.sound {
-                        if anim.t <= 0.0 {
-                            audio.play_with_settings(
-                                sound.clone(),
-                                PlaybackSettings {
-                                    volume: volume(0.3),
-                                    ..default()
-                                },
-                            );
-                        }
+                        audio.play_with_settings(
+                            sound.clone(),
+                            PlaybackSettings {
+                                volume: volume(0.3),
+                                ..default()
+                            },
+                        );
                     }
-
-                    anim.t += dt / anim.air_time;
-
-                    // The rest of this manages the loop, or lack thereof.
-                    if anim.t < 1.0 {
-                        continue;
-                    }
-                    if moving {
-                        anim.t = anim.t.fract();
-
-                        if let Some(sound) = &anim.sound {
-                            audio.play_with_settings(
-                                sound.clone(),
-                                PlaybackSettings {
-                                    volume: volume(0.3),
-                                    ..default()
-                                },
-                            );
-                        }
-                    } else {
-                        anim.t = 0.0;
-                    }
+                } else {
+                    anim.t = 0.0;
                 }
             }
         }
@@ -282,6 +284,25 @@ pub struct AttackAnimation {
 }
 
 impl AttackAnimation {
+    pub fn trigger(
+        mob_query: Query<(&MobInputs, &Children)>,
+        mut animation_query: Query<&mut AttackAnimation>,
+    ) {
+        for (mob_inputs, children) in &mob_query {
+            if let Some(attack_direction) = mob_inputs.attack {
+                let x_sign = attack_direction.x.signum();
+                let attack_direction = vec2(attack_direction.x.abs(), attack_direction.y);
+                for &child in children {
+                    if let Ok(mut anim) = animation_query.get_mut(child) {
+                        anim.t = 0.0;
+                        anim.direction = attack_direction;
+                        anim.x_sign = x_sign;
+                    }
+                }
+            }
+        }
+    }
+
     pub fn update(mut animation_query: Query<&mut AttackAnimation>, time: Res<Time>) {
         let dt = time.delta_seconds();
 
