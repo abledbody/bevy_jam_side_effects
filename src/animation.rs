@@ -306,7 +306,7 @@ impl Default for FlinchAnimation {
 impl FlinchAnimation {
 	pub fn trigger(&mut self, direction: Vec2) {
 		self.t = 0.0;
-		self.direction = direction;
+		self.direction = direction
 	}
 
 	pub fn update(mut animation_query: Query<&mut FlinchAnimation>, time: Res<Time>) {
@@ -319,8 +319,9 @@ impl FlinchAnimation {
 
 	pub fn apply(mut animation_query: Query<(&FlinchAnimation, &mut Transform)>) {
 		for (anim, mut transform) in &mut animation_query {
-			transform.translation += (anim.direction * anim.distance * (1.0 - anim.t)).extend(0.0);
-			transform.rotation *= Quat::from_rotation_z(anim.rotation * (1.0 - anim.t));
+			let agnostic_direction = vec2(-anim.direction.x.abs(), anim.direction.y);
+			transform.translation += (agnostic_direction * anim.distance * (1.0 - anim.t)).extend(0.0);
+			transform.rotation *= Quat::from_rotation_z(-(anim.direction.x.signum()) * anim.rotation * (1.0 - anim.t));
 		}
 	}
 }
