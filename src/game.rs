@@ -19,7 +19,7 @@ use crate::{
     hud::{AlarmMeter, AlarmMeterTemplate, HealthBar},
     map::MapPlugin,
     mob::{
-        enemy::{Alarm, EnemyTemplate},
+        enemy::{Alarm, DetectionEvent, EnemyAi, EnemyTemplate},
         player::{PlayerAction, PlayerControl, PlayerTemplate},
         Mob,
         MobInputs,
@@ -52,7 +52,9 @@ impl Plugin for GamePlugin {
         .insert_resource(Alarm::empty(100.0));
 
         // Events
-        app.add_event::<HitEvent>().add_event::<DeathEvent>();
+        app.add_event::<HitEvent>()
+            .add_event::<DeathEvent>()
+            .add_event::<DetectionEvent>();
 
         // Plugins
         app.add_plugins(
@@ -93,6 +95,7 @@ impl Plugin for GamePlugin {
         app.add_systems(
             (
                 PlayerControl::record_inputs,
+                EnemyAi::think,
                 Mob::apply_movement,
                 Mob::set_facing,
             )
@@ -108,6 +111,7 @@ impl Plugin for GamePlugin {
                 DeathEffects::apply.after(HitEffects::apply),
                 HitEffects::cleanup.after(DeathEffects::apply),
                 HitEffects::spawn_from_inputs.after(HitEffects::cleanup),
+                DetectionEvent::detect,
                 MobInputs::animate_attack,
                 Lifetime::apply,
             )

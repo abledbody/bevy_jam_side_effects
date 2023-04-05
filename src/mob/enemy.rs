@@ -1,6 +1,11 @@
-use bevy::{math::vec2, prelude::*};
+use bevy::{
+    math::{vec2, Vec3Swizzles},
+    prelude::*,
+};
+use bevy_rapier2d::prelude::{ActiveEvents, Collider, CollisionEvent, Sensor};
 use rand::{seq::SliceRandom, thread_rng, Rng};
 
+use super::MobInputs;
 use crate::{
     asset::{Handles, ImageKey},
     combat::{DeathEffects, Faction},
@@ -77,6 +82,8 @@ pub struct EnemyTemplate {
     pub health: f32,
     pub reward_gold: f32,
     pub increase_alarm: f32,
+    pub detection_radius: f32,
+    pub attack_radius: f32,
 }
 
 impl Default for EnemyTemplate {
@@ -88,6 +95,8 @@ impl Default for EnemyTemplate {
             health: 20.0,
             reward_gold: 10.0,
             increase_alarm: 5.0,
+            detection_radius: 100.0,
+            attack_radius: 20.0,
         }
     }
 }
@@ -122,6 +131,10 @@ impl EnemyTemplate {
             offset: vec2(0.0, -6.0),
         }
         .spawn(commands);
+        let detection_radius = DetectionRadiusTemplate {
+            radius: self.detection_radius,
+        }
+        .spawn(commands);
 
         // Parent entity
         let mut enemy = if let Some(e) = attach.into() {
@@ -139,7 +152,10 @@ impl EnemyTemplate {
                 ..default()
             }
             .with_faction(FACTION),
-            EnemyAi,
+            EnemyAi {
+                attack_radius: self.attack_radius,
+                ..default()
+            },
             DeathEffects {
                 reward_gold: self.reward_gold,
                 ..default()
@@ -152,6 +168,7 @@ impl EnemyTemplate {
         enemy.add_child(drop_shadow);
         enemy.add_child(nametag);
         enemy.add_child(health_bar);
+        enemy.add_child(detection_radius);
 
         enemy.id()
     }
@@ -173,5 +190,98 @@ impl Alarm {
     }
 }
 
-#[derive(Component, Reflect, Default)]
-pub struct EnemyAi;
+#[derive(Component, Reflect)]
+pub struct EnemyAi {
+    attack_radius: f32,
+    attack_cooldown: f32,
+    t: f32,
+}
+
+impl Default for EnemyAi {
+    fn default() -> Self {
+        Self {
+            attack_radius: 30.0,
+            attack_cooldown: 0.5,
+            t: Default::default(),
+        }
+    }
+}
+
+impl EnemyAi {
+    pub fn think(
+        mut ai_query: Query<(&mut EnemyAi, &mut MobInputs, &GlobalTransform), With<EnemyAi>>,
+        mut detection_events: EventReader<DetectionEvent>,
+        children_query: Query<&Parent>,
+        transform_query: Query<&GlobalTransform, Without<EnemyAi>>,
+        time: Res<Time>,
+    ) {
+        for DetectionEvent { sensor, target } in detection_events.iter() {
+            if let Ok(parent) = children_query.get(*sensor) {
+                if let Ok((mut ai, mut mob_inputs, mob_gt)) = ai_query.get_mut(parent.get()) {
+                    mob_inputs.movement = Vec2::ZERO;
+                    mob_inputs.attack = None;
+                    ai.t += time.delta_seconds();
+                    if let Ok(target_gt) = transform_query.get(*target) {
+                        let dir = target_gt.translation() - mob_gt.translation();
+                        let dist = dir.length();
+                        let dir = dir.normalize().xy();
+                        if dist > ai.attack_radius {
+                            mob_inputs.movement = dir;
+                        } else if ai.t >= ai.attack_cooldown {
+                            mob_inputs.attack = Some(dir);
+                            ai.t = 0.0;
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+pub struct DetectionEvent {
+    sensor: Entity,
+    target: Entity,
+}
+
+impl DetectionEvent {
+    pub fn detect(
+        mut collision_events: EventReader<CollisionEvent>,
+        mut detect_events: EventWriter<DetectionEvent>,
+        detect_query: Query<Entity, With<Sensor>>,
+    ) {
+        for &event in collision_events.iter() {
+            let CollisionEvent::Started(entity1, entity2, _) = event else {
+            continue
+        };
+
+            let mut handle_collision = |sensor: Entity, target: Entity| {
+                if detect_query.get(sensor).is_ok() {
+                    detect_events.send(DetectionEvent { sensor, target });
+                }
+            };
+
+            handle_collision(entity1, entity2);
+            handle_collision(entity2, entity1);
+        }
+    }
+}
+
+pub struct DetectionRadiusTemplate {
+    radius: f32,
+}
+
+impl DetectionRadiusTemplate {
+    pub fn spawn(self, commands: &mut Commands) -> Entity {
+        let mut entity = commands.spawn((
+            TransformBundle::default(),
+            Collider::ball(self.radius),
+            Sensor,
+            Faction::Enemy.hitbox_groups(),
+            ActiveEvents::COLLISION_EVENTS,
+        ));
+        #[cfg(feature = "debug_mode")]
+        entity.insert(Name::new("Detection Radius"));
+
+        entity.id()
+    }
+}
