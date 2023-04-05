@@ -149,6 +149,7 @@ pub struct WalkAnimation {
     pub air_time: f32,
     pub height: f32,
     pub t: f32,
+	pub start_frame: bool,
     pub sound: Option<Handle<AudioSource>>,
 }
 
@@ -158,6 +159,7 @@ impl Default for WalkAnimation {
             air_time: 0.18,
             height: 3.0,
             t: 1.0,
+			start_frame: false,
             sound: None,
         }
     }
@@ -170,14 +172,18 @@ impl WalkAnimation {
     ) {
         for (mut anim, parent) in &mut animation_query {
             if anim.t < 1.0 {
-                continue;
-            }
-            let Ok(inputs) = inputs_query.get(parent.get()) else { continue };
-            if inputs.movement.length() == 0.0 {
+				anim.start_frame = false;
                 continue;
             }
 
-            anim.t = 0.0;
+            let Ok(inputs) = inputs_query.get(parent.get()) else { continue };
+            if inputs.movement.length() == 0.0 {
+				anim.t = 1.0;
+                continue;
+            }
+
+			anim.start_frame = true;
+            anim.t -= anim.t.floor();
         }
     }
 
@@ -190,7 +196,7 @@ impl WalkAnimation {
         let player_pos = player.translation().xy();
 
         for (anim, transform) in &animation_query {
-            if anim.t != 0.0 {
+            if !anim.start_frame {
                 continue;
             }
             let Some(sound) = &anim.sound else { continue };
@@ -213,7 +219,7 @@ impl WalkAnimation {
         let dt = time.delta_seconds();
 
         for mut anim in &mut animation_query {
-            anim.t = (anim.t + dt / anim.air_time).min(1.0);
+            anim.t += dt / anim.air_time;
         }
     }
 
