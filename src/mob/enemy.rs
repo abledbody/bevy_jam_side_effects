@@ -250,14 +250,14 @@ impl Default for EnemyAi {
             max_follow_radius: 1100.0,
             follow_radius: 100.0,
 
-            min_attack_radius: 10.0,
+            min_attack_radius: 20.0,
             max_attack_radius: 40.0,
-            attack_radius: 10.0,
+            attack_radius: 20.0,
 
             // Ignore the fact that min > max here :)
-            min_attack_cooldown: 1.0,
-            max_attack_cooldown: 0.0,
-            attack_cooldown: 1.0,
+            min_attack_cooldown: 0.8,
+            max_attack_cooldown: 0.4,
+            attack_cooldown: 0.8,
             attack_cooldown_t: 0.0,
 
             target: None,
