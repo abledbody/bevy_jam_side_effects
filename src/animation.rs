@@ -1,8 +1,11 @@
 use std::f32::consts::{PI, TAU};
 
-use bevy::prelude::*;
+use bevy::{math::Vec3Swizzles, prelude::*};
 
-use crate::{mob::MobInputs, util::DespawnSet};
+use crate::{
+    mob::{player::PlayerControl, MobInputs},
+    util::DespawnSet,
+};
 
 #[derive(Component, Reflect)]
 pub struct Lifetime(pub f32);
@@ -157,57 +160,63 @@ pub struct WalkAnimation {
 
 impl WalkAnimation {
     pub fn update(
-        mob_query: Query<(&MobInputs, &Children)>,
+        mob_query: Query<(&GlobalTransform, &MobInputs, &Children)>,
+        player_query: Query<Entity, With<PlayerControl>>,
         mut animation_query: Query<&mut WalkAnimation>,
         time: Res<Time>,
         audio: Res<Audio>,
     ) {
-        let dt = time.delta_seconds();
+        if let Ok(player) = player_query.get_single() {
+            let dt = time.delta_seconds();
+            let player_transform = *mob_query.get(player).unwrap().0;
+            for (transform, mob_inputs, children) in &mob_query {
+                let dist_to_player =
+                    (player_transform.translation().xy() - transform.translation().xy()).length();
+                let volume = |max_volume: f32| max_volume / (0.2 * dist_to_player).max(1.0);
+                let moving = mob_inputs.movement.length() != 0.0;
 
-        for (mob_inputs, children) in &mob_query {
-            let moving = mob_inputs.movement.length() != 0.0;
-
-            for &child in children {
-                let Ok(mut anim) = animation_query.get_mut(child) else {
+                for &child in children {
+                    let Ok(mut anim) = animation_query.get_mut(child) else {
                     continue
                 };
 
-                if anim.t <= 0.0 && !moving {
-                    continue;
-                }
-
-                if let Some(sound) = &anim.sound {
-                    if anim.t <= 0.0 {
-                        audio.play_with_settings(
-                            sound.clone(),
-                            PlaybackSettings {
-                                volume: 0.3,
-                                ..default()
-                            },
-                        );
+                    if anim.t <= 0.0 && !moving {
+                        continue;
                     }
-                }
-
-                anim.t += dt / anim.air_time;
-
-                // The rest of this manages the loop, or lack thereof.
-                if anim.t < 1.0 {
-                    continue;
-                }
-                if moving {
-                    anim.t = anim.t.fract();
 
                     if let Some(sound) = &anim.sound {
-                        audio.play_with_settings(
-                            sound.clone(),
-                            PlaybackSettings {
-                                volume: 0.3,
-                                ..default()
-                            },
-                        );
+                        if anim.t <= 0.0 {
+                            audio.play_with_settings(
+                                sound.clone(),
+                                PlaybackSettings {
+                                    volume: volume(0.3),
+                                    ..default()
+                                },
+                            );
+                        }
                     }
-                } else {
-                    anim.t = 0.0;
+
+                    anim.t += dt / anim.air_time;
+
+                    // The rest of this manages the loop, or lack thereof.
+                    if anim.t < 1.0 {
+                        continue;
+                    }
+                    if moving {
+                        anim.t = anim.t.fract();
+
+                        if let Some(sound) = &anim.sound {
+                            audio.play_with_settings(
+                                sound.clone(),
+                                PlaybackSettings {
+                                    volume: volume(0.3),
+                                    ..default()
+                                },
+                            );
+                        }
+                    } else {
+                        anim.t = 0.0;
+                    }
                 }
             }
         }

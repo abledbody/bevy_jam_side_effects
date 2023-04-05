@@ -239,9 +239,9 @@ impl EnemyAi {
             mob_inputs.attack = None;
             ai.t += dt;
 
-            let delta = target_gt.translation() - mob_gt.translation();
+            let delta = target_gt.translation().xy() - mob_gt.translation().xy();
             let distance = delta.length();
-            let dir = delta.xy().normalize();
+            let dir = delta.normalize();
 
             if distance > ai.follow_radius {
                 ai.target = None;
