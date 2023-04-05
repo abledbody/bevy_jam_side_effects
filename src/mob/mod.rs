@@ -2,7 +2,7 @@ use bevy::prelude::*;
 use bevy_rapier2d::prelude::*;
 
 use crate::{
-    animation::{AttackAnimation, Facing, Offset, WalkAnimation},
+    animation::{AttackAnimation, Facing, Offset, WalkAnimation, FlinchAnimation},
     asset::{AudioKey, Handles, ImageKey},
     combat::{Faction, COLLISION_GROUP},
     math::MoveTowards,
@@ -196,6 +196,7 @@ impl BodyTemplate {
                 ..default()
             },
             AttackAnimation::default(),
+			FlinchAnimation::default(),
         ));
         #[cfg(feature = "debug_mode")]
         body.insert(Name::new("Body"));

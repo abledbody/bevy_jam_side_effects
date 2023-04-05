@@ -232,48 +232,6 @@ impl WalkAnimation {
 }
 
 #[derive(Component, Reflect)]
-pub struct DeathAnimation {
-    pub height: f32,
-    pub final_height: f32,
-    pub air_time: f32,
-    pub rotate_time: f32,
-    pub air_t: f32,
-    pub rot_t: f32,
-}
-
-impl Default for DeathAnimation {
-    fn default() -> Self {
-        Self {
-            air_time: 0.25,
-            height: 16.0,
-            final_height: -8.0,
-            rotate_time: 0.3,
-            air_t: 1.0,
-            rot_t: 1.0,
-        }
-    }
-}
-
-impl DeathAnimation {
-    pub fn update(mut animation_query: Query<&mut DeathAnimation>, time: Res<Time>) {
-        let dt = time.delta_seconds();
-
-        for mut anim in &mut animation_query {
-            anim.air_t = (anim.air_t + dt / anim.air_time).min(1.0);
-            anim.rot_t = (anim.rot_t + dt / anim.rotate_time).min(1.0);
-        }
-    }
-
-    pub fn apply(mut animation_query: Query<(&DeathAnimation, &mut Transform)>) {
-        for (anim, mut transform) in &mut animation_query {
-            transform.translation.y +=
-                anim.height * (anim.air_t * PI).sin() + anim.final_height * anim.air_t;
-            transform.rotation *= Quat::from_rotation_z((anim.rot_t * TAU / 4.0).sin() * TAU / 4.0);
-        }
-    }
-}
-
-#[derive(Component, Reflect)]
 pub struct AttackAnimation {
     pub duration: f32,
     pub distance: f32,
@@ -320,6 +278,91 @@ impl Default for AttackAnimation {
             direction: Vec2::ZERO,
             x_sign: 0.0,
             t: 1.0,
+        }
+    }
+}
+
+#[derive(Component, Reflect)]
+pub struct FlinchAnimation {
+	pub duration: f32,
+	pub distance: f32,
+	pub rotation: f32,
+	pub direction: Vec2,
+	pub t: f32,
+}
+
+impl Default for FlinchAnimation {
+	fn default() -> Self {
+		Self {
+			duration: 0.15,
+			distance: 6.0,
+			rotation: TAU / 16.0,
+			direction: Vec2::ZERO,
+			t: 1.0,
+		}
+	}
+}
+
+impl FlinchAnimation {
+	pub fn trigger(&mut self, direction: Vec2) {
+		self.t = 0.0;
+		self.direction = direction;
+	}
+
+	pub fn update(mut animation_query: Query<&mut FlinchAnimation>, time: Res<Time>) {
+		let dt = time.delta_seconds();
+
+		for mut anim in &mut animation_query {
+			anim.t = (anim.t + dt / anim.duration).min(1.0);
+		}
+	}
+
+	pub fn apply(mut animation_query: Query<(&FlinchAnimation, &mut Transform)>) {
+		for (anim, mut transform) in &mut animation_query {
+			transform.translation += (anim.direction * anim.distance * (1.0 - anim.t)).extend(0.0);
+			transform.rotation *= Quat::from_rotation_z(anim.rotation * (1.0 - anim.t));
+		}
+	}
+}
+
+#[derive(Component, Reflect)]
+pub struct DeathAnimation {
+    pub height: f32,
+    pub final_height: f32,
+    pub air_time: f32,
+    pub rotate_time: f32,
+    pub air_t: f32,
+    pub rot_t: f32,
+}
+
+impl Default for DeathAnimation {
+    fn default() -> Self {
+        Self {
+            air_time: 0.25,
+            height: 16.0,
+            final_height: -8.0,
+            rotate_time: 0.3,
+            air_t: 1.0,
+            rot_t: 1.0,
+        }
+    }
+}
+
+impl DeathAnimation {
+    pub fn update(mut animation_query: Query<&mut DeathAnimation>, time: Res<Time>) {
+        let dt = time.delta_seconds();
+
+        for mut anim in &mut animation_query {
+            anim.air_t = (anim.air_t + dt / anim.air_time).min(1.0);
+            anim.rot_t = (anim.rot_t + dt / anim.rotate_time).min(1.0);
+        }
+    }
+
+    pub fn apply(mut animation_query: Query<(&DeathAnimation, &mut Transform)>) {
+        for (anim, mut transform) in &mut animation_query {
+            transform.translation.y +=
+                anim.height * (anim.air_t * PI).sin() + anim.final_height * anim.air_t;
+            transform.rotation *= Quat::from_rotation_z((anim.rot_t * TAU / 4.0).sin() * TAU / 4.0);
         }
     }
 }
