@@ -8,7 +8,7 @@ use rand::{seq::SliceRandom, thread_rng, Rng};
 use super::MobInputs;
 use crate::{
     asset::{Handles, ImageKey},
-    combat::{DeathEffects, Faction},
+    combat::{DeathEffects, Faction, HurtEffects},
     hud::{HealthBarTemplate, NametagTemplate},
     mob::{BodyTemplate, Health, Mob, MobBundle},
     vfx::DropShadowTemplate,
@@ -81,7 +81,8 @@ pub struct EnemyTemplate {
     pub variant: ImageKey,
     pub health: f32,
     pub reward_gold: f32,
-    pub increase_alarm: f32,
+    pub hurt_increase_alarm: f32,
+    pub death_increase_alarm: f32,
     pub follow_beyond_detect_radius: f32,
     pub detect_radius: f32,
     pub attack_radius: f32,
@@ -95,7 +96,8 @@ impl Default for EnemyTemplate {
             variant: ImageKey::RedGnoll,
             health: 20.0,
             reward_gold: 10.0,
-            increase_alarm: 5.0,
+            hurt_increase_alarm: 0.5,
+            death_increase_alarm: 5.0,
             follow_beyond_detect_radius: 100.0,
             detect_radius: 100.0,
             attack_radius: 20.0,
@@ -158,6 +160,10 @@ impl EnemyTemplate {
             EnemyAi {
                 attack_radius: self.attack_radius,
                 follow_radius: self.detect_radius + self.follow_beyond_detect_radius,
+                ..default()
+            },
+            HurtEffects {
+                increase_alarm: self.hurt_increase_alarm,
                 ..default()
             },
             DeathEffects {
