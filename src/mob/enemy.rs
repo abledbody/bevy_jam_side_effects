@@ -10,7 +10,7 @@ use crate::{
     asset::{Handles, ImageKey},
     combat::{DeathEffects, Faction},
     hud::{HealthBarTemplate, NametagTemplate},
-    mob::{BodyTemplate, Health, MobBundle},
+    mob::{BodyTemplate, Health, Mob, MobBundle},
     vfx::DropShadowTemplate,
 };
 
@@ -151,6 +151,7 @@ impl EnemyTemplate {
             },
             MobBundle {
                 health: Health::full(self.health),
+                mob: Mob::enemy(),
                 ..default()
             }
             .with_faction(FACTION),

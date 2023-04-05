@@ -1,4 +1,4 @@
-use bevy::{prelude::*, math::vec2};
+use bevy::{math::vec2, prelude::*};
 use bevy_rapier2d::prelude::*;
 
 use crate::{
@@ -36,13 +36,14 @@ pub struct Mob {
 impl Mob {
     pub fn set_facing(mut mob_query: Query<(&MobInputs, &mut Facing)>) {
         for (mob_inputs, mut facing) in &mut mob_query {
-			if mob_inputs.movement.x == 0.0 && mob_inputs.attack.is_none() {continue;}
+            if mob_inputs.movement.x == 0.0 && mob_inputs.attack.is_none() {
+                continue;
+            }
 
             let input_left = mob_inputs.movement.x < 0.0;
-			let attack_left = mob_inputs.attack.map(|dir| dir.x < 0.0).unwrap_or(false);
+            let attack_left = mob_inputs.attack.map(|dir| dir.x < 0.0).unwrap_or(false);
 
-            *facing = if input_left || attack_left
-			{
+            *facing = if input_left || attack_left {
                 Facing::Left
             } else {
                 Facing::Right
@@ -84,6 +85,16 @@ impl Mob {
             brake_deceleration: 1800.0,
             idle_threshold: 10.0,
             faction: Faction::Player,
+        }
+    }
+
+    pub fn enemy() -> Self {
+        Self {
+            speed: 80.0,
+            acceleration: 900.0,
+            brake_deceleration: 1800.0,
+            idle_threshold: 10.0,
+            faction: Faction::Enemy,
         }
     }
 }
@@ -159,11 +170,11 @@ impl MobInputs {
     ) {
         for (mob_inputs, children) in &mob_query {
             if let Some(attack_direction) = mob_inputs.attack {
-				let attack_direction = vec2(attack_direction.x.abs(), attack_direction.y);
+                let attack_direction = vec2(attack_direction.x.abs(), attack_direction.y);
                 for &child in children {
                     if let Ok(mut anim) = animation_query.get_mut(child) {
                         anim.t = 0.0;
-						anim.direction = attack_direction;
+                        anim.direction = attack_direction;
                     }
                 }
             }
