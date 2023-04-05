@@ -49,10 +49,7 @@ impl VirtualParent {
 }
 
 #[derive(Component, Reflect, Default)]
-pub struct Offset {
-    pub pos: Vec2,
-    pub rot: f32,
-}
+pub struct Offset(pub Transform);
 
 impl Offset {
     pub fn apply(
@@ -60,16 +57,10 @@ impl Offset {
         virtual_parent_query: Query<(), With<VirtualParent>>,
     ) {
         for (entity, offset, mut transform) in &mut offset_query {
-            let rot_quat = Quat::from_rotation_z(offset.rot);
-
             if virtual_parent_query.contains(entity) {
-                transform.translation.x += offset.pos.x;
-                transform.translation.y += offset.pos.y;
-                transform.rotation *= rot_quat;
+                *transform = *transform * offset.0;
             } else {
-                transform.translation.x = offset.pos.x;
-                transform.translation.y = offset.pos.y;
-                transform.rotation = rot_quat;
+                *transform = offset.0;
             }
         }
     }
@@ -153,7 +144,7 @@ impl Facing {
     }
 }
 
-#[derive(Component, Reflect, Default)]
+#[derive(Component, Reflect)]
 pub struct WalkAnimation {
     pub air_time: f32,
     pub height: f32,
@@ -161,66 +152,68 @@ pub struct WalkAnimation {
     pub sound: Option<Handle<AudioSource>>,
 }
 
+impl Default for WalkAnimation {
+    fn default() -> Self {
+        Self {
+            air_time: 0.18,
+            height: 3.0,
+            t: 1.0,
+            sound: None,
+        }
+    }
+}
+
 impl WalkAnimation {
-    pub fn update(
-        mob_query: Query<(&GlobalTransform, &MobInputs, &Children)>,
-        player_query: Query<Entity, With<PlayerControl>>,
-        mut animation_query: Query<&mut WalkAnimation>,
-        time: Res<Time>,
+    pub fn trigger(
+        mut animation_query: Query<(&mut WalkAnimation, &Parent)>,
+        inputs_query: Query<&MobInputs>,
+    ) {
+        for (mut anim, parent) in &mut animation_query {
+            if anim.t < 1.0 {
+                continue;
+            }
+            let Ok(inputs) = inputs_query.get(parent.get()) else { continue };
+            if inputs.movement.length() == 0.0 {
+                continue;
+            }
+
+            anim.t = 0.0;
+        }
+    }
+
+    pub fn play_step_sound(
+        player_query: Query<&GlobalTransform, With<PlayerControl>>,
+        animation_query: Query<(&WalkAnimation, &GlobalTransform), Without<PlayerControl>>,
         audio: Res<Audio>,
     ) {
         let Ok(player) = player_query.get_single() else { return };
-        let Ok((&player_transform, ..)) = mob_query.get(player) else { return };
-        let player_pos = player_transform.translation().xy();
+        let player_pos = player.translation().xy();
 
-        let dt = time.delta_seconds();
-        for (transform, mob_inputs, children) in &mob_query {
-            let dist_to_player = (player_pos - transform.translation().xy()).length();
-            let volume = |max_volume: f32| max_volume / (0.2 * dist_to_player).max(1.0);
-            let moving = mob_inputs.movement.length() != 0.0;
-
-            for &child in children {
-                let Ok(mut anim) = animation_query.get_mut(child) else {
-                    continue
-                };
-                if anim.t <= 0.0 && !moving {
-                    continue;
-                }
-
-                if let Some(sound) = &anim.sound {
-                    if anim.t <= 0.0 {
-                        audio.play_with_settings(
-                            sound.clone(),
-                            PlaybackSettings {
-                                volume: volume(0.3),
-                                ..default()
-                            },
-                        );
-                    }
-                }
-
-                anim.t += dt / anim.air_time;
-
-                // The rest of this manages the loop, or lack thereof.
-                if anim.t < 1.0 {
-                    continue;
-                }
-                if moving {
-                    anim.t = anim.t.fract();
-
-                    if let Some(sound) = &anim.sound {
-                        audio.play_with_settings(
-                            sound.clone(),
-                            PlaybackSettings {
-                                volume: volume(0.3),
-                                ..default()
-                            },
-                        );
-                    }
-                } else {
-                    anim.t = 0.0;
-                }
+        for (anim, transform) in &animation_query {
+            if anim.t != 0.0 {
+                continue;
             }
+            let Some(sound) = &anim.sound else { continue };
+
+            let pos = transform.translation().xy();
+            let dist_to_player = (player_pos - pos).length();
+            let max_volume = 0.3;
+
+            audio.play_with_settings(
+                sound.clone(),
+                PlaybackSettings {
+                    volume: max_volume / (0.2 * dist_to_player).max(1.0),
+                    ..default()
+                },
+            );
+        }
+    }
+
+    pub fn update(mut animation_query: Query<&mut WalkAnimation>, time: Res<Time>) {
+        let dt = time.delta_seconds();
+
+        for mut anim in &mut animation_query {
+            anim.t = (anim.t + dt / anim.air_time).min(1.0);
         }
     }
 
@@ -249,8 +242,8 @@ impl Default for DeathAnimation {
             height: 16.0,
             final_height: -8.0,
             rotate_time: 0.3,
-            air_t: 0.0,
-            rot_t: 0.0,
+            air_t: 1.0,
+            rot_t: 1.0,
         }
     }
 }
@@ -285,21 +278,16 @@ pub struct AttackAnimation {
 
 impl AttackAnimation {
     pub fn trigger(
-        mob_query: Query<(&MobInputs, &Children)>,
-        mut animation_query: Query<&mut AttackAnimation>,
+        mut animation_query: Query<(&mut AttackAnimation, &Parent)>,
+        inputs_query: Query<&MobInputs>,
     ) {
-        for (mob_inputs, children) in &mob_query {
-            if let Some(attack_direction) = mob_inputs.attack {
-                let x_sign = attack_direction.x.signum();
-                let attack_direction = vec2(attack_direction.x.abs(), attack_direction.y);
-                for &child in children {
-                    if let Ok(mut anim) = animation_query.get_mut(child) {
-                        anim.t = 0.0;
-                        anim.direction = attack_direction;
-                        anim.x_sign = x_sign;
-                    }
-                }
-            }
+        for (mut anim, parent) in &mut animation_query {
+            let Ok(inputs) = inputs_query.get(parent.get()) else { continue };
+            let Some(attack) = inputs.attack else { continue };
+
+            anim.t = 0.0;
+            anim.direction = vec2(attack.x.abs(), attack.y);
+            anim.x_sign = attack.x.signum();
         }
     }
 

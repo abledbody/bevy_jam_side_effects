@@ -180,7 +180,7 @@ pub struct MobInputs {
 
 pub struct BodyTemplate {
     texture: ImageKey,
-    offset: Vec2,
+    offset: Transform,
 }
 
 impl BodyTemplate {
@@ -190,17 +190,12 @@ impl BodyTemplate {
                 texture: handle.image[&self.texture].clone(),
                 ..default()
             },
-            Offset {
-                pos: self.offset,
-                ..default()
-            },
+            Offset(self.offset),
             WalkAnimation {
-                air_time: 0.18,
-                height: 3.0,
                 sound: Some(handle.audio[&AudioKey::GnollWalk].clone()),
                 ..default()
             },
-            AttackAnimation { ..default() },
+            AttackAnimation::default(),
         ));
         #[cfg(feature = "debug_mode")]
         body.insert(Name::new("Body"));

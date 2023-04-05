@@ -1,5 +1,5 @@
 use bevy::{
-    math::{vec2, Vec3Swizzles},
+    math::{vec3, Vec3Swizzles},
     prelude::*,
 };
 use bevy_rapier2d::prelude::{ActiveEvents, Collider, CollisionEvent, Sensor};
@@ -8,6 +8,7 @@ use rand::{seq::SliceRandom, thread_rng, Rng};
 use super::MobInputs;
 use crate::{
     asset::{Handles, ImageKey},
+    camera::CAMERA_SCALE,
     combat::{DeathEffects, Faction, HurtEffects},
     hud::{HealthBarTemplate, NametagTemplate},
     mob::{BodyTemplate, Health, Mob, MobBundle},
@@ -60,18 +61,24 @@ const FANTASY_LAST_NAMES_P2: [&str; 9] = [
     "borne", "claw", "heart", "hide", "fang", "jaw", "maw", "snarl", "tooth",
 ];
 
-// TODO: Generate dark fantasy names occasionally
-fn random_name() -> String {
-    let mut rng = thread_rng();
+fn random_casual_name(mut rng: impl Rng) -> String {
+    CASUAL_NAMES.choose(&mut rng).unwrap().to_string()
+}
+
+fn random_fantasy_name(mut rng: impl Rng) -> String {
+    format!(
+        "{} {}{}",
+        FANTASY_FIRST_NAMES.choose(&mut rng).unwrap(),
+        FANTASY_LAST_NAMES_P1.choose(&mut rng).unwrap(),
+        FANTASY_LAST_NAMES_P2.choose(&mut rng).unwrap()
+    )
+}
+
+fn random_name(mut rng: impl Rng) -> String {
     if rng.gen_ratio(80, 100) {
-        format!(
-            "{} {}{}",
-            FANTASY_FIRST_NAMES.choose(&mut rng).unwrap(),
-            FANTASY_LAST_NAMES_P1.choose(&mut rng).unwrap(),
-            FANTASY_LAST_NAMES_P2.choose(&mut rng).unwrap()
-        )
+        random_fantasy_name(rng)
     } else {
-        CASUAL_NAMES.choose(&mut rng).unwrap().to_string()
+        random_casual_name(rng)
     }
 }
 
@@ -106,8 +113,18 @@ impl Default for EnemyTemplate {
 }
 
 impl EnemyTemplate {
+    pub fn with_random_casual_name(mut self) -> Self {
+        self.name = random_casual_name(thread_rng());
+        self
+    }
+
+    pub fn with_random_fantasy_name(mut self) -> Self {
+        self.name = random_fantasy_name(thread_rng());
+        self
+    }
+
     pub fn with_random_name(mut self) -> Self {
-        self.name = random_name();
+        self.name = random_name(thread_rng());
         self
     }
 
@@ -122,20 +139,24 @@ impl EnemyTemplate {
         // Children
         let body = BodyTemplate {
             texture: ImageKey::RedGnoll,
-            offset: vec2(2.0, 11.0),
+            offset: Transform::from_xyz(2.0, 11.0, 0.0),
         }
         .spawn(commands, handle);
         let drop_shadow = DropShadowTemplate::default().spawn(commands, handle);
         let nametag = NametagTemplate {
-            offset: vec2(0.0, 26.0),
+            offset: Transform::from_xyz(0.0, 26.0, 0.0).with_scale(vec3(
+                CAMERA_SCALE,
+                CAMERA_SCALE,
+                1.0,
+            )),
             name: self.name,
         }
         .spawn(commands, handle);
         let health_bar = HealthBarTemplate {
-            offset: vec2(0.0, -6.0),
+            offset: Transform::from_xyz(0.0, -6.0, 0.0),
         }
         .spawn(commands);
-        let detection_radius = DetectorTemplate {
+        let detector = DetectorTemplate {
             radius: self.detect_radius,
         }
         .spawn(commands);
@@ -178,7 +199,7 @@ impl EnemyTemplate {
         enemy.add_child(drop_shadow);
         enemy.add_child(nametag);
         enemy.add_child(health_bar);
-        enemy.add_child(detection_radius);
+        enemy.add_child(detector);
 
         enemy.id()
     }

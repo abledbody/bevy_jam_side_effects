@@ -109,7 +109,9 @@ impl Plugin for GamePlugin {
         // Animation systems
         app.add_systems(
             (
-                WalkAnimation::update,
+                WalkAnimation::trigger,
+                WalkAnimation::play_step_sound.after(WalkAnimation::trigger),
+                WalkAnimation::update.after(WalkAnimation::play_step_sound),
                 WalkAnimation::apply.after(WalkAnimation::update),
                 DeathAnimation::update,
                 DeathAnimation::apply.after(DeathAnimation::update),
