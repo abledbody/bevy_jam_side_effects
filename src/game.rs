@@ -35,7 +35,8 @@ enum UpdateSet {
     PostAnimate,
     Combat,
     CombatFlush,
-    SpawnDespawn,
+    // <-- Physics
+    // Spawn / Despawn
 }
 
 pub struct GamePlugin;
@@ -87,7 +88,6 @@ impl Plugin for GamePlugin {
                 UpdateSet::PostAnimate,
                 UpdateSet::Combat,
                 UpdateSet::CombatFlush,
-                UpdateSet::SpawnDespawn,
             )
                 .chain(),
         );
@@ -99,7 +99,8 @@ impl Plugin for GamePlugin {
                 VirtualParent::copy_transform.after(ZRampByY::apply),
                 Offset::apply.after(VirtualParent::copy_transform),
                 HitEvent::detect,
-                DetectEvent::detect,
+                DetectEvent::detect.before(EnemyAi::think),
+                Alarm::scale_difficulty.before(EnemyAi::think),
                 EnemyAi::think,
                 PlayerControl::record_inputs,
             )
@@ -143,7 +144,7 @@ impl Plugin for GamePlugin {
         app.add_system(apply_system_buffers.in_set(UpdateSet::CombatFlush));
 
         // Spawn / despawn systems
-        app.add_systems((DespawnSet::apply, spawn_instances).in_set(UpdateSet::SpawnDespawn));
+        app.add_systems((DespawnSet::apply, spawn_instances).in_base_set(CoreSet::Last));
 
         // UI systems
         app.add_systems((

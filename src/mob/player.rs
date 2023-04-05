@@ -46,18 +46,18 @@ impl PlayerControl {
         let window = primary_window_query.single();
         let (camera, cam_gt) = camera.single();
 
-        for (action_state, mut mob_inputs, mob_gt) in &mut player_query {
-            mob_inputs.movement = Vec2::ZERO;
+        for (action_state, mut inputs, mob_gt) in &mut player_query {
+            inputs.movement = Vec2::ZERO;
             if action_state.pressed(PlayerAction::Move) {
                 if let Some(axis_pair) = action_state.clamped_axis_pair(PlayerAction::Move) {
-                    mob_inputs.movement = axis_pair.xy();
+                    inputs.movement = axis_pair.xy();
                 }
             }
 
-            mob_inputs.attack = None;
+            inputs.attack = None;
             if action_state.just_pressed(PlayerAction::Attack) {
                 if let Some(axis_pair) = action_state.clamped_axis_pair(PlayerAction::Attack) {
-                    mob_inputs.attack = Some(axis_pair.xy());
+                    inputs.attack = Some(axis_pair.xy());
                 }
             }
 
@@ -65,7 +65,7 @@ impl PlayerControl {
                 if let Some(position) = window.cursor_position() {
                     if let Some(pos) = camera.viewport_to_world_2d(cam_gt, position) {
                         let dir = pos - mob_gt.translation().xy();
-                        mob_inputs.attack = Some(dir.normalize());
+                        inputs.attack = Some(dir.normalize());
                     }
                 }
             }

@@ -106,7 +106,7 @@ impl Default for EnemyTemplate {
             hurt_increase_alarm: 0.5,
             death_increase_alarm: 5.0,
             follow_beyond_detect_radius: 100.0,
-            detect_radius: 100.0,
+            detect_radius: 1000.0,
             attack_radius: 20.0,
         }
     }
@@ -219,6 +219,23 @@ impl Alarm {
     pub fn increase(&mut self, value: f32) {
         self.current = (self.current + value).min(self.max);
     }
+
+    pub fn scale_difficulty(
+        alarm: Res<Alarm>,
+        mut enemy_query: Query<(&mut EnemyAi, &Children)>,
+        mut detector_query: Query<&mut Transform, With<Detector>>,
+    ) {
+        let t = alarm.current / alarm.max;
+        for (mut enemy, children) in &mut enemy_query {
+            for &child in children {
+                let Ok(mut transform) = detector_query.get_mut(child) else { continue };
+
+                transform.scale = Vec2::splat(t).extend(1.0);
+            }
+
+            // TODO: Adjust enemy.follow_radius
+        }
+    }
 }
 
 #[derive(Component, Reflect)]
@@ -226,7 +243,7 @@ pub struct EnemyAi {
     follow_radius: f32,
     attack_radius: f32,
     attack_cooldown: f32,
-    t: f32,
+    attack_cooldown_t: f32,
     target: Option<Entity>,
 }
 
@@ -236,7 +253,7 @@ impl Default for EnemyAi {
             follow_radius: 200.0,
             attack_radius: 30.0,
             attack_cooldown: 0.5,
-            t: Default::default(),
+            attack_cooldown_t: default(),
             target: None,
         }
     }
@@ -244,39 +261,40 @@ impl Default for EnemyAi {
 
 impl EnemyAi {
     pub fn think(
-        mut ai_query: Query<(&mut EnemyAi, &mut MobInputs, &GlobalTransform), With<EnemyAi>>,
+        mut enemy_query: Query<(&mut EnemyAi, &mut MobInputs, &GlobalTransform)>,
         mut detect_events: EventReader<DetectEvent>,
         parent_query: Query<&Parent>,
         transform_query: Query<&GlobalTransform, Without<EnemyAi>>,
         time: Res<Time>,
     ) {
+        // Detect target
         for DetectEvent { sensor, target } in detect_events.iter() {
             if let Ok(parent) = parent_query.get(*sensor) {
-                if let Ok((mut ai, _, _)) = ai_query.get_mut(parent.get()) {
-                    ai.target = Some(*target);
+                if let Ok((mut enemy, _, _)) = enemy_query.get_mut(parent.get()) {
+                    enemy.target = Some(*target);
                 }
             }
         }
 
         let dt = time.delta_seconds();
-        for (mut ai, mut mob_inputs, mob_gt) in &mut ai_query {
-            let Some(target) = ai.target else { continue };
+        for (mut enemy, mut inputs, mob_gt) in &mut enemy_query {
+            let Some(target) = enemy.target else { continue };
             let Ok(target_gt) = transform_query.get(target) else { continue };
 
-            mob_inputs.attack = None;
-            ai.t += dt;
+            inputs.attack = None;
+            enemy.attack_cooldown_t += dt;
 
             let delta = target_gt.translation().xy() - mob_gt.translation().xy();
             let distance = delta.length();
             let dir = delta.normalize();
 
-            if distance > ai.follow_radius {
-                ai.target = None;
-            } else if distance > ai.attack_radius {
-                mob_inputs.movement = dir;
-            } else if ai.t >= ai.attack_cooldown {
-                mob_inputs.attack = Some(dir);
-                ai.t = 0.0;
+            if distance > enemy.follow_radius {
+                enemy.target = None;
+            } else if distance > enemy.attack_radius {
+                inputs.movement = dir;
+            } else if enemy.attack_cooldown_t >= enemy.attack_cooldown {
+                inputs.attack = Some(dir);
+                enemy.attack_cooldown_t = 0.0;
             }
         }
     }

@@ -38,8 +38,8 @@ impl Mob {
         mut mob_query: Query<(&MobInputs, Option<&Children>, &mut Facing)>,
         attack_animation_query: Query<&AttackAnimation>,
     ) {
-        for (mob_inputs, children, mut facing) in &mut mob_query {
-            if mob_inputs.movement.x == 0.0 && mob_inputs.attack.is_none() {
+        for (inputs, children, mut facing) in &mut mob_query {
+            if inputs.movement.x == 0.0 && inputs.attack.is_none() {
                 continue;
             }
 
@@ -57,7 +57,7 @@ impl Mob {
                         .next()
                 })
                 .flatten()
-                .unwrap_or_else(|| mob_inputs.movement.x < 0.0)
+                .unwrap_or_else(|| inputs.movement.x < 0.0)
             {
                 Facing::Left
             } else {
@@ -71,11 +71,11 @@ impl Mob {
         time: Res<Time>,
     ) {
         let dt = time.delta_seconds();
-        for (mob, mut velocity, mob_inputs) in &mut mob_query {
-            let (input_direction, input_magnitude) = if let Some(mob_inputs) = mob_inputs {
+        for (mob, mut velocity, inputs) in &mut mob_query {
+            let (input_direction, input_magnitude) = if let Some(inputs) = inputs {
                 (
-                    mob_inputs.movement.normalize_or_zero(),
-                    mob_inputs.movement.length().min(1.0),
+                    inputs.movement.normalize_or_zero(),
+                    inputs.movement.length().min(1.0),
                 )
             } else {
                 (Vec2::ZERO, 0.0)
@@ -140,13 +140,13 @@ pub struct MobBundle {
 impl Default for MobBundle {
     fn default() -> Self {
         Self {
-            mob: Mob::default(),
-            mob_inputs: MobInputs::default(),
-            facing: Facing::default(),
+            mob: default(),
+            mob_inputs: default(),
+            facing: default(),
             health: Health::full(100.0),
             z_ramp_by_y: ZRampByY,
-            velocity: Velocity::default(),
-            rigid_body: RigidBody::default(),
+            velocity: default(),
+            rigid_body: default(),
             locked_axes: LockedAxes::ROTATION_LOCKED,
             friction: Friction::new(0.0),
             collider: Collider::ball(5.0),
