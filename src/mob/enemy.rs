@@ -2,7 +2,7 @@ use bevy::{
     math::{vec3, Vec3Swizzles},
     prelude::*,
 };
-use bevy_rapier2d::prelude::{ActiveEvents, Collider, CollisionEvent, Sensor};
+use bevy_rapier2d::prelude::*;
 use rand::{seq::SliceRandom, thread_rng, Rng};
 
 use super::MobInputs;
@@ -90,9 +90,6 @@ pub struct EnemyTemplate {
     pub reward_gold: f32,
     pub hurt_increase_alarm: f32,
     pub death_increase_alarm: f32,
-    pub follow_beyond_detect_radius: f32,
-    pub detect_radius: f32,
-    pub attack_radius: f32,
 }
 
 impl Default for EnemyTemplate {
@@ -105,9 +102,6 @@ impl Default for EnemyTemplate {
             reward_gold: 10.0,
             hurt_increase_alarm: 0.5,
             death_increase_alarm: 5.0,
-            follow_beyond_detect_radius: 100.0,
-            detect_radius: 1000.0,
-            attack_radius: 20.0,
         }
     }
 }
@@ -151,10 +145,7 @@ impl EnemyTemplate {
             offset: Transform::from_xyz(0.0, -6.0, 0.0),
         }
         .spawn(commands);
-        let detector = DetectorTemplate {
-            radius: self.detect_radius,
-        }
-        .spawn(commands);
+        let detector = DetectorTemplate.spawn(commands);
 
         // Parent
         let mut enemy = commands.spawn((
@@ -168,11 +159,7 @@ impl EnemyTemplate {
                 ..default()
             }
             .with_faction(FACTION),
-            EnemyAi {
-                attack_radius: self.attack_radius,
-                follow_radius: self.detect_radius + self.follow_beyond_detect_radius,
-                ..default()
-            },
+            EnemyAi::default(),
             HurtEffects {
                 increase_alarm: self.hurt_increase_alarm,
                 ..default()
@@ -216,35 +203,63 @@ impl Alarm {
         mut enemy_query: Query<(&mut EnemyAi, &Children)>,
         mut detector_query: Query<&mut Transform, With<Detector>>,
     ) {
-        let t = alarm.current / alarm.max;
+        let hi = alarm.current / alarm.max;
+        let lo = 1.0 - hi;
         for (mut enemy, children) in &mut enemy_query {
+            let detect_radius = enemy.min_detect_radius * lo + enemy.max_detect_radius * hi;
+            enemy.follow_radius = enemy.min_follow_radius * lo + enemy.max_follow_radius * hi;
+            enemy.attack_radius = enemy.min_attack_radius * lo + enemy.max_attack_radius * hi;
+            enemy.attack_cooldown = enemy.min_attack_cooldown * lo + enemy.max_attack_cooldown * hi;
+
             for &child in children {
                 let Ok(mut transform) = detector_query.get_mut(child) else { continue };
-
-                transform.scale = Vec2::splat(t).extend(1.0);
+                transform.scale = Vec2::splat(detect_radius).extend(1.0);
             }
-
-            // TODO: Adjust enemy.follow_radius
         }
     }
 }
 
 #[derive(Component, Reflect)]
 pub struct EnemyAi {
+    min_detect_radius: f32,
+    max_detect_radius: f32,
+
+    min_follow_radius: f32,
+    max_follow_radius: f32,
     follow_radius: f32,
+
+    min_attack_radius: f32,
+    max_attack_radius: f32,
     attack_radius: f32,
+
+    min_attack_cooldown: f32,
+    max_attack_cooldown: f32,
     attack_cooldown: f32,
     attack_cooldown_t: f32,
+
     target: Option<Entity>,
 }
 
 impl Default for EnemyAi {
     fn default() -> Self {
         Self {
-            follow_radius: 200.0,
-            attack_radius: 30.0,
-            attack_cooldown: 0.5,
-            attack_cooldown_t: default(),
+            min_detect_radius: 0.0,
+            max_detect_radius: 1000.0,
+
+            min_follow_radius: 100.0,
+            max_follow_radius: 1100.0,
+            follow_radius: 100.0,
+
+            min_attack_radius: 10.0,
+            max_attack_radius: 40.0,
+            attack_radius: 10.0,
+
+            // Ignore the fact that min > max here :)
+            min_attack_cooldown: 1.0,
+            max_attack_cooldown: 0.0,
+            attack_cooldown: 1.0,
+            attack_cooldown_t: 0.0,
+
             target: None,
         }
     }
@@ -271,7 +286,7 @@ impl EnemyAi {
                 enemy.target = Some(target);
             }
         }
-        for &HitEvent { hitbox, hurtbox } in hit_events.iter() {
+        for &HitEvent { hurtbox, .. } in hit_events.iter() {
             if let Ok((mut enemy, ..)) = enemy_query.get_mut(hurtbox) {
                 // Assume the hitbox originated from the player.
                 enemy.target = Some(player);
@@ -303,8 +318,8 @@ impl EnemyAi {
 }
 
 pub struct DetectEvent {
-    sensor: Entity,
-    target: Entity,
+    pub sensor: Entity,
+    pub target: Entity,
 }
 
 impl DetectEvent {
@@ -333,15 +348,14 @@ impl DetectEvent {
 #[derive(Component, Reflect)]
 pub struct Detector;
 
-pub struct DetectorTemplate {
-    radius: f32,
-}
+pub struct DetectorTemplate;
 
 impl DetectorTemplate {
     pub fn spawn(self, commands: &mut Commands) -> Entity {
         let mut detector = commands.spawn((
             TransformBundle::default(),
-            Collider::ball(self.radius),
+            Collider::ball(1.0),
+            ColliderMassProperties::Mass(0.0),
             Sensor,
             Faction::Enemy.hitbox_groups(),
             ActiveEvents::COLLISION_EVENTS,
