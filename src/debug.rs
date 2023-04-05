@@ -28,7 +28,7 @@ use crate::{
         Mob,
         MobInputs,
     },
-    util::ZRampByY,
+    util::{DespawnSet, ZRampByY},
 };
 
 const TOGGLE_KEY: KeyCode = KeyCode::F3;
@@ -69,6 +69,7 @@ impl Plugin for DebugPlugin {
             .register_type::<DeathEffects>()
             .register_type::<VirtualParent>()
             .register_type::<ZRampByY>()
+            .register_type::<DespawnSet>()
             .register_type::<Offset>()
             .register_type::<WalkAnimation>()
             .register_type::<AttackAnimation>()

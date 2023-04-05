@@ -195,7 +195,8 @@ impl EnemyTemplate {
     }
 }
 
-#[derive(Resource, Reflect)]
+#[derive(Resource, Reflect, Default)]
+#[reflect(Resource)]
 pub struct Alarm {
     pub current: f32,
     pub max: f32,
