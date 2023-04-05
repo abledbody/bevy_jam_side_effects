@@ -192,17 +192,21 @@ impl Alarm {
 
 #[derive(Component, Reflect)]
 pub struct EnemyAi {
+    follow_distance: f32,
     attack_radius: f32,
     attack_cooldown: f32,
     t: f32,
+    target: Option<Entity>,
 }
 
 impl Default for EnemyAi {
     fn default() -> Self {
         Self {
+            follow_distance: 100.0,
             attack_radius: 30.0,
             attack_cooldown: 0.5,
             t: Default::default(),
+            target: None,
         }
     }
 }
@@ -217,20 +221,26 @@ impl EnemyAi {
     ) {
         for DetectionEvent { sensor, target } in detection_events.iter() {
             if let Ok(parent) = children_query.get(*sensor) {
-                if let Ok((mut ai, mut mob_inputs, mob_gt)) = ai_query.get_mut(parent.get()) {
-                    mob_inputs.movement = Vec2::ZERO;
+                if let Ok((mut ai, _, _)) = ai_query.get_mut(parent.get()) {
+                    ai.target = Some(*target);
+                }
+            }
+        }
+        for (mut ai, mut mob_inputs, mob_gt) in &mut ai_query {
+            if let Some(target) = ai.target {
+                if let Ok(target_gt) = transform_query.get(target) {
                     mob_inputs.attack = None;
                     ai.t += time.delta_seconds();
-                    if let Ok(target_gt) = transform_query.get(*target) {
-                        let dir = target_gt.translation() - mob_gt.translation();
-                        let dist = dir.length();
-                        let dir = dir.normalize().xy();
-                        if dist > ai.attack_radius {
-                            mob_inputs.movement = dir;
-                        } else if ai.t >= ai.attack_cooldown {
-                            mob_inputs.attack = Some(dir);
-                            ai.t = 0.0;
-                        }
+                    let dir = target_gt.translation() - mob_gt.translation();
+                    let dist = dir.length();
+                    let dir = dir.normalize().xy();
+                    if dist > ai.follow_distance {
+                        ai.target = None;
+                    } else if dist > ai.attack_radius {
+                        mob_inputs.movement = dir;
+                    } else if ai.t >= ai.attack_cooldown {
+                        mob_inputs.attack = Some(dir);
+                        ai.t = 0.0;
                     }
                 }
             }
