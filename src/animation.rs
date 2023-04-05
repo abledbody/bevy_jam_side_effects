@@ -226,7 +226,7 @@ impl WalkAnimation {
     pub fn apply(mut animation_query: Query<(&WalkAnimation, &mut Transform)>) {
         for (anim, mut transform) in &mut animation_query {
             // PI is used here because we only want half a rotation.
-            transform.translation.y += anim.height * (anim.t * PI).sin();
+            transform.translation.y += anim.height * (anim.t.min(1.0) * PI).sin();
         }
     }
 }
