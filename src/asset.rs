@@ -34,14 +34,20 @@ pub enum AudioKey {
     GnollWalk,
     PlayerAttack1,
     PlayerAttack2,
+    PlayerAttack3,
+	PlayerAttack4,
     PlayerHit,
+    PlayerAttackMiss,
 }
 
-const AUDIO_MAP: [(AudioKey, &str); 4] = [
+const AUDIO_MAP: [(AudioKey, &str); 7] = [
     (AudioKey::GnollWalk, "sfx/walk.wav"),
     (AudioKey::PlayerAttack1, "sfx/player_attack_1.wav"),
     (AudioKey::PlayerAttack2, "sfx/player_attack_2.wav"),
+	(AudioKey::PlayerAttack3, "sfx/player_attack_3.wav"),
+	(AudioKey::PlayerAttack4, "sfx/player_attack_4.wav"),
     (AudioKey::PlayerHit, "sfx/player_hit.wav"),
+	(AudioKey::PlayerAttackMiss, "sfx/player_attack_miss.wav"),
 ];
 
 #[derive(Reflect, FromReflect, Eq, PartialEq, Hash)]

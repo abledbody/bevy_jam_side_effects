@@ -9,7 +9,7 @@ use crate::{
     animation::{DeathAnimation, Facing, Lifetime, Offset, VirtualParent, WalkAnimation},
     asset::Handles,
     camera::CameraFollow,
-    combat::{DeathEffects, HitEffects},
+    combat::{DeathEffects, HitBox},
     hud::{AlarmMeter, HealthBar},
     map::Wall,
     mob::{
@@ -55,7 +55,7 @@ impl Plugin for DebugPlugin {
             .register_type::<PlayerControl>()
             .register_type::<Alarm>()
             .register_type::<EnemyAi>()
-            .register_type::<HitEffects>()
+            .register_type::<HitBox>()
             .register_type::<DeathEffects>()
             .register_type::<VirtualParent>()
             .register_type::<ZRampByY>()

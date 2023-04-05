@@ -72,10 +72,12 @@ impl HitboxTemplate {
             Sensor,
             self.faction.hitbox_groups(),
             ActiveEvents::COLLISION_EVENTS,
-            HitEffects {
+            HitBox {
                 damage: self.damage,
                 knockback: self.knockback * self.direction,
-                sound: Some(handle.audio[&AudioKey::PlayerAttack2].clone()),
+                hit: false,
+                hit_sound: Some(handle.audio[&AudioKey::PlayerAttack4].clone()),
+                miss_sound: Some(handle.audio[&AudioKey::PlayerAttackMiss].clone()),
             },
         ));
         #[cfg(feature = "debug_mode")]
@@ -95,7 +97,7 @@ impl HitEvent {
     pub fn detect(
         mut collision_events: EventReader<CollisionEvent>,
         mut hit_events: EventWriter<HitEvent>,
-        hit_query: Query<&HitEffects>,
+        hit_query: Query<&HitBox>,
     ) {
         for &event in collision_events.iter() {
             let CollisionEvent::Started(entity1, entity2, _) = event else {
@@ -118,17 +120,19 @@ impl HitEvent {
 }
 
 #[derive(Component, Reflect)]
-pub struct HitEffects {
+pub struct HitBox {
     damage: f32,
     knockback: Vec2,
-    sound: Option<Handle<AudioSource>>,
+    hit: bool,
+    hit_sound: Option<Handle<AudioSource>>,
+    miss_sound: Option<Handle<AudioSource>>,
 }
 
-impl HitEffects {
+impl HitBox {
     pub fn apply(
         mut hit_events: EventReader<HitEvent>,
         mut death_events: EventWriter<DeathEvent>,
-        hit_effects_query: Query<&HitEffects>,
+        mut hitbox_query: Query<&mut HitBox>,
         mut health_query: Query<&mut Health>,
         mut velocity_query: Query<&mut Velocity>,
         audio: Res<Audio>,
@@ -139,18 +143,19 @@ impl HitEffects {
             target,
         } in hit_events.iter()
         {
-            let Ok(effect) = hit_effects_query.get(hitbox) else { return };
+            let Ok(mut hitbox) = hitbox_query.get_mut(hitbox) else { return };
+            hitbox.hit = true;
 
-            if let Some(sound) = &effect.sound {
+            if let Some(sound) = &hitbox.hit_sound {
                 audio.play(sound.clone());
             }
 
             // Damage
             if let Ok(mut health) = health_query.get_mut(target) {
-                if 0.0 < health.current && health.current <= effect.damage {
+                if 0.0 < health.current && health.current <= hitbox.damage {
                     death_events.send(DeathEvent(target));
                 }
-                health.current -= effect.damage;
+                health.current -= hitbox.damage;
             }
 
             // Knockback
@@ -161,8 +166,18 @@ impl HitEffects {
         }
     }
 
-    pub fn cleanup(mut commands: Commands, hit_effects_query: Query<Entity, With<HitEffects>>) {
-        for entity in &hit_effects_query {
+    pub fn cleanup(
+        mut commands: Commands,
+        hit_effects_query: Query<(Entity, &HitBox)>,
+        audio: Res<Audio>,
+    ) {
+        for (entity, hitbox) in &hit_effects_query {
+            if !hitbox.hit {
+                if let Some(sound) = &hitbox.miss_sound {
+                    audio.play(sound.clone());
+                }
+            }
+
             commands.entity(entity).despawn_recursive();
         }
     }
