@@ -3,11 +3,7 @@ use bevy::{
     prelude::*,
     window::PrimaryWindow,
 };
-use leafwing_input_manager::{
-    prelude::{ActionState, DualAxis, InputMap, VirtualDPad},
-    Actionlike,
-    InputManagerBundle,
-};
+use leafwing_input_manager::prelude::*;
 
 use super::{Health, Mob, MobBundle, MobInputs};
 use crate::{
@@ -15,7 +11,7 @@ use crate::{
     camera::{GameCamera, CAMERA_SCALE},
     combat::Faction,
     hud::{HealthBarTemplate, NametagTemplate},
-    mob::BodyTemplate,
+    mob::{enemy::Alarm, BodyTemplate},
     vfx::DropShadowTemplate,
 };
 
@@ -27,6 +23,7 @@ pub struct Gold(pub f32);
 #[derive(Debug, Copy, Clone, PartialEq, Actionlike)]
 pub enum PlayerAction {
     Move,
+    Aim,
     Attack,
 }
 
@@ -39,9 +36,9 @@ impl PlayerControl {
             (&ActionState<PlayerAction>, &mut MobInputs, &GlobalTransform),
             With<PlayerControl>,
         >,
-        mouse_input_resource: Res<Input<MouseButton>>,
         primary_window_query: Query<&Window, With<PrimaryWindow>>,
         camera: Query<(&Camera, &GlobalTransform), With<GameCamera>>,
+        mut alarm: ResMut<Alarm>,
     ) {
         let window = primary_window_query.single();
         let (camera, cam_gt) = camera.single();
@@ -51,23 +48,28 @@ impl PlayerControl {
             if action_state.pressed(PlayerAction::Move) {
                 if let Some(axis_pair) = action_state.clamped_axis_pair(PlayerAction::Move) {
                     inputs.movement = axis_pair.xy();
+                    alarm.current = alarm.current.max(6.5);
                 }
             }
 
             inputs.attack = None;
-            if action_state.just_pressed(PlayerAction::Attack) {
-                if let Some(axis_pair) = action_state.clamped_axis_pair(PlayerAction::Attack) {
-                    inputs.attack = Some(axis_pair.xy());
+            let mut direction = None;
+            if let Some(axis_pair) = action_state.clamped_axis_pair(PlayerAction::Aim) {
+                let axis_pair = axis_pair.xy();
+                if axis_pair != Vec2::ZERO {
+                    direction = Some(axis_pair);
                 }
             }
 
-            if mouse_input_resource.just_pressed(MouseButton::Left) {
-                if let Some(position) = window.cursor_position() {
-                    if let Some(pos) = camera.viewport_to_world_2d(cam_gt, position) {
-                        let dir = pos - mob_gt.translation().xy();
-                        inputs.attack = Some(dir.normalize());
-                    }
-                }
+            if action_state.just_pressed(PlayerAction::Attack) {
+                inputs.attack = direction
+                    .or_else(|| {
+                        window
+                            .cursor_position()
+                            .and_then(|p| camera.viewport_to_world_2d(cam_gt, p))
+                            .map(|p| p - mob_gt.translation().xy())
+                    })
+                    .map(|d| d.normalize());
             }
         }
     }
@@ -94,7 +96,7 @@ impl PlayerTemplate {
 
         // Children
         let body = BodyTemplate {
-            texture: ImageKey::GnollGreen,
+            texture: ImageKey::GnollRed,
             offset: Transform::from_xyz(2.0, 11.0, 0.0),
         }
         .spawn(commands, handle);
@@ -129,9 +131,11 @@ impl PlayerTemplate {
             InputManagerBundle::<PlayerAction> {
                 input_map: InputMap::default()
                     .insert(VirtualDPad::wasd(), PlayerAction::Move)
-                    .insert(VirtualDPad::arrow_keys(), PlayerAction::Attack)
+                    .insert(VirtualDPad::arrow_keys(), PlayerAction::Move)
                     .insert(DualAxis::left_stick(), PlayerAction::Move)
-                    .insert(DualAxis::right_stick(), PlayerAction::Attack)
+                    .insert(DualAxis::right_stick(), PlayerAction::Aim)
+                    .insert(GamepadButtonType::RightTrigger, PlayerAction::Attack)
+                    .insert(MouseButton::Left, PlayerAction::Attack)
                     .build(),
                 ..default()
             },
