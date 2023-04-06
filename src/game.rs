@@ -1,4 +1,7 @@
-use bevy::prelude::*;
+use bevy::{
+    prelude::*,
+    transform::systems::{propagate_transforms, sync_simple_transforms},
+};
 use bevy_ecs_ldtk::prelude::*;
 use bevy_rapier2d::prelude::*;
 use leafwing_input_manager::prelude::InputManagerPlugin;
@@ -15,10 +18,10 @@ use crate::{
         WalkAnimation,
     },
     asset::Handles,
-    camera::{CameraPlugin, GameCameraTemplate},
+    camera::{GameCamera, GameCameraTemplate},
     combat::{DeathEffects, DeathEvent, HitEffects, HitEvent, HurtEffects},
     hud::{AlarmMeter, AlarmMeterTemplate, HealthBar},
-    map::{spawn_level_entities, Exit, MapTemplate},
+    map::{spawn_level_entities, Exit, MapTemplate, Plate},
     mob::{
         enemy::{Alarm, DetectEvent, DifficultyCurve, EnemyAi},
         player::{PlayerAction, PlayerControl},
@@ -81,8 +84,7 @@ impl Plugin for GamePlugin {
         )
         .add_plugin(RapierPhysicsPlugin::<NoUserData>::default())
         .add_plugin(InputManagerPlugin::<PlayerAction>::default())
-        .add_plugin(LdtkPlugin)
-        .add_plugin(CameraPlugin);
+        .add_plugin(LdtkPlugin);
         #[cfg(feature = "debug_mode")]
         app.add_plugin(crate::debug::DebugPlugin::default());
 
@@ -92,7 +94,8 @@ impl Plugin for GamePlugin {
 
         // Pre-update systems
         app.add_systems(
-            (Exit::detect, spawn_level_entities.after(Exit::detect))
+            (Exit::detect, spawn_level_entities)
+                .chain()
                 .in_base_set(CoreSet::PreUpdate),
         );
 
@@ -111,9 +114,12 @@ impl Plugin for GamePlugin {
         // Synchronization systems
         app.add_systems(
             (
+                sync_simple_transforms,
+                propagate_transforms,
                 ZRampByY::apply,
                 VirtualParent::copy_transform.after(ZRampByY::apply),
                 Offset::apply.after(VirtualParent::copy_transform),
+                Plate::detect,
                 HitEvent::detect.before(EnemyAi::think),
                 DetectEvent::detect.before(EnemyAi::think),
                 DifficultyCurve::apply.before(EnemyAi::think),
@@ -126,6 +132,8 @@ impl Plugin for GamePlugin {
         // Animation systems
         app.add_systems(
             (
+                GameCamera::cut_to_new_target,
+                GameCamera::follow_target,
                 WalkAnimation::trigger,
                 WalkAnimation::play_step_sound.after(WalkAnimation::trigger),
                 WalkAnimation::update.after(WalkAnimation::play_step_sound),
@@ -181,5 +189,5 @@ fn spawn_game(mut commands: Commands, handle: Res<Handles>) {
     AlarmMeterTemplate.spawn(&mut commands);
 
     // Camera
-    GameCameraTemplate::<PlayerControl>::default().spawn(&mut commands);
+    GameCameraTemplate.spawn(&mut commands);
 }

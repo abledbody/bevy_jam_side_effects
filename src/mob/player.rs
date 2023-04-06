@@ -12,7 +12,7 @@ use leafwing_input_manager::{
 use super::{Health, Mob, MobBundle, MobInputs};
 use crate::{
     asset::{Handles, ImageKey},
-    camera::{CameraFollow, CAMERA_SCALE},
+    camera::{GameCamera, CAMERA_SCALE},
     combat::Faction,
     hud::{HealthBarTemplate, NametagTemplate},
     mob::BodyTemplate,
@@ -41,7 +41,7 @@ impl PlayerControl {
         >,
         mouse_input_resource: Res<Input<MouseButton>>,
         primary_window_query: Query<&Window, With<PrimaryWindow>>,
-        camera: Query<(&Camera, &GlobalTransform), With<CameraFollow<PlayerControl>>>,
+        camera: Query<(&Camera, &GlobalTransform), With<GameCamera>>,
     ) {
         let window = primary_window_query.single();
         let (camera, cam_gt) = camera.single();

@@ -17,10 +17,10 @@ use crate::{
         WalkAnimation,
     },
     asset::Handles,
-    camera::CameraFollow,
+    camera::GameCamera,
     combat::{DeathEffects, HitEffects, HurtEffects},
     hud::{AlarmMeter, HealthBar},
-    map::{Exit, Wall},
+    map::{Exit, Gate, Plate, Wall},
     mob::{
         enemy::{Alarm, DifficultyCurve, EnemyAi},
         player::{Gold, PlayerControl},
@@ -81,7 +81,9 @@ impl Plugin for DebugPlugin {
             .register_type::<Lifetime>()
             .register_type::<Wall>()
             .register_type::<Exit>()
-            .register_type::<CameraFollow<PlayerControl>>()
+            .register_type::<Plate>()
+            .register_type::<Gate>()
+            .register_type::<GameCamera>()
             .register_type::<HealthBar>()
             .register_type::<Alarm>()
             .register_type::<AlarmMeter>();
