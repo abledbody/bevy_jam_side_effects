@@ -1,7 +1,7 @@
 use std::marker::PhantomData;
 
 use bevy::{
-    math::{vec2, vec3, Vec3Swizzles},
+    math::{vec2, Vec3Swizzles},
     prelude::*,
     render::camera::OrthographicProjection,
 };
@@ -16,10 +16,7 @@ pub struct CameraPlugin;
 impl Plugin for CameraPlugin {
     fn build(&self, app: &mut App) {
         app.add_system(CameraFollow::<PlayerControl>::apply)
-            .add_systems((
-                CameraFollow::<PlayerControl>::follow,
-                camera_fit_inside_current_level::<PlayerControl>,
-            ));
+            .add_system(CameraFollow::<PlayerControl>::follow);
     }
 }
 
@@ -94,17 +91,59 @@ impl<C: Component> CameraFollow<C> {
     }
 
     fn apply(
-        mut camera_query: Query<(&CameraFollow<C>, &mut Transform, &GlobalTransform)>,
-        transform_query: Query<&GlobalTransform, Without<CameraFollow<C>>>,
+        mut camera_query: Query<(
+            &CameraFollow<C>,
+            &mut Transform,
+            &GlobalTransform,
+            &OrthographicProjection,
+        )>,
+        transform_query: Query<
+            &GlobalTransform,
+            (Without<CameraFollow<C>>, Without<Handle<LdtkLevel>>),
+        >,
+        level_query: Query<(&GlobalTransform, &Handle<LdtkLevel>), Without<CameraFollow<C>>>,
+        level_selection: Res<LevelSelection>,
+        ldtk_levels: Res<Assets<LdtkLevel>>,
         time: Res<Time>,
     ) {
-        for (follow, mut transform, cam_gt) in &mut camera_query {
+        for (follow, mut cam_transform, cam_gt, ortho) in &mut camera_query {
+            let mut delta = Vec3::ZERO;
             if let Ok(&target) = transform_query.get(follow.target) {
-                transform.translation += cam_gt
+                // Store the delta from this translation so we account for it when locking the camera
+                delta = cam_gt
                     .translation()
                     .xy()
                     .smooth_approach(target.translation().xy(), follow.rate, time.delta_seconds())
                     .extend(0.0);
+                cam_transform.translation += delta;
+            };
+            for (level_transform, level_handle) in &level_query {
+                if let Some(ldtk_level) = ldtk_levels.get(level_handle) {
+                    let level = &ldtk_level.level;
+                    let level_translation = level_transform.translation();
+                    if level_selection.is_match(&0, level) {
+                        let cam_gt = (cam_gt.translation() + delta).xy();
+                        let cam_bottom_left = cam_gt + ortho.area.min;
+                        let cam_top_right = cam_gt + ortho.area.max;
+                        // The level's origin is at the bottom left corner
+                        let level_extents = vec2(level.px_wid as f32, level.px_hei as f32);
+                        let level_bottom_left = level_translation.xy();
+                        let level_top_right = level_translation.xy() + level_extents;
+
+                        // Vector pointing from camera bounds to level bounds
+                        // If x or y are positive the screen is out of bounds and must shift
+                        // If x or y are negative, ignore them as they are in bounds
+                        let shift_up_right = (level_bottom_left - cam_bottom_left)
+                            .max(Vec2::ZERO)
+                            .extend(0.0);
+                        // Same as above in reverse: use negative values ignore positive ones
+                        let shift_down_left = (level_top_right - cam_top_right)
+                            .min(Vec2::ZERO)
+                            .extend(0.0);
+
+                        cam_transform.translation += shift_up_right + shift_down_left;
+                    }
+                }
             }
         }
     }
@@ -117,48 +156,5 @@ pub trait SmoothApproach {
 impl SmoothApproach for Vec2 {
     fn smooth_approach(self, target: Self, rate: f32, dt: f32) -> Self {
         (target - self) * dt * rate
-    }
-}
-
-fn camera_fit_inside_current_level<C: Component>(
-    mut camera_query: Query<(&Camera, &mut Transform, &GlobalTransform), With<CameraFollow<C>>>,
-    level_query: Query<(&GlobalTransform, &Handle<LdtkLevel>), Without<CameraFollow<C>>>,
-    level_selection: Res<LevelSelection>,
-    ldtk_levels: Res<Assets<LdtkLevel>>,
-) {
-    for (camera, mut cam_transform, cam_gt) in &mut camera_query {
-        for (level_transform, level_handle) in &level_query {
-            if let Some(ldtk_level) = ldtk_levels.get(level_handle) {
-                let level = &ldtk_level.level;
-                let level_translation = level_transform.translation();
-                if level_selection.is_match(&0, level) {
-                    let cam_bottom_left = camera
-                        .ndc_to_world(&cam_gt, -vec3(1.0, 1.0, 0.0))
-                        .unwrap()
-                        .xy();
-                    let cam_top_right = camera
-                        .ndc_to_world(&cam_gt, vec3(1.0, 1.0, 0.0))
-                        .unwrap()
-                        .xy();
-                    // The level's origin is at the bottom left corner
-                    let level_extents = vec2(level.px_wid as f32, level.px_hei as f32);
-                    let level_bottom_left = level_translation.xy();
-                    let level_top_right = level_translation.xy() + level_extents;
-
-                    // Vector pointing from camera bounds to level bounds
-                    // If x or y are positive the screen is out of bounds and must shift
-                    // If x or y are negative, ignore them as they are in bounds
-                    let shift_up_right = (level_bottom_left - cam_bottom_left)
-                        .max(Vec2::ZERO)
-                        .extend(0.0);
-                    // Same as above in reverse: use negative values ignore positive ones
-                    let shift_down_left = (level_top_right - cam_top_right)
-                        .min(Vec2::ZERO)
-                        .extend(0.0);
-
-                    cam_transform.translation += shift_up_right + shift_down_left;
-                }
-            }
-        }
     }
 }
