@@ -100,8 +100,8 @@ impl Default for EnemyTemplate {
             variant: ImageKey::GnollRed,
             health: 20.0,
             reward_gold: 10.0,
-            hurt_increase_alarm: 0.5,
-            death_increase_alarm: 5.0,
+            hurt_increase_alarm: 0.005,
+            death_increase_alarm: 0.05,
         }
     }
 }
@@ -185,18 +185,11 @@ impl EnemyTemplate {
 
 #[derive(Resource, Reflect, Default)]
 #[reflect(Resource)]
-pub struct Alarm {
-    pub current: f32,
-    pub max: f32,
-}
+pub struct Alarm(pub f32);
 
 impl Alarm {
-    pub fn empty(max: f32) -> Self {
-        Self { current: 0.0, max }
-    }
-
     pub fn increase(&mut self, value: f32) {
-        self.current = (self.current + value).min(self.max);
+        self.0 = (self.0 + value).min(1.0);
     }
 }
 
@@ -243,13 +236,12 @@ impl DifficultyCurve {
         mut curve_query: Query<(&DifficultyCurve, &mut EnemyAi, &mut Mob, &Children)>,
         mut detector_query: Query<&mut Transform, With<Detector>>,
     ) {
-        let t = alarm.current / alarm.max;
         for (curve, mut enemy, mut mob, children) in &mut curve_query {
-            mob.speed = curve.speed.at(t);
-            let detect_radius = curve.detect_radius.at(t);
-            enemy.follow_radius = curve.follow_radius.at(t);
-            enemy.attack_radius = curve.attack_radius.at(t);
-            enemy.attack_cooldown = curve.attack_cooldown.at(t);
+            mob.speed = curve.speed.at(alarm.0);
+            let detect_radius = curve.detect_radius.at(alarm.0);
+            enemy.follow_radius = curve.follow_radius.at(alarm.0);
+            enemy.attack_radius = curve.attack_radius.at(alarm.0);
+            enemy.attack_cooldown = curve.attack_cooldown.at(alarm.0);
 
             for &child in children {
                 let Ok(mut transform) = detector_query.get_mut(child) else { continue };

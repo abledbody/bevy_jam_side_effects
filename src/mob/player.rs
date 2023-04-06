@@ -11,7 +11,7 @@ use crate::{
     camera::{GameCamera, CAMERA_SCALE},
     combat::Faction,
     hud::{HealthBarTemplate, NametagTemplate},
-    mob::{enemy::Alarm, BodyTemplate},
+    mob::{enemy::Alarm, Body, BodyTemplate},
     vfx::DropShadowTemplate,
 };
 
@@ -27,6 +27,32 @@ pub enum PlayerAction {
     Attack,
 }
 
+#[derive(Resource, Reflect, Default)]
+#[reflect(Resource)]
+pub struct PlayerDefected(pub bool);
+
+impl PlayerDefected {
+    pub fn detect(
+        player_query: Query<(&MobInputs, &Children), With<PlayerControl>>,
+        mut body_query: Query<&mut Handle<Image>, With<Body>>,
+        handle: Res<Handles>,
+        mut defected: ResMut<PlayerDefected>,
+        mut alarm: ResMut<Alarm>,
+    ) {
+        let Ok((player, children)) = player_query.get_single() else { return };
+        if player.movement == Vec2::ZERO && player.attack.is_none() {
+            return;
+        }
+
+        defected.0 = true;
+        alarm.0 = alarm.0.max(0.065);
+        for &child in children {
+            let Ok(mut body) = body_query.get_mut(child) else { continue };
+            *body = handle.image[&ImageKey::GnollBlue].clone();
+        }
+    }
+}
+
 #[derive(Component, Reflect, Default, Debug)]
 pub struct PlayerControl;
 
@@ -38,31 +64,29 @@ impl PlayerControl {
         >,
         primary_window_query: Query<&Window, With<PrimaryWindow>>,
         camera: Query<(&Camera, &GlobalTransform), With<GameCamera>>,
-        mut alarm: ResMut<Alarm>,
     ) {
         let window = primary_window_query.single();
         let (camera, cam_gt) = camera.single();
 
-        for (action_state, mut inputs, mob_gt) in &mut player_query {
+        for (action, mut inputs, mob_gt) in &mut player_query {
             inputs.movement = Vec2::ZERO;
-            if action_state.pressed(PlayerAction::Move) {
-                if let Some(axis_pair) = action_state.clamped_axis_pair(PlayerAction::Move) {
+            if action.pressed(PlayerAction::Move) {
+                if let Some(axis_pair) = action.clamped_axis_pair(PlayerAction::Move) {
                     inputs.movement = axis_pair.xy();
-                    alarm.current = alarm.current.max(6.5);
+                }
+            }
+
+            let mut aim = None;
+            if let Some(axis_pair) = action.clamped_axis_pair(PlayerAction::Aim) {
+                let axis_pair = axis_pair.xy();
+                if axis_pair != Vec2::ZERO {
+                    aim = Some(axis_pair);
                 }
             }
 
             inputs.attack = None;
-            let mut direction = None;
-            if let Some(axis_pair) = action_state.clamped_axis_pair(PlayerAction::Aim) {
-                let axis_pair = axis_pair.xy();
-                if axis_pair != Vec2::ZERO {
-                    direction = Some(axis_pair);
-                }
-            }
-
-            if action_state.just_pressed(PlayerAction::Attack) {
-                inputs.attack = direction
+            if action.just_pressed(PlayerAction::Attack) {
+                inputs.attack = aim
                     .or_else(|| {
                         window
                             .cursor_position()

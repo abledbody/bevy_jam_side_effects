@@ -150,7 +150,7 @@ impl AlarmMeter {
     ) {
         for (mut color, mut style) in &mut alarm_meter_query {
             // Hack but it works
-            let t = (alarm.current / alarm.max).max(0.000001);
+            let t = alarm.0.max(0.000001);
             let color_idx = (t * Self::COLOR_RAMP.len() as f32).ceil() as usize - 1;
 
             color.0 = Self::COLOR_RAMP[color_idx];

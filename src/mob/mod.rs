@@ -178,6 +178,9 @@ pub struct MobInputs {
     pub attack: Option<Vec2>,
 }
 
+#[derive(Component, Reflect)]
+pub struct Body;
+
 pub struct BodyTemplate {
     texture: ImageKey,
     offset: Transform,
@@ -197,6 +200,7 @@ impl BodyTemplate {
             },
             AttackAnimation::default(),
             FlinchAnimation::default(),
+            Body,
         ));
         #[cfg(feature = "debug_mode")]
         body.insert(Name::new("Body"));

@@ -24,7 +24,7 @@ use crate::{
     map::{spawn_level_entities, Exit, MapTemplate, Plate},
     mob::{
         enemy::{Alarm, DetectEvent, DifficultyCurve, EnemyAi},
-        player::{PlayerAction, PlayerControl},
+        player::{PlayerAction, PlayerControl, PlayerDefected},
         Mob,
     },
     util::{DespawnSet, ZRampByY},
@@ -34,13 +34,14 @@ const TITLE: &str = "Sai Defects";
 
 #[derive(SystemSet, Clone, Debug, Eq, PartialEq, Hash)]
 enum UpdateSet {
+    // <-- Spawn level
     Synchronize,
     Animate,
     PostAnimate,
     Combat,
     CombatFlush,
     // <-- Physics
-    // Spawn / Despawn
+    // <-- Spawn / Despawn
 }
 
 pub struct GamePlugin;
@@ -63,7 +64,8 @@ impl Plugin for GamePlugin {
         .insert_resource(LevelSelection::Index(0))
         .init_resource::<Handles>()
         .init_resource::<DespawnSet>()
-        .insert_resource(Alarm::empty(100.0));
+        .init_resource::<PlayerDefected>()
+        .init_resource::<Alarm>();
 
         // Events
         app.add_event::<HitEvent>()
@@ -132,6 +134,7 @@ impl Plugin for GamePlugin {
         // Animation systems
         app.add_systems(
             (
+                PlayerDefected::detect,
                 GameCamera::cut_to_new_target,
                 GameCamera::follow_target,
                 WalkAnimation::trigger,
