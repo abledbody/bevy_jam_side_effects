@@ -97,7 +97,7 @@ impl Default for EnemyTemplate {
         Self {
             transform: default(),
             name: "Unnamed".to_string(),
-            variant: ImageKey::RedGnoll,
+            variant: ImageKey::GnollRed,
             health: 20.0,
             reward_gold: 10.0,
             hurt_increase_alarm: 0.5,
@@ -127,7 +127,7 @@ impl EnemyTemplate {
 
         // Children
         let body = BodyTemplate {
-            texture: ImageKey::RedGnoll,
+            texture: ImageKey::GnollRed,
             offset: Transform::from_xyz(2.0, 11.0, 0.0),
         }
         .spawn(commands, handle);

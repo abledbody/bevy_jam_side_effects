@@ -16,19 +16,31 @@ const FONT_MAP: [(FontKey, &str); 3] = [
 
 #[derive(Reflect, FromReflect, Eq, PartialEq, Hash)]
 pub enum ImageKey {
-    RedGnoll,
-    GreenGnoll,
-    BlueGnoll,
-    Plate,
+    GnollRed,
+    GnollGreen,
+    GnollBlue,
+    PlateUnpressed,
+    PlatePressed,
+    GateOpen,
+    GateClosed,
     DropShadow,
 }
 
-const IMAGE_MAP: [(ImageKey, &str); 5] = [
-    (ImageKey::RedGnoll, "sprites/character/RedGnoll.png"),
-    (ImageKey::GreenGnoll, "sprites/character/GreenGnoll.png"),
-    (ImageKey::BlueGnoll, "sprites/character/BlueGnoll.png"),
-    (ImageKey::Plate, "sprites/tilesets/interactive.png"),
-    (ImageKey::DropShadow, "sprites/vfx/DropShadow.png"),
+const IMAGE_MAP: [(ImageKey, &str); 8] = [
+    (ImageKey::GnollRed, "sprites/character/gnoll_red.png"),
+    (ImageKey::GnollGreen, "sprites/character/gnoll_green.png"),
+    (ImageKey::GnollBlue, "sprites/character/gnoll_blue.png"),
+    (
+        ImageKey::PlateUnpressed,
+        "sprites/interactive/plate_unpressed.png",
+    ),
+    (
+        ImageKey::PlatePressed,
+        "sprites/interactive/plate_pressed.png",
+    ),
+    (ImageKey::GateOpen, "sprites/interactive/gate_open.png"),
+    (ImageKey::GateClosed, "sprites/interactive/gate_closed.png"),
+    (ImageKey::DropShadow, "sprites/vfx/drop_shadow.png"),
 ];
 
 #[derive(Reflect, FromReflect, Eq, PartialEq, Hash)]

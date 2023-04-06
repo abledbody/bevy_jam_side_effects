@@ -94,7 +94,7 @@ impl PlayerTemplate {
 
         // Children
         let body = BodyTemplate {
-            texture: ImageKey::GreenGnoll,
+            texture: ImageKey::GnollGreen,
             offset: Transform::from_xyz(2.0, 11.0, 0.0),
         }
         .spawn(commands, handle);

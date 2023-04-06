@@ -95,7 +95,6 @@ impl ExitTemplate {
     }
 }
 
-// TODO: Determine which gates to toggle
 #[derive(Component, Reflect, Default)]
 pub struct Plate {
     gates: Vec<Entity>,
@@ -105,32 +104,34 @@ pub struct Plate {
 impl Plate {
     pub fn detect(
         mut collision_events: EventReader<CollisionEvent>,
-        mut plate_query: Query<(&mut Plate, &mut Sprite)>,
-        mut gate_query: Query<(&mut Gate, &mut Sprite, &mut CollisionGroups), Without<Plate>>,
+        mut plate_query: Query<(&mut Plate, &mut Handle<Image>)>,
+        mut gate_query: Query<
+            (&mut Gate, &mut Handle<Image>, &mut CollisionGroups),
+            Without<Plate>,
+        >,
+        handle: Res<Handles>,
     ) {
         for &event in collision_events.iter() {
             let CollisionEvent::Started ( entity1, entity2, _) = event else { continue };
 
             let mut handle_collision = |entity: Entity| {
-                let Ok((mut plate, mut plate_sprite)) = plate_query.get_mut(entity) else { return };
+                let Ok((mut plate, mut plate_image)) = plate_query.get_mut(entity) else { return };
                 if plate.pressed {
                     return;
                 }
                 plate.pressed = true;
-                // TODO: Set texture to ImageKey::PressedPlate instead
-                plate_sprite.color = Color::RED;
+                *plate_image = handle.image[&ImageKey::PlatePressed].clone();
 
                 for &entity in &plate.gates {
-                    let Ok((mut gate, mut gate_sprite, mut gate_groups)) = gate_query.get_mut(entity) else {
+                    let Ok((mut gate, mut gate_image, mut gate_groups)) = gate_query.get_mut(entity) else {
                         continue
                     };
 
                     gate.open = !gate.open;
-                    // TODO: Set texture to ImageKey::OpenGate vs ClosedGate instead
-                    (gate_groups.filters, gate_sprite.color) = if gate.open {
-                        (Group::empty(), Color::GREEN)
+                    (gate_groups.filters, *gate_image) = if gate.open {
+                        (Group::empty(), handle.image[&ImageKey::GateOpen].clone())
                     } else {
-                        (COLLISION_GROUP, Color::BLUE)
+                        (COLLISION_GROUP, handle.image[&ImageKey::GateClosed].clone())
                     };
                 }
             };
@@ -151,8 +152,7 @@ impl PlateTemplate {
         let mut plate = commands.spawn((
             SpriteBundle {
                 transform: self.transform,
-                // TODO: ImageKey::UnpressedPlate
-                texture: handle.image[&ImageKey::Plate].clone(),
+                texture: handle.image[&ImageKey::PlateUnpressed].clone(),
                 ..default()
             },
             Collider::cuboid(8.0, 8.0),
@@ -186,17 +186,16 @@ struct GateTemplate {
 
 impl GateTemplate {
     pub fn spawn(self, commands: &mut Commands, handle: &Handles) -> Entity {
-        let filters = if self.open {
-            Group::empty()
+        let (filters, texture) = if self.open {
+            (Group::empty(), handle.image[&ImageKey::GateOpen].clone())
         } else {
-            COLLISION_GROUP
+            (COLLISION_GROUP, handle.image[&ImageKey::GateClosed].clone())
         };
 
         let mut gate = commands.spawn((
             SpriteBundle {
                 transform: self.transform,
-                // TODO: ImageKey::OpenGate or ClosedGate
-                texture: handle.image[&ImageKey::Plate].clone(),
+                texture,
                 ..default()
             },
             Collider::cuboid(8.0, 8.0),
