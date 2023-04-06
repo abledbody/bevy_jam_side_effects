@@ -20,7 +20,7 @@ use crate::{
     camera::CameraFollow,
     combat::{DeathEffects, HitEffects, HurtEffects},
     hud::{AlarmMeter, HealthBar},
-    map::Wall,
+    map::{Exit, Wall},
     mob::{
         enemy::{Alarm, DifficultyCurve, EnemyAi},
         player::{Gold, PlayerControl},
@@ -80,6 +80,7 @@ impl Plugin for DebugPlugin {
             .register_type::<Facing>()
             .register_type::<Lifetime>()
             .register_type::<Wall>()
+            .register_type::<Exit>()
             .register_type::<CameraFollow<PlayerControl>>()
             .register_type::<HealthBar>()
             .register_type::<Alarm>()

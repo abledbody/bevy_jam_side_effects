@@ -83,7 +83,7 @@ fn random_name(mut rng: impl Rng) -> String {
 }
 
 pub struct EnemyTemplate {
-    pub position: Vec2,
+    pub transform: Transform,
     pub name: String,
     pub variant: ImageKey,
     pub health: f32,
@@ -95,7 +95,7 @@ pub struct EnemyTemplate {
 impl Default for EnemyTemplate {
     fn default() -> Self {
         Self {
-            position: Vec2::ZERO,
+            transform: default(),
             name: "Unnamed".to_string(),
             variant: ImageKey::RedGnoll,
             health: 20.0,
@@ -150,7 +150,7 @@ impl EnemyTemplate {
         // Parent
         let mut enemy = commands.spawn((
             SpatialBundle {
-                transform: Transform::from_translation(self.position.extend(0.0)),
+                transform: self.transform,
                 ..default()
             },
             MobBundle {

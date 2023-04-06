@@ -52,10 +52,10 @@ const AUDIO_MAP: [(AudioKey, &str); 7] = [
 
 #[derive(Reflect, FromReflect, Eq, PartialEq, Hash)]
 pub enum LevelKey {
-    TestLevel,
+    GameMap,
 }
 
-const LEVEL_MAP: [(LevelKey, &str); 1] = [(LevelKey::TestLevel, "maps/test_map.ldtk")];
+const LEVEL_MAP: [(LevelKey, &str); 1] = [(LevelKey::GameMap, "maps/game_map.ldtk")];
 
 #[derive(Resource, Reflect, Default)]
 #[reflect(Resource)]

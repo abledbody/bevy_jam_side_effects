@@ -1,139 +1,132 @@
-use bevy::{
-    math::{vec2, Vec3Swizzles},
-    prelude::*,
-};
+use bevy::prelude::*;
 use bevy_ecs_ldtk::prelude::*;
 use bevy_rapier2d::prelude::*;
 
 use crate::{
-    asset::Handles,
-    combat::COLLISION_GROUP,
-    mob::{
-        enemy::EnemyTemplate,
-        player::{PlayerControl, PlayerTemplate},
-    },
+    asset::{Handles, LevelKey},
+    combat::{COLLISION_GROUP, PLAYER_HURTBOX_GROUP},
+    mob::{enemy::EnemyTemplate, player::PlayerTemplate},
 };
 
-pub struct MapPlugin;
+pub struct MapTemplate;
 
-impl Plugin for MapPlugin {
-    fn build(&self, app: &mut App) {
-        app.insert_resource(LdtkSettings {
-            level_spawn_behavior: LevelSpawnBehavior::UseWorldTranslation {
-                load_level_neighbors: true,
-            },
-            set_clear_color: SetClearColor::FromLevelBackground,
+impl MapTemplate {
+    pub fn spawn(self, commands: &mut Commands, handle: &Handles) -> Entity {
+        let mut map = commands.spawn(LdtkWorldBundle {
+            ldtk_handle: handle.levels[&LevelKey::GameMap].clone(),
             ..default()
-        })
-        .insert_resource(LevelSelection::Index(0))
-        .add_plugin(LdtkPlugin)
-        .add_systems((spawn_walls, spawn_instances, update_level_selection));
+        });
+        #[cfg(feature = "debug_mode")]
+        map.insert(Name::new("Map"));
+
+        map.id()
     }
 }
 
-#[derive(Component, Reflect, Copy, Clone, Eq, PartialEq, Debug, Default)]
+#[derive(Component, Reflect)]
 pub struct Wall;
 
-#[derive(Bundle, Clone, Default, Debug)]
-pub struct WallBundle {
-    wall: Wall,
-    collider: Collider,
-    collision_groups: CollisionGroups,
-    rigid_body: RigidBody,
-    friction: Friction,
+struct WallTemplate {
+    transform: Transform,
 }
 
-fn spawn_walls(mut commands: Commands, tags: Query<(Entity, &TileEnumTags), Added<TileEnumTags>>) {
-    for (entity, tag) in &tags {
-        if tag.tags.iter().find(|s| s.as_str() == "Full").is_none() {
-            continue;
-        }
-
-        commands.entity(entity).insert(WallBundle {
-            collider: Collider::cuboid(8.0, 8.0),
-            collision_groups: CollisionGroups {
+impl WallTemplate {
+    fn spawn(self, commands: &mut Commands) -> Entity {
+        let mut wall = commands.spawn((
+            TransformBundle::from_transform(self.transform),
+            Collider::cuboid(8.0, 8.0),
+            CollisionGroups {
                 memberships: COLLISION_GROUP,
                 filters: COLLISION_GROUP,
             },
-            rigid_body: RigidBody::Fixed,
-            ..default()
-        });
+            Friction::new(0.0),
+            RigidBody::Fixed,
+            Wall,
+        ));
+        #[cfg(feature = "debug_mode")]
+        wall.insert(Name::new("Wall"));
+
+        wall.id()
     }
 }
 
-fn spawn_instances(
-    mut commands: Commands,
-    handle: Res<Handles>,
-    entity_query: Query<(Entity, &Transform, &EntityInstance, &Parent), Added<EntityInstance>>,
-    transform_query: Query<&Transform, (With<Children>, Without<EntityInstance>)>,
-    player_query: Query<&PlayerControl>,
-) {
-    for (entity, transform, instance, parent) in &entity_query {
-        let parent_transform = transform_query
-            .get(parent.get())
-            .copied()
-            .unwrap_or_default();
+#[derive(Component, Reflect)]
+pub struct Exit;
 
-        // Despawn the marker entity
-        commands.entity(entity).despawn_recursive();
+impl Exit {
+    pub fn detect(
+        mut collision_events: EventReader<CollisionEvent>,
+        mut level_selection: ResMut<LevelSelection>,
+        exit_query: Query<(), With<Exit>>,
+    ) {
+        // If this line returns, there's a bug.
+        let LevelSelection::Index(idx) = *level_selection else { return };
 
-        // Replace with the actual entity
-        match instance.identifier.as_str() {
-            "Player" => {
-                // We only want one player and LDtk doesn't know that
-                if player_query.is_empty() {
-                    // Since we're going to create a new entity, and we therefore will not inherit the parent's
-                    // transform automatically, we need to manually add it.
-                    let position = (transform.translation + parent_transform.translation).xy();
-                    PlayerTemplate {
-                        position,
-                        ..default()
-                    }
-                    .spawn(&mut commands, &handle);
-                }
-            },
-            "Enemy" => {
-                let enemy = EnemyTemplate {
-                    position: transform.translation.xy(),
-                    ..default()
-                }
-                .with_random_name()
-                .spawn(&mut commands, &handle);
-
-                commands.entity(parent.get()).add_child(enemy);
-            },
-            _ => (),
+        for &event in collision_events.iter() {
+            let CollisionEvent::Started ( entity1, entity2, _) = event else { continue };
+            if exit_query.contains(entity1) || exit_query.contains(entity2) {
+                *level_selection = LevelSelection::Index(idx + 1);
+                break;
+            }
         }
     }
 }
 
-fn update_level_selection(
-    level_query: Query<(&Handle<LdtkLevel>, &Transform), Without<PlayerControl>>,
-    player_query: Query<&Transform, With<PlayerControl>>,
-    mut level_selection: ResMut<LevelSelection>,
-    ldtk_levels: Res<Assets<LdtkLevel>>,
-) {
-    let Ok(player_transform) = player_query.get_single() else { return };
-    let player_pos = player_transform.translation.xy();
+struct ExitTemplate {
+    transform: Transform,
+}
 
-    // Iterate over unselected levels to find one that contains the player
-    for (level_handle, level_transform) in &level_query {
-        let Some(ldtk_level) = ldtk_levels.get(level_handle) else { continue };
-        if level_selection.is_match(&usize::MAX, &ldtk_level.level) {
+impl ExitTemplate {
+    pub fn spawn(self, commands: &mut Commands) -> Entity {
+        let mut exit = commands.spawn((
+            TransformBundle::from_transform(self.transform),
+            Collider::cuboid(8.0, 8.0),
+            CollisionGroups {
+                memberships: COLLISION_GROUP,
+                filters: PLAYER_HURTBOX_GROUP,
+            },
+            Sensor,
+            ActiveEvents::COLLISION_EVENTS,
+            Exit,
+        ));
+        #[cfg(feature = "debug_mode")]
+        exit.insert(Name::new("Exit"));
+
+        exit.id()
+    }
+}
+
+pub fn spawn_level_entities(
+    mut commands: Commands,
+    handle: Res<Handles>,
+    entity_query: Query<(&Parent, &Transform, &EntityInstance), Added<EntityInstance>>,
+    tile_query: Query<(&Parent, &Transform, &TileEnumTags), Added<TileEnumTags>>,
+) {
+    for (parent, &transform, instance) in &entity_query {
+        let entity = match instance.identifier.as_str() {
+            "player" => PlayerTemplate {
+                transform,
+                ..default()
+            }
+            .spawn(&mut commands, &handle),
+            "enemy" => EnemyTemplate {
+                transform,
+                ..default()
+            }
+            .with_random_name()
+            .spawn(&mut commands, &handle),
+            "exit" => ExitTemplate { transform }.spawn(&mut commands),
+            _ => continue,
+        };
+        commands.entity(parent.get()).add_child(entity);
+    }
+
+    for (parent, &transform, tile) in &tile_query {
+        if tile.tags.iter().find(|s| s.as_str() == "wall").is_none() {
             continue;
         }
 
-        let level_pos = level_transform.translation.xy();
-        let level_size = vec2(
-            ldtk_level.level.px_wid as f32,
-            ldtk_level.level.px_hei as f32,
-        );
-        let level_bounds = Rect::from_corners(level_pos, level_pos + level_size);
-
-        if level_bounds.contains(player_pos) {
-            println!("Updating level selection: {}", ldtk_level.level.identifier);
-            *level_selection = LevelSelection::Iid(ldtk_level.level.iid.clone());
-            break;
-        }
+        let entity = WallTemplate { transform }.spawn(&mut commands);
+        commands.entity(parent.get()).add_child(entity);
     }
 }

@@ -75,14 +75,14 @@ impl PlayerControl {
 
 #[derive(Component, Reflect)]
 pub struct PlayerTemplate {
-    pub position: Vec2,
+    pub transform: Transform,
     pub health: f32,
 }
 
 impl Default for PlayerTemplate {
     fn default() -> Self {
         Self {
-            position: Vec2::ZERO,
+            transform: default(),
             health: 200.0,
         }
     }
@@ -116,7 +116,7 @@ impl PlayerTemplate {
         // Parent
         let mut player = commands.spawn((
             SpatialBundle {
-                transform: Transform::from_translation(self.position.extend(0.0)),
+                transform: self.transform,
                 ..default()
             },
             MobBundle {
