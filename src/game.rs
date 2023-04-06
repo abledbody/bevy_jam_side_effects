@@ -134,7 +134,7 @@ impl Plugin for GamePlugin {
         // Animation systems
         app.add_systems(
             (
-                PlayerDefected::detect,
+                PlayerDefected::detect.run_if(resource_equals(PlayerDefected(false))),
                 GameCamera::cut_to_new_target,
                 GameCamera::follow_target,
                 WalkAnimation::trigger,

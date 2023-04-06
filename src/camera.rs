@@ -1,16 +1,20 @@
-use bevy::{math::Vec3Swizzles, prelude::*, render::camera::OrthographicProjection};
+use bevy::{
+    math::Vec3Swizzles,
+    prelude::*,
+    render::camera::{OrthographicProjection, ScalingMode},
+};
 
 use crate::mob::player::PlayerControl;
-
-pub const CAMERA_SCALE: f32 = 1.0 / 4.0;
 
 pub struct GameCameraTemplate;
 
 impl GameCameraTemplate {
     pub fn spawn(self, commands: &mut Commands) -> Entity {
         let projection = OrthographicProjection {
-            // TODO: Scale to screen resolution
-            scale: CAMERA_SCALE,
+            scaling_mode: ScalingMode::AutoMax {
+                max_width: 480.0,
+                max_height: 270.0,
+            },
             ..default()
         };
 
@@ -31,15 +35,9 @@ impl GameCameraTemplate {
     }
 }
 
-#[derive(Component, Reflect)]
+#[derive(Component, Reflect, Default)]
 pub struct GameCamera {
     pub rate: f32,
-}
-
-impl Default for GameCamera {
-    fn default() -> Self {
-        Self { rate: 0.0 }
-    }
 }
 
 impl GameCamera {

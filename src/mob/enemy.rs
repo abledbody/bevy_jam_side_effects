@@ -1,14 +1,10 @@
-use bevy::{
-    math::{vec3, Vec3Swizzles},
-    prelude::*,
-};
+use bevy::{math::Vec3Swizzles, prelude::*};
 use bevy_rapier2d::prelude::*;
 use rand::{seq::SliceRandom, thread_rng, Rng};
 
 use super::MobInputs;
 use crate::{
     asset::{Handles, ImageKey},
-    camera::CAMERA_SCALE,
     combat::{DeathEffects, Faction, HitEvent, HurtEffects},
     hud::{HealthBarTemplate, NametagTemplate},
     mob::{player::PlayerControl, BodyTemplate, Health, Mob, MobBundle},
@@ -131,11 +127,7 @@ impl EnemyTemplate {
         .spawn(commands, handle);
         let drop_shadow = DropShadowTemplate::default().spawn(commands, handle);
         let nametag = NametagTemplate {
-            offset: Transform::from_xyz(0.0, 26.0, 0.0).with_scale(vec3(
-                CAMERA_SCALE,
-                CAMERA_SCALE,
-                1.0,
-            )),
+            offset: Transform::from_xyz(0.0, 26.0, 0.0),
             name: self.name,
         }
         .spawn(commands, handle);

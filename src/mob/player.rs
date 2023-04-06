@@ -1,14 +1,10 @@
-use bevy::{
-    math::{vec3, Vec3Swizzles},
-    prelude::*,
-    window::PrimaryWindow,
-};
+use bevy::{math::Vec3Swizzles, prelude::*, window::PrimaryWindow};
 use leafwing_input_manager::prelude::*;
 
 use super::{Health, Mob, MobBundle, MobInputs};
 use crate::{
     asset::{Handles, ImageKey},
-    camera::{GameCamera, CAMERA_SCALE},
+    camera::GameCamera,
     combat::Faction,
     hud::{HealthBarTemplate, NametagTemplate},
     mob::{enemy::Alarm, Body, BodyTemplate},
@@ -24,7 +20,7 @@ pub enum PlayerAction {
     Attack,
 }
 
-#[derive(Resource, Reflect, Default)]
+#[derive(Resource, Reflect, Default, Eq, PartialEq)]
 #[reflect(Resource)]
 pub struct PlayerDefected(pub bool);
 
@@ -123,11 +119,7 @@ impl PlayerTemplate {
         .spawn(commands, handle);
         let drop_shadow = DropShadowTemplate::default().spawn(commands, handle);
         let nametag = NametagTemplate {
-            offset: Transform::from_xyz(0.0, 26.0, 0.0).with_scale(vec3(
-                CAMERA_SCALE,
-                CAMERA_SCALE,
-                1.0,
-            )),
+            offset: Transform::from_xyz(0.0, 26.0, 0.0),
             name: PLAYER_NAME.to_string(),
         }
         .spawn(commands, handle);
