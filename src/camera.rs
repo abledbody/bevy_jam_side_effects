@@ -3,7 +3,7 @@ use std::marker::PhantomData;
 use bevy::{
     math::{vec2, Vec3Swizzles},
     prelude::*,
-    render::camera::OrthographicProjection,
+    render::camera::{OrthographicProjection, ScalingMode},
 };
 use bevy_ecs_ldtk::{LdtkLevel, LevelSelection};
 
@@ -95,7 +95,7 @@ impl<C: Component> CameraFollow<C> {
             &CameraFollow<C>,
             &mut Transform,
             &GlobalTransform,
-            &OrthographicProjection,
+            &mut OrthographicProjection,
         )>,
         transform_query: Query<
             &GlobalTransform,
@@ -106,7 +106,7 @@ impl<C: Component> CameraFollow<C> {
         ldtk_levels: Res<Assets<LdtkLevel>>,
         time: Res<Time>,
     ) {
-        for (follow, mut cam_transform, cam_gt, ortho) in &mut camera_query {
+        for (follow, mut cam_transform, cam_gt, mut ortho) in &mut camera_query {
             let mut delta = Vec3::ZERO;
             if let Ok(&target) = transform_query.get(follow.target) {
                 // Store the delta from this translation so we account for it when locking the camera
@@ -142,6 +142,10 @@ impl<C: Component> CameraFollow<C> {
                             .extend(0.0);
 
                         cam_transform.translation += shift_up_right + shift_down_left;
+                        ortho.scaling_mode = ScalingMode::AutoMax {
+                            max_width: level_extents.x * 3.0,
+                            max_height: level_extents.y * 3.0,
+                        }
                     }
                 }
             }
