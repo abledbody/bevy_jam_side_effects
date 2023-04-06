@@ -314,6 +314,7 @@ impl EnemyAi {
             let Ok(target_gt) = transform_query.get(target) else { continue };
 
             inputs.attack = None;
+            inputs.movement = Vec2::ZERO;
             enemy.attack_cooldown_t += dt;
 
             let delta = target_gt.translation().xy() - mob_gt.translation().xy();
@@ -322,9 +323,11 @@ impl EnemyAi {
 
             if distance > enemy.follow_radius {
                 enemy.target = None;
-            } else if distance > enemy.attack_radius {
-                inputs.movement = dir;
-            } else if enemy.attack_cooldown_t >= enemy.attack_cooldown {
+                continue;
+            }
+
+            inputs.movement = dir;
+            if distance <= enemy.attack_radius && enemy.attack_cooldown_t >= enemy.attack_cooldown {
                 inputs.attack = Some(dir);
                 enemy.attack_cooldown_t = 0.0;
             }
