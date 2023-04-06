@@ -3,7 +3,7 @@ use bevy_ecs_ldtk::prelude::*;
 use bevy_rapier2d::prelude::*;
 
 use crate::{
-    asset::{Handles, LevelKey},
+    asset::{Handles, ImageKey, LevelKey},
     combat::{COLLISION_GROUP, PLAYER_HURTBOX_GROUP},
     mob::{enemy::EnemyTemplate, player::PlayerTemplate},
 };
@@ -105,29 +105,32 @@ pub struct Plate {
 impl Plate {
     pub fn detect(
         mut collision_events: EventReader<CollisionEvent>,
-        mut plate_query: Query<&mut Plate>,
-        mut gate_query: Query<(&mut Gate, &mut CollisionGroups)>,
+        mut plate_query: Query<(&mut Plate, &mut Sprite)>,
+        mut gate_query: Query<(&mut Gate, &mut Sprite, &mut CollisionGroups), Without<Plate>>,
     ) {
         for &event in collision_events.iter() {
             let CollisionEvent::Started ( entity1, entity2, _) = event else { continue };
 
             let mut handle_collision = |entity: Entity| {
-                let Ok(mut plate) = plate_query.get_mut(entity) else { return };
+                let Ok((mut plate, mut plate_sprite)) = plate_query.get_mut(entity) else { return };
                 if plate.pressed {
                     return;
                 }
                 plate.pressed = true;
+                // TODO: Set texture to ImageKey::PressedPlate instead
+                plate_sprite.color = Color::RED;
 
                 for &entity in &plate.gates {
-                    let Ok((mut gate, mut collision_groups)) = gate_query.get_mut(entity) else {
+                    let Ok((mut gate, mut gate_sprite, mut gate_groups)) = gate_query.get_mut(entity) else {
                         continue
                     };
 
                     gate.open = !gate.open;
-                    collision_groups.filters = if gate.open {
-                        Group::empty()
+                    // TODO: Set texture to ImageKey::OpenGate vs ClosedGate instead
+                    (gate_groups.filters, gate_sprite.color) = if gate.open {
+                        (Group::empty(), Color::GREEN)
                     } else {
-                        COLLISION_GROUP
+                        (COLLISION_GROUP, Color::BLUE)
                     };
                 }
             };
@@ -144,9 +147,14 @@ struct PlateTemplate {
 }
 
 impl PlateTemplate {
-    pub fn spawn(self, commands: &mut Commands) -> Entity {
+    pub fn spawn(self, commands: &mut Commands, handle: &Handles) -> Entity {
         let mut plate = commands.spawn((
-            TransformBundle::from_transform(self.transform),
+            SpriteBundle {
+                transform: self.transform,
+                // TODO: ImageKey::UnpressedPlate
+                texture: handle.image[&ImageKey::Plate].clone(),
+                ..default()
+            },
             Collider::cuboid(8.0, 8.0),
             CollisionGroups {
                 memberships: COLLISION_GROUP,
@@ -177,7 +185,7 @@ struct GateTemplate {
 }
 
 impl GateTemplate {
-    pub fn spawn(self, commands: &mut Commands) -> Entity {
+    pub fn spawn(self, commands: &mut Commands, handle: &Handles) -> Entity {
         let filters = if self.open {
             Group::empty()
         } else {
@@ -185,7 +193,12 @@ impl GateTemplate {
         };
 
         let mut gate = commands.spawn((
-            TransformBundle::from_transform(self.transform),
+            SpriteBundle {
+                transform: self.transform,
+                // TODO: ImageKey::OpenGate or ClosedGate
+                texture: handle.image[&ImageKey::Plate].clone(),
+                ..default()
+            },
             Collider::cuboid(8.0, 8.0),
             CollisionGroups {
                 memberships: COLLISION_GROUP,
@@ -228,7 +241,7 @@ pub fn spawn_level_entities(
                     transform,
                     open: true,
                 }
-                .spawn(&mut commands);
+                .spawn(&mut commands, &handle);
 
                 gate_map.insert(&instance.iid, gate);
                 gate
@@ -238,7 +251,7 @@ pub fn spawn_level_entities(
                     transform,
                     open: false,
                 }
-                .spawn(&mut commands);
+                .spawn(&mut commands, &handle);
 
                 gate_map.insert(&instance.iid, gate);
                 gate
@@ -269,7 +282,7 @@ pub fn spawn_level_entities(
                     break;
                 }
 
-                PlateTemplate { transform, gates }.spawn(&mut commands)
+                PlateTemplate { transform, gates }.spawn(&mut commands, &handle)
             },
             _ => continue,
         };

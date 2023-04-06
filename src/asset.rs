@@ -19,13 +19,15 @@ pub enum ImageKey {
     RedGnoll,
     GreenGnoll,
     BlueGnoll,
+    Plate,
     DropShadow,
 }
 
-const IMAGE_MAP: [(ImageKey, &str); 4] = [
+const IMAGE_MAP: [(ImageKey, &str); 5] = [
     (ImageKey::RedGnoll, "sprites/character/RedGnoll.png"),
     (ImageKey::GreenGnoll, "sprites/character/GreenGnoll.png"),
     (ImageKey::BlueGnoll, "sprites/character/BlueGnoll.png"),
+    (ImageKey::Plate, "sprites/tilesets/interactive.png"),
     (ImageKey::DropShadow, "sprites/vfx/DropShadow.png"),
 ];
 
