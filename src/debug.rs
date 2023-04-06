@@ -23,7 +23,7 @@ use crate::{
     map::{Exit, Gate, Plate, Wall},
     mob::{
         enemy::{Alarm, DifficultyCurve, EnemyAi},
-        player::{Gold, PlayerControl, PlayerDefected},
+        player::{PlayerControl, PlayerDefected},
         Body,
         DeadBody,
         Health,
@@ -60,7 +60,6 @@ impl Plugin for DebugPlugin {
         // Types
         app.register_type::<Handles>()
             .register_type::<Health>()
-            .register_type::<Gold>()
             .register_type::<Mob>()
             .register_type::<MobInputs>()
             .register_type::<Body>()

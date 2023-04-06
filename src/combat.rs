@@ -6,14 +6,7 @@ use bevy_rapier2d::prelude::*;
 use crate::{
     animation::{DeathAnimation, FlinchAnimation, Lifetime, WalkAnimation},
     asset::{AudioKey, Handles},
-    mob::{
-        enemy::Alarm,
-        player::{Gold, PlayerControl},
-        DeadBody,
-        Health,
-        Mob,
-        MobInputs,
-    },
+    mob::{enemy::Alarm, DeadBody, Health, Mob, MobInputs},
 };
 
 pub const COLLISION_GROUP: Group = Group::GROUP_1;
@@ -247,7 +240,6 @@ pub struct DeathEvent(pub Entity);
 
 #[derive(Component, Reflect, Default)]
 pub struct DeathEffects {
-    pub reward_gold: f32,
     pub increase_alarm: f32,
     // TODO: Animation, sound effect
 }
@@ -258,7 +250,6 @@ impl DeathEffects {
         mut death_events: EventReader<DeathEvent>,
         death_effects_query: Query<&DeathEffects>,
         mut alarm: ResMut<Alarm>,
-        mut player_query: Query<&mut Gold, With<PlayerControl>>,
         children_query: Query<&Children>,
         animation_query: Query<(), With<WalkAnimation>>, // And you can use animation_query.contains(child)
     ) {
@@ -280,11 +271,6 @@ impl DeathEffects {
             let Ok(death) = death_effects_query.get(entity) else {
                 continue
             };
-
-            // Reward gold
-            for mut player_gold in &mut player_query {
-                player_gold.0 += death.reward_gold;
-            }
 
             // Increase alarm
             alarm.increase(death.increase_alarm);

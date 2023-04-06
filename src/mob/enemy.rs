@@ -87,7 +87,6 @@ pub struct EnemyTemplate {
     pub name: String,
     pub variant: ImageKey,
     pub health: f32,
-    pub reward_gold: f32,
     pub hurt_increase_alarm: f32,
     pub death_increase_alarm: f32,
 }
@@ -99,7 +98,6 @@ impl Default for EnemyTemplate {
             name: "Unnamed".to_string(),
             variant: ImageKey::GnollRed,
             health: 20.0,
-            reward_gold: 10.0,
             hurt_increase_alarm: 0.005,
             death_increase_alarm: 0.05,
         }
@@ -166,7 +164,6 @@ impl EnemyTemplate {
                 ..default()
             },
             DeathEffects {
-                reward_gold: self.reward_gold,
                 increase_alarm: self.death_increase_alarm,
             },
         ));

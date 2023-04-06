@@ -17,9 +17,6 @@ use crate::{
 
 const PLAYER_NAME: &str = "Sai";
 
-#[derive(Component, Reflect, Default)]
-pub struct Gold(pub f32);
-
 #[derive(Debug, Copy, Clone, PartialEq, Actionlike)]
 pub enum PlayerAction {
     Move,
