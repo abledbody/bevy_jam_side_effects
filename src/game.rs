@@ -54,6 +54,7 @@ impl Plugin for GamePlugin {
                 load_level_neighbors: true,
             },
             set_clear_color: SetClearColor::FromLevelBackground,
+            level_background: LevelBackground::Nonexistent,
             ..default()
         })
         .insert_resource(LevelSelection::Index(0))
