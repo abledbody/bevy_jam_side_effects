@@ -97,8 +97,8 @@ impl Default for EnemyTemplate {
             name: "Unnamed".to_string(),
             variant: ImageKey::GnollRed,
             health: 20.0,
-            hurt_increase_alarm: 0.005,
-            death_increase_alarm: 0.05,
+            hurt_increase_alarm: 0.0025,
+            death_increase_alarm: 0.025,
         }
     }
 }
@@ -214,9 +214,9 @@ impl Default for DifficultyCurve {
     fn default() -> Self {
         Self {
             speed: Curve::new(60.0, 100.0),
-            detect_radius: Curve::new(0.0, 1000.0),
-            follow_radius: Curve::new(100.0, 1100.0),
-            attack_radius: Curve::new(20.0, 40.0),
+            detect_radius: Curve::new(0.0, 500.0),
+            follow_radius: Curve::new(50.0, 550.0),
+            attack_radius: Curve::new(20.0, 30.0),
             attack_cooldown: Curve::new(1.0, 0.5),
         }
     }
