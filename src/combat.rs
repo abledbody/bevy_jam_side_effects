@@ -6,7 +6,7 @@ use bevy_rapier2d::prelude::*;
 use crate::{
     animation::{DeathAnimation, FlinchAnimation, Lifetime, WalkAnimation},
     asset::{AudioKey, Handles},
-    mob::{enemy::Alarm, DeadBody, Health, Mob, MobInputs},
+    mob::{enemy::Alarm, Health, Mob, MobInputs},
 };
 
 pub const COLLISION_GROUP: Group = Group::GROUP_1;
@@ -263,7 +263,7 @@ impl DeathEffects {
             // Turn into a dead body
             commands
                 .entity(entity)
-                .insert((DeadBody, Lifetime(10.0)))
+                .insert(Lifetime(5.0))
                 .remove::<MobInputs>();
 
             if let Ok(children) = children_query.get(entity) {
