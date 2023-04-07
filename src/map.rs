@@ -3,7 +3,7 @@ use bevy_ecs_ldtk::prelude::*;
 use bevy_rapier2d::prelude::*;
 
 use crate::{
-    asset::{Handles, ImageKey, LevelKey},
+    asset::{AudioKey, Handles, ImageKey, LevelKey},
     combat::{COLLISION_GROUP, PLAYER_HURTBOX_GROUP},
     mob::{enemy::EnemyTemplate, player::PlayerTemplate},
 };
@@ -110,6 +110,7 @@ impl Plate {
             Without<Plate>,
         >,
         handle: Res<Handles>,
+        audio: Res<Audio>,
     ) {
         for &event in collision_events.iter() {
             let CollisionEvent::Started ( entity1, entity2, _) = event else { continue };
@@ -121,6 +122,8 @@ impl Plate {
                 }
                 plate.pressed = true;
                 *plate_image = handle.image[&ImageKey::PlatePressed].clone();
+
+                audio.play(handle.audio[&AudioKey::PlateTriggerGate].clone());
 
                 for &entity in &plate.gates {
                     let Ok((mut gate, mut gate_image, mut gate_groups)) = gate_query.get_mut(entity) else {

@@ -52,9 +52,10 @@ pub enum AudioKey {
     PlayerAttack4,
     PlayerHit,
     PlayerAttackMiss,
+    PlateTriggerGate,
 }
 
-const AUDIO_MAP: [(AudioKey, &str); 7] = [
+const AUDIO_MAP: [(AudioKey, &str); 8] = [
     (AudioKey::GnollWalk, "sfx/walk.wav"),
     (AudioKey::PlayerAttack1, "sfx/player_attack_1.wav"),
     (AudioKey::PlayerAttack2, "sfx/player_attack_2.wav"),
@@ -62,6 +63,7 @@ const AUDIO_MAP: [(AudioKey, &str); 7] = [
     (AudioKey::PlayerAttack4, "sfx/player_attack_4.wav"),
     (AudioKey::PlayerHit, "sfx/player_hit.wav"),
     (AudioKey::PlayerAttackMiss, "sfx/player_attack_miss.wav"),
+    (AudioKey::PlateTriggerGate, "sfx/button_gate.wav"),
 ];
 
 #[derive(Reflect, FromReflect, Eq, PartialEq, Hash)]
