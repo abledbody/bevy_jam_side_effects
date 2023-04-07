@@ -118,7 +118,7 @@ impl Plugin for GamePlugin {
         // First systems
         app.add_systems((
             restart_game.run_if(action_just_pressed(GameAction::Restart)),
-            StartText::update.run_if(action_just_pressed(GameAction::Confirm)),
+            StartText::advance.run_if(action_just_pressed(GameAction::Confirm)),
         ));
 
         // Pre-update systems
@@ -204,7 +204,7 @@ impl Plugin for GamePlugin {
         app.add_system(DespawnSet::apply.in_base_set(CoreSet::Last));
 
         // UI systems
-        app.add_systems((HealthBar::update, AlarmMeter::update));
+        app.add_systems((HealthBar::update, AlarmMeter::update, StartText::update));
     }
 }
 
