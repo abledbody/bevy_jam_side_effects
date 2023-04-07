@@ -1,4 +1,7 @@
-use bevy::{math::Vec3Swizzles, prelude::*};
+use bevy::{
+    math::{vec2, Vec3Swizzles},
+    prelude::*,
+};
 use bevy_rapier2d::prelude::*;
 use rand::{seq::SliceRandom, thread_rng, Rng};
 
@@ -273,7 +276,19 @@ impl EnemyAi {
         time: Res<Time>,
         audio: Res<Audio>,
     ) {
-        let Ok(player) = player_query.get_single() else { return };
+        let Ok(player) = player_query.get_single() else {
+            let mut rng = thread_rng();
+            for (mut enemy, mut inputs, _) in &mut enemy_query {
+                if enemy.target.is_none() {
+                    continue;
+                }
+
+                enemy.target = None;
+                inputs.attack = None;
+                inputs.movement = vec2(rng.gen_range(-1.0..1.0), rng.gen_range(-1.0..1.0)).normalize_or_zero();
+            }
+            return
+        };
 
         // Detect target
         let detect_sound_settings = PlaybackSettings::default().with_volume(0.7);
