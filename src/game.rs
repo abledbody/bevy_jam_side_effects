@@ -216,6 +216,7 @@ fn restart_game(
     mut commands: Commands,
     handle: Res<Handles>,
     map_query: Query<Entity, (With<Handle<LdtkAsset>>, Without<Parent>)>,
+    mut alarm_meter_query: Query<&mut AlarmMeter>,
     mut collision_events: ResMut<Events<CollisionEvent>>,
     mut hit_events: ResMut<Events<HitEvent>>,
     mut death_events: ResMut<Events<DeathEvent>>,
@@ -230,6 +231,12 @@ fn restart_game(
         commands.entity(map).despawn_recursive();
     }
     MapTemplate.spawn(&mut commands, &handle);
+
+    // Reset alarm meter shake
+    for mut alarm_meter in &mut alarm_meter_query {
+        alarm_meter.old_alarm = 0.0;
+        alarm_meter.shake = 0.0;
+    }
 
     // Reset events
     collision_events.clear();
