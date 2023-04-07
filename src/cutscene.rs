@@ -68,7 +68,7 @@ pub struct StartTextTemplate;
 impl StartTextTemplate {
     pub fn spawn(self, commands: &mut Commands, handle: &Handles) -> Entity {
         let text_style = TextStyle {
-            font_size: 10.0,
+            font_size: 18.0,
             font: handle.font[&FontKey::Pixel].clone(),
             ..default()
         };
@@ -85,7 +85,7 @@ impl StartTextTemplate {
                         left: Val::Auto,
                         right: Val::Auto,
                         top: Val::Percent(10.0),
-                        bottom: Val::Px(40.0),
+                        bottom: Val::Percent(60.0),
                     },
                     position_type: PositionType::Absolute,
                     ..default()

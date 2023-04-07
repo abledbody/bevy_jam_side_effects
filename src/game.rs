@@ -94,8 +94,8 @@ impl Plugin for GamePlugin {
             DefaultPlugins
                 .set(WindowPlugin {
                     primary_window: Some(Window {
-                        mode: WindowMode::BorderlessFullscreen,
                         title: TITLE.to_string(),
+                        canvas: Some("#bevy".to_string()),
                         fit_canvas_to_parent: true,
                         prevent_default_event_handling: true,
                         ..default()
@@ -204,6 +204,8 @@ impl Plugin for GamePlugin {
         app.add_system(DespawnSet::apply.in_base_set(CoreSet::Last));
 
         // UI systems
+        #[cfg(not(feature = "wasm"))]
+        app.add_system(bevy::window::close_on_esc);
         app.add_systems((HealthBar::update, AlarmMeter::update, StartText::update));
     }
 }
