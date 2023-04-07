@@ -24,9 +24,10 @@ pub enum ImageKey {
     GateOpen,
     GateClosed,
     DropShadow,
+    DetectPopup,
 }
 
-const IMAGE_MAP: [(ImageKey, &str); 8] = [
+const IMAGE_MAP: [(ImageKey, &str); 9] = [
     (ImageKey::GnollRed, "sprites/character/gnoll_red.png"),
     (ImageKey::GnollGreen, "sprites/character/gnoll_green.png"),
     (ImageKey::GnollBlue, "sprites/character/gnoll_blue.png"),
@@ -41,6 +42,7 @@ const IMAGE_MAP: [(ImageKey, &str); 8] = [
     (ImageKey::GateOpen, "sprites/interactive/gate_open.png"),
     (ImageKey::GateClosed, "sprites/interactive/gate_closed.png"),
     (ImageKey::DropShadow, "sprites/vfx/drop_shadow.png"),
+    (ImageKey::DetectPopup, "sprites/vfx/detect_popup.png"),
 ];
 
 #[derive(Reflect, FromReflect, Eq, PartialEq, Hash)]

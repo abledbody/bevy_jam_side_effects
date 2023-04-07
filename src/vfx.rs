@@ -1,7 +1,7 @@
 use bevy::prelude::*;
 
 use crate::{
-    animation::Offset,
+    animation::{Lifetime, Offset},
     asset::{Handles, ImageKey},
 };
 
@@ -30,5 +30,34 @@ impl DropShadowTemplate {
         drop_shadow.insert(Name::new("DropShadow"));
 
         drop_shadow.id()
+    }
+}
+
+pub struct DetectPopupTemplate {
+    pub offset: Transform,
+}
+
+impl Default for DetectPopupTemplate {
+    fn default() -> Self {
+        Self {
+            offset: Transform::from_xyz(0.0, 0.0, 0.01),
+        }
+    }
+}
+
+impl DetectPopupTemplate {
+    pub fn spawn(self, commands: &mut Commands, handle: &Handles) -> Entity {
+        let mut detect_popup = commands.spawn((
+            SpriteBundle {
+                texture: handle.image[&ImageKey::DetectPopup].clone(),
+                ..default()
+            },
+            Lifetime(1.0),
+            Offset(self.offset),
+        ));
+        #[cfg(feature = "debug_mode")]
+        detect_popup.insert(Name::new("DetectPopup"));
+
+        detect_popup.id()
     }
 }

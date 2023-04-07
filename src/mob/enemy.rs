@@ -11,7 +11,7 @@ use crate::{
     combat::{DeathEffects, Faction, HitEvent, HurtEffects},
     hud::{HealthBarTemplate, NametagTemplate},
     mob::{player::PlayerControl, BodyTemplate, Health, Mob, MobBundle},
-    vfx::DropShadowTemplate,
+    vfx::{DetectPopupTemplate, DropShadowTemplate},
 };
 
 const CASUAL_NAMES: [&str; 51] = [
@@ -266,6 +266,7 @@ impl Default for EnemyAi {
 
 impl EnemyAi {
     pub fn think(
+        mut commands: Commands,
         mut enemy_query: Query<(&mut EnemyAi, &mut MobInputs, &GlobalTransform)>,
         mut detect_events: EventReader<DetectEvent>,
         mut hit_events: EventReader<HitEvent>,
@@ -292,30 +293,33 @@ impl EnemyAi {
 
         // Detect target
         let detect_sound_settings = PlaybackSettings::default().with_volume(0.7);
+        let mut handle_detection = |ai: &mut EnemyAi, enemy: Entity, target: Entity| {
+            if ai.target.is_some() {
+                return;
+            }
+
+            audio.play_with_settings(
+                handle.audio[&AudioKey::GnollDetect].clone(),
+                detect_sound_settings,
+            );
+            ai.target = Some(target);
+            let popup = DetectPopupTemplate {
+                offset: Transform::from_xyz(0.0, 38.0, 0.0),
+            }
+            .spawn(&mut commands, &handle);
+            commands.entity(enemy).add_child(popup);
+        };
+
         for &DetectEvent { sensor, target } in detect_events.iter() {
-            if let Ok((mut enemy, ..)) = parent_query
-                .get(sensor)
-                .and_then(|parent| enemy_query.get_mut(parent.get()))
-            {
-                if enemy.target.is_none() {
-                    audio.play_with_settings(
-                        handle.audio[&AudioKey::GnollDetect].clone(),
-                        detect_sound_settings,
-                    );
-                }
-                enemy.target = Some(target);
+            let Ok(parent) = parent_query.get(sensor) else { continue };
+            if let Ok((mut enemy, ..)) = enemy_query.get_mut(parent.get()) {
+                handle_detection(&mut enemy, parent.get(), target);
             }
         }
         for &HitEvent { hurtbox, .. } in hit_events.iter() {
             if let Ok((mut enemy, ..)) = enemy_query.get_mut(hurtbox) {
-                if enemy.target.is_none() {
-                    audio.play_with_settings(
-                        handle.audio[&AudioKey::GnollDetect].clone(),
-                        detect_sound_settings,
-                    );
-                }
                 // Assume the hitbox originated from the player
-                enemy.target = Some(player);
+                handle_detection(&mut enemy, hurtbox, player);
             }
         }
 
