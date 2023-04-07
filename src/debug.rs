@@ -19,7 +19,7 @@ use crate::{
     asset::Handles,
     camera::GameCamera,
     combat::{DeathEffects, HitEffects, HurtEffects},
-    hud::{AlarmMeter, HealthBar},
+    hud::{AlarmMeter, FontSizeHack, HealthBar},
     map::{Exit, Gate, Plate, Wall},
     mob::{
         enemy::{Alarm, DifficultyCurve, EnemyAi},
@@ -86,6 +86,7 @@ impl Plugin for DebugPlugin {
             .register_type::<Plate>()
             .register_type::<Gate>()
             .register_type::<GameCamera>()
+            .register_type::<FontSizeHack>()
             .register_type::<HealthBar>()
             .register_type::<Alarm>()
             .register_type::<AlarmMeter>();

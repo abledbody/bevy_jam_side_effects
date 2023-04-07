@@ -1,12 +1,17 @@
-use bevy::{math::vec2, prelude::*};
+use bevy::{
+    math::{vec2, vec3},
+    prelude::*,
+};
 
 use crate::{
     animation::Offset,
     asset::{FontKey, Handles},
+    camera::GameCamera,
     mob::{enemy::Alarm, Health},
 };
 
 struct BackdropTemplate {
+    offset: Transform,
     size: Vec2,
 }
 
@@ -14,19 +19,49 @@ impl BackdropTemplate {
     const COLOR: Color = Color::rgba(0.2, 0.1, 0.2, 0.6);
 
     fn spawn(self, commands: &mut Commands) -> Entity {
-        let mut backdrop = commands.spawn(SpriteBundle {
-            sprite: Sprite {
-                color: Self::COLOR,
-                custom_size: Some(self.size),
+        let mut backdrop = commands.spawn((
+            SpriteBundle {
+                sprite: Sprite {
+                    color: Self::COLOR,
+                    custom_size: Some(self.size),
+                    ..default()
+                },
+                transform: Transform::from_xyz(0.0, 0.0, -0.001),
                 ..default()
             },
-            transform: Transform::from_xyz(0.0, 0.0, -0.001),
-            ..default()
-        });
+            Offset(self.offset),
+        ));
         #[cfg(feature = "debug_mode")]
         backdrop.insert(Name::new("Backdrop"));
 
         backdrop.id()
+    }
+}
+
+#[derive(Component, Reflect)]
+pub struct FontSizeHack(pub f32);
+
+impl FontSizeHack {
+    pub fn scale(
+        camera_query: Query<(&OrthographicProjection, &Camera), With<GameCamera>>,
+        mut text_query: Query<(&mut Text, &mut Transform, &FontSizeHack)>,
+    ) {
+        let Ok((camera_proj, camera)) = camera_query.get_single() else { return };
+        let Some(viewport_size) = camera.logical_viewport_size() else { return };
+
+        let units_per_pixel = camera_proj.area.width() / viewport_size.x;
+        let scale = Vec2::splat(units_per_pixel).extend(1.0);
+        let max_font_size = 800.0;
+
+        for (mut text, mut transform, font_size_hack) in &mut text_query {
+            let font_size = font_size_hack.0 / units_per_pixel;
+            let capped_font_size = font_size.min(max_font_size);
+            transform.scale = scale * font_size / capped_font_size;
+            debug!("Setting font size {capped_font_size}");
+            for section in &mut text.sections {
+                section.style.font_size = capped_font_size;
+            }
+        }
     }
 }
 
@@ -50,30 +85,33 @@ impl NametagTemplate {
     pub fn spawn(self, commands: &mut Commands, handle: &Handles) -> Entity {
         let style = TextStyle {
             font: handle.font[&FontKey::Bold].clone(),
-            font_size: 14.0,
+            font_size: 4.0,
             color: Self::TEXT_COLOR,
         };
 
         // Children
-        let backdrop = BackdropTemplate {
-            size: vec2(110.0, 14.0),
-        }
-        .spawn(commands);
-
-        // Parent
         let mut nametag = commands.spawn((
             Text2dBundle {
-                text: Text::from_section(self.name, style),
+                text: Text::from_section(self.name, style.clone()),
+                transform: Transform::from_xyz(0.0, 0.2, 0.001),
                 ..default()
             },
-            Offset(self.offset),
+            FontSizeHack(style.font_size),
         ));
         #[cfg(feature = "debug_mode")]
         nametag.insert(Name::new("Nametag"));
+        let nametag = nametag.id();
 
-        nametag.add_child(backdrop);
+        // Parent
+        let backdrop = BackdropTemplate {
+            size: vec2(32.0, 4.0),
+            offset: self.offset,
+        }
+        .spawn(commands);
 
-        nametag.id()
+        commands.entity(backdrop).add_child(nametag);
+
+        backdrop
     }
 }
 
@@ -90,9 +128,11 @@ impl HealthBar {
 
     pub fn update(
         mut health_bar_query: Query<(&mut Sprite, &Parent), With<HealthBar>>,
+        parent_query: Query<&Parent, Without<HealthBar>>,
         health_query: Query<&Health>,
     ) {
         for (mut sprite, parent) in &mut health_bar_query {
+            let Ok(parent) = parent_query.get(parent.get()) else { continue };
             let Ok(health) = health_query.get(parent.get()) else {
                 continue
             };
@@ -114,20 +154,27 @@ pub struct HealthBarTemplate {
 impl HealthBarTemplate {
     pub fn spawn(self, commands: &mut Commands) -> Entity {
         // Children
+        let mut health_bar = commands.spawn((
+            SpriteBundle {
+                transform: Transform::from_xyz(0.0, 0.0, 0.001),
+                ..default()
+            },
+            HealthBar,
+        ));
+        #[cfg(feature = "debug_mode")]
+        health_bar.insert(Name::new("HealthBar"));
+        let health_bar = health_bar.id();
+
+        // Parent
         let backdrop = BackdropTemplate {
+            offset: self.offset,
             size: vec2(21.5, 4.0),
         }
         .spawn(commands);
 
-        // Parent
-        let mut health_bar =
-            commands.spawn((SpriteBundle::default(), Offset(self.offset), HealthBar));
-        #[cfg(feature = "debug_mode")]
-        health_bar.insert(Name::new("HealthBar"));
+        commands.entity(backdrop).add_child(health_bar);
 
-        health_bar.add_child(backdrop);
-
-        health_bar.id()
+        backdrop
     }
 }
 

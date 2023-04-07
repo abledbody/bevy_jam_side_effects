@@ -20,7 +20,7 @@ use crate::{
     asset::Handles,
     camera::{GameCamera, GameCameraTemplate},
     combat::{DeathEffects, DeathEvent, HitEffects, HitEvent, HurtEffects},
-    hud::{AlarmMeter, AlarmMeterTemplate, HealthBar},
+    hud::{AlarmMeter, AlarmMeterTemplate, FontSizeHack, HealthBar},
     map::{spawn_level_entities, Exit, MapTemplate, Plate},
     mob::{
         enemy::{Alarm, DetectEvent, DifficultyCurve, EnemyAi},
@@ -137,6 +137,7 @@ impl Plugin for GamePlugin {
                 PlayerDefected::detect.run_if(resource_equals(PlayerDefected(false))),
                 GameCamera::cut_to_new_target,
                 GameCamera::follow_target,
+                FontSizeHack::scale,
                 WalkAnimation::trigger,
                 WalkAnimation::play_step_sound.after(WalkAnimation::trigger),
                 WalkAnimation::update.after(WalkAnimation::play_step_sound),
