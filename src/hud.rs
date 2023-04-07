@@ -183,13 +183,12 @@ pub struct AlarmMeter {
 }
 
 impl AlarmMeter {
-    const COLOR_RAMP: [Color; 6] = [
-        Color::rgba(0.5, 0.8, 0.3, 0.3),
+    const COLOR_RAMP: [Color; 5] = [
         Color::rgba(0.7, 0.7, 0.3, 0.3),
-        Color::rgba(0.8, 0.5, 0.3, 0.3),
-        Color::rgba(0.8, 0.3, 0.2, 0.4),
-        Color::rgba(0.9, 0.2, 0.2, 0.5),
-        Color::rgba(1.0, 0.1, 0.1, 0.6),
+        Color::rgba(0.8, 0.5, 0.3, 0.4),
+        Color::rgba(0.8, 0.3, 0.2, 0.5),
+        Color::rgba(0.9, 0.2, 0.2, 0.6),
+        Color::rgba(1.0, 0.1, 0.1, 0.7),
     ];
 
     pub fn update(
@@ -235,9 +234,9 @@ impl AlarmMeterTemplate {
 
         let mut backdrop = commands.spawn(NodeBundle {
             style: Style {
-                margin: UiRect::all(Val::Px(25.0)),
-                padding: UiRect::all(Val::Px(7.0)),
-                size: Size::new(Val::Percent(100.0), Val::Px(50.0)),
+                margin: UiRect::all(Val::Percent(1.5)),
+                padding: UiRect::all(Val::Percent(0.35)),
+                size: Size::new(Val::Percent(100.0), Val::Percent(6.0)),
                 ..default()
             },
             background_color: BackgroundColor(BackdropTemplate::COLOR),
