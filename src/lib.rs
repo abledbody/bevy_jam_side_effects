@@ -8,6 +8,7 @@ mod animation;
 mod asset;
 mod camera;
 mod combat;
+mod cutscene;
 mod debug;
 mod game;
 mod hud;

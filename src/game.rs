@@ -20,6 +20,7 @@ use crate::{
     asset::Handles,
     camera::{GameCamera, GameCameraTemplate},
     combat::{DeathEffects, DeathEvent, HitEffects, HitEvent, HurtEffects},
+    cutscene::{StartText, StartTextTemplate},
     hud::{AlarmMeter, AlarmMeterTemplate, FontSizeHack, HealthBar},
     map::{spawn_level_entities, Exit, MapTemplate, Plate},
     mob::{
@@ -33,8 +34,9 @@ use crate::{
 const TITLE: &str = "Sai Defects";
 
 #[derive(Actionlike, Clone)]
-enum GameAction {
+pub enum GameAction {
     Restart,
+    Confirm,
 }
 
 #[derive(SystemSet, Clone, Debug, Eq, PartialEq, Hash)]
@@ -68,7 +70,14 @@ impl Plugin for GamePlugin {
         })
         .init_resource::<LevelSelection>()
         .init_resource::<ActionState<GameAction>>()
-        .insert_resource(InputMap::new([(KeyCode::R, GameAction::Restart)]))
+        .insert_resource(
+            InputMap::default()
+                .insert(KeyCode::R, GameAction::Restart)
+                .insert(KeyCode::Space, GameAction::Confirm)
+                .insert(KeyCode::Return, GameAction::Confirm)
+                .insert(MouseButton::Left, GameAction::Confirm)
+                .build(),
+        )
         .init_resource::<Handles>()
         .init_resource::<DespawnSet>()
         .init_resource::<PlayerDefected>()
@@ -103,7 +112,10 @@ impl Plugin for GamePlugin {
         app.add_startup_system(spawn_game);
 
         // First systems
-        app.add_system(restart_game.run_if(action_just_pressed(GameAction::Restart)));
+        app.add_systems((
+            restart_game.run_if(action_just_pressed(GameAction::Restart)),
+            StartText::update.run_if(action_just_pressed(GameAction::Confirm)),
+        ));
 
         // Pre-update systems
         app.add_systems(
@@ -226,12 +238,13 @@ fn restart_game(
     *alarm = default();
 }
 
-fn spawn_game(mut commands: Commands, handle: Res<Handles>) {
+fn spawn_game(mut commands: Commands, handle: Res<Handles>, audio: Res<Audio>) {
     // Spawn map
     MapTemplate.spawn(&mut commands, &handle);
 
     // Spawn HUD
     AlarmMeterTemplate.spawn(&mut commands);
+    StartTextTemplate.spawn(&mut commands, &handle);
 
     // Spawn camera
     GameCameraTemplate.spawn(&mut commands);
