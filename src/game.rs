@@ -1,6 +1,7 @@
 use bevy::{
     prelude::*,
     transform::systems::{propagate_transforms, sync_simple_transforms},
+    window::WindowMode,
 };
 use bevy_ecs_ldtk::prelude::*;
 use bevy_rapier2d::prelude::*;
@@ -93,7 +94,10 @@ impl Plugin for GamePlugin {
             DefaultPlugins
                 .set(WindowPlugin {
                     primary_window: Some(Window {
+                        mode: WindowMode::BorderlessFullscreen,
                         title: TITLE.to_string(),
+                        fit_canvas_to_parent: true,
+                        prevent_default_event_handling: true,
                         ..default()
                     }),
                     ..default()
