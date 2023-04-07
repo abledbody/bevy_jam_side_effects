@@ -136,7 +136,10 @@ impl HitEffects {
             let Ok(mut hit) = hit_effects.get_mut(hitbox) else { return };
 
             if let Some(sound) = &hit.success_sound {
-                audio.play(sound.clone());
+                audio.play_with_settings(
+                    sound.clone(),
+                    PlaybackSettings::default().with_volume(0.6),
+                );
             }
             hit.success = true;
 
@@ -173,7 +176,10 @@ impl HitEffects {
         for (entity, effects) in &hit_effects_query {
             if !effects.success {
                 if let Some(sound) = &effects.failure_sound {
-                    audio.play(sound.clone());
+                    audio.play_with_settings(
+                        sound.clone(),
+                        PlaybackSettings::default().with_volume(0.6),
+                    );
                 }
             }
 
