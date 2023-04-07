@@ -46,7 +46,7 @@ impl PlayerDefected {
             }
 
             defected.0 = true;
-            alarm.0 = alarm.0.max(0.065);
+            alarm.increase(0.065);
             for &child in children {
                 let Ok(mut body) = body_query.get_mut(child) else { continue };
                 *body = handle.image[&ImageKey::GnollBlue].clone();

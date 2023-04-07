@@ -3,7 +3,7 @@ use rand::{thread_rng, Rng};
 
 use crate::{
     animation::Offset,
-    asset::{FontKey, Handles},
+    asset::{FontKey, Handles, ImageKey},
     camera::GameCamera,
     mob::{enemy::Alarm, Health},
 };
@@ -193,6 +193,7 @@ impl AlarmMeter {
 
     pub fn update(
         mut alarm_meter_query: Query<(&mut AlarmMeter, &mut BackgroundColor, &mut Style, &Parent)>,
+        parent_query: Query<&Parent, Without<AlarmMeter>>,
         mut backdrop_query: Query<&mut Style, Without<AlarmMeter>>,
         alarm: Res<Alarm>,
         time: Res<Time>,
@@ -206,7 +207,10 @@ impl AlarmMeter {
             color.0 = Self::COLOR_RAMP[color_idx];
             style.size.width = Val::Percent(100.0 * t);
 
-            if let Ok(mut backdrop) = backdrop_query.get_mut(parent.get()) {
+            if let Ok(mut backdrop) = parent_query
+                .get(parent.get())
+                .and_then(|parent| backdrop_query.get_mut(parent.get()))
+            {
                 let mut rng = thread_rng();
                 let dx = rng.gen_range(-1.0..1.0) * meter.shake;
                 let dy = rng.gen_range(-1.0..1.0) * meter.shake;
@@ -226,7 +230,7 @@ impl AlarmMeter {
 pub struct AlarmMeterTemplate;
 
 impl AlarmMeterTemplate {
-    pub fn spawn(self, commands: &mut Commands) -> Entity {
+    pub fn spawn(self, commands: &mut Commands, handle: &Handles) -> Entity {
         let mut alarm_meter = commands.spawn((NodeBundle::default(), AlarmMeter::default()));
         #[cfg(feature = "debug_mode")]
         alarm_meter.insert(Name::new("AlarmMeter"));
@@ -234,20 +238,50 @@ impl AlarmMeterTemplate {
 
         let mut backdrop = commands.spawn(NodeBundle {
             style: Style {
-                margin: UiRect::all(Val::Percent(1.5)),
+                //margin: UiRect::all(Val::Percent(1.0)),
                 padding: UiRect::all(Val::Percent(0.35)),
-                size: Size::new(Val::Percent(100.0), Val::Percent(6.0)),
+                size: Size::new(Val::Percent(100.0), Val::Percent(80.0)),
                 ..default()
             },
             background_color: BackgroundColor(BackdropTemplate::COLOR),
-            z_index: ZIndex::Global(100),
             ..default()
         });
         #[cfg(feature = "debug_mode")]
         backdrop.insert(Name::new("AlarmMeterBackdrop"));
-
         backdrop.add_child(alarm_meter);
+        let backdrop = backdrop.id();
 
-        backdrop.id()
+        let mut icon = commands.spawn(ImageBundle {
+            style: Style {
+                margin: UiRect::left(Val::Percent(1.0)),
+                size: Size::new(Val::Auto, Val::Percent(100.0)),
+                aspect_ratio: Some(15.0 / 16.0),
+                flex_shrink: 0.0,
+                ..default()
+            },
+            image: UiImage::new(handle.image[&ImageKey::AlarmMeterIcon].clone()),
+            ..default()
+        });
+        #[cfg(feature = "debug_mode")]
+        icon.insert(Name::new("AlarmMeterIcon"));
+        let icon = icon.id();
+
+        let mut container = commands.spawn(NodeBundle {
+            style: Style {
+                margin: UiRect::all(Val::Percent(1.0)),
+                size: Size::new(Val::Percent(100.0), Val::Percent(10.0)),
+                align_items: AlignItems::Center,
+                ..default()
+            },
+            z_index: ZIndex::Global(100),
+            ..default()
+        });
+        #[cfg(feature = "debug_mode")]
+        container.insert(Name::new("AlarmMeterContainer"));
+
+        container.add_child(backdrop);
+        container.add_child(icon);
+
+        container.id()
     }
 }

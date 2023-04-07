@@ -258,7 +258,7 @@ fn spawn_game(mut commands: Commands, handle: Res<Handles>) {
     MapTemplate.spawn(&mut commands, &handle);
 
     // Spawn HUD
-    AlarmMeterTemplate.spawn(&mut commands);
+    AlarmMeterTemplate.spawn(&mut commands, &handle);
     CutsceneTemplate.spawn(&mut commands, &handle);
 
     // Spawn camera
