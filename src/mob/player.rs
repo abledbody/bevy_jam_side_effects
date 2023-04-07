@@ -1,4 +1,5 @@
 use bevy::{math::Vec3Swizzles, prelude::*, window::PrimaryWindow};
+use bevy_rapier2d::prelude::*;
 use leafwing_input_manager::prelude::*;
 
 use super::{Health, Mob, MobBundle, MobInputs};
@@ -7,6 +8,7 @@ use crate::{
     camera::GameCamera,
     combat::{Faction, HurtEffects},
     hud::{HealthBarTemplate, NametagTemplate},
+    map::Plate,
     mob::{enemy::Alarm, Body, BodyTemplate},
     vfx::DropShadowTemplate,
 };
@@ -26,22 +28,31 @@ pub struct PlayerDefected(pub bool);
 
 impl PlayerDefected {
     pub fn detect(
-        player_query: Query<(&MobInputs, &Children), With<PlayerControl>>,
+        mut collision_events: EventReader<CollisionEvent>,
+        plate_query: Query<(), With<Plate>>,
+        player_query: Query<&Children, With<PlayerControl>>,
         mut body_query: Query<&mut Handle<Image>, With<Body>>,
         handle: Res<Handles>,
         mut defected: ResMut<PlayerDefected>,
         mut alarm: ResMut<Alarm>,
     ) {
-        let Ok((player, children)) = player_query.get_single() else { return };
-        if player.movement == Vec2::ZERO && player.attack.is_none() {
-            return;
-        }
+        let Ok(children) = player_query.get_single() else { return };
 
-        defected.0 = true;
-        alarm.0 = alarm.0.max(0.065);
-        for &child in children {
-            let Ok(mut body) = body_query.get_mut(child) else { continue };
-            *body = handle.image[&ImageKey::GnollBlue].clone();
+        for &event in collision_events.iter() {
+            let CollisionEvent::Started ( entity1, entity2, _) = event else { continue };
+
+            if !plate_query.contains(entity1) && !plate_query.contains(entity2) {
+                continue;
+            }
+
+            defected.0 = true;
+            alarm.0 = alarm.0.max(0.065);
+            for &child in children {
+                let Ok(mut body) = body_query.get_mut(child) else { continue };
+                *body = handle.image[&ImageKey::GnollBlue].clone();
+            }
+
+            return;
         }
     }
 }
