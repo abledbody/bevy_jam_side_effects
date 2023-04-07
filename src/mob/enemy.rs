@@ -214,7 +214,7 @@ impl Default for DifficultyCurve {
             detect_radius: Curve::new(0.0, 1000.0),
             follow_radius: Curve::new(100.0, 1100.0),
             attack_radius: Curve::new(20.0, 40.0),
-            attack_cooldown: Curve::new(0.8, 0.4),
+            attack_cooldown: Curve::new(1.0, 0.5),
         }
     }
 }
@@ -254,8 +254,8 @@ impl Default for EnemyAi {
         Self {
             follow_radius: 100.0,
             attack_radius: 20.0,
-            attack_cooldown: 0.8,
-            attack_cooldown_t: 0.0,
+            attack_cooldown: 1.0,
+            attack_cooldown_t: 0.5,
             target: None,
         }
     }
@@ -284,7 +284,7 @@ impl EnemyAi {
         }
         for &HitEvent { hurtbox, .. } in hit_events.iter() {
             if let Ok((mut enemy, ..)) = enemy_query.get_mut(hurtbox) {
-                // Assume the hitbox originated from the player.
+                // Assume the hitbox originated from the player
                 enemy.target = Some(player);
             }
         }
@@ -296,21 +296,26 @@ impl EnemyAi {
 
             inputs.attack = None;
             inputs.movement = Vec2::ZERO;
-            enemy.attack_cooldown_t += dt;
 
-            let delta = target_gt.translation().xy() - mob_gt.translation().xy();
-            let distance = delta.length();
-            let dir = delta.normalize();
+            let target_delta = target_gt.translation().xy() - mob_gt.translation().xy();
+            let target_distance = target_delta.length();
 
-            if distance > enemy.follow_radius {
+            // Give up on target
+            if target_distance > enemy.follow_radius {
                 enemy.target = None;
+                enemy.attack_cooldown_t = enemy.attack_cooldown / 2.0;
                 continue;
             }
 
-            inputs.movement = dir;
-            if distance <= enemy.attack_radius && enemy.attack_cooldown_t >= enemy.attack_cooldown {
-                inputs.attack = Some(dir);
-                enemy.attack_cooldown_t = 0.0;
+            // Move towards target
+            let target_direction = target_delta.normalize();
+            inputs.movement = target_direction;
+
+            // Attack target
+            enemy.attack_cooldown_t -= dt;
+            if target_distance <= enemy.attack_radius && enemy.attack_cooldown_t <= 0.0 {
+                inputs.attack = Some(target_direction);
+                enemy.attack_cooldown_t = enemy.attack_cooldown;
             }
         }
     }
