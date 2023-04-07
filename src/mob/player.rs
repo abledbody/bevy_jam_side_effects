@@ -13,7 +13,7 @@ use crate::{
 
 const PLAYER_NAME: &str = "Sai";
 
-#[derive(Debug, Copy, Clone, PartialEq, Actionlike)]
+#[derive(Actionlike, Debug, Copy, Clone, PartialEq)]
 pub enum PlayerAction {
     Move,
     Aim,

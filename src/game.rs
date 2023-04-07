@@ -4,7 +4,7 @@ use bevy::{
 };
 use bevy_ecs_ldtk::prelude::*;
 use bevy_rapier2d::prelude::*;
-use leafwing_input_manager::prelude::InputManagerPlugin;
+use leafwing_input_manager::{common_conditions::action_just_pressed, prelude::*};
 
 use crate::{
     animation::{
@@ -31,6 +31,11 @@ use crate::{
 };
 
 const TITLE: &str = "Sai Defects";
+
+#[derive(Actionlike, Clone)]
+enum GameAction {
+    Restart,
+}
 
 #[derive(SystemSet, Clone, Debug, Eq, PartialEq, Hash)]
 enum UpdateSet {
@@ -61,7 +66,9 @@ impl Plugin for GamePlugin {
             level_background: LevelBackground::Nonexistent,
             ..default()
         })
-        .insert_resource(LevelSelection::Index(0))
+        .init_resource::<LevelSelection>()
+        .init_resource::<ActionState<GameAction>>()
+        .insert_resource(InputMap::new([(KeyCode::R, GameAction::Restart)]))
         .init_resource::<Handles>()
         .init_resource::<DespawnSet>()
         .init_resource::<PlayerDefected>()
@@ -85,6 +92,7 @@ impl Plugin for GamePlugin {
                 .set(ImagePlugin::default_nearest()),
         )
         .add_plugin(RapierPhysicsPlugin::<NoUserData>::default())
+        .add_plugin(InputManagerPlugin::<GameAction>::default())
         .add_plugin(InputManagerPlugin::<PlayerAction>::default())
         .add_plugin(LdtkPlugin);
         #[cfg(feature = "debug_mode")]
@@ -93,6 +101,9 @@ impl Plugin for GamePlugin {
         // Startup systems
         app.add_startup_system(Handles::load.in_base_set(StartupSet::PreStartup));
         app.add_startup_system(spawn_game);
+
+        // First systems
+        app.add_system(restart_game.run_if(action_just_pressed(GameAction::Restart)));
 
         // Pre-update systems
         app.add_systems(
@@ -185,13 +196,43 @@ impl Plugin for GamePlugin {
     }
 }
 
-fn spawn_game(mut commands: Commands, handle: Res<Handles>) {
-    // Map
+fn restart_game(
+    mut commands: Commands,
+    handle: Res<Handles>,
+    map_query: Query<Entity, (With<Handle<LdtkAsset>>, Without<Parent>)>,
+    mut collision_events: ResMut<Events<CollisionEvent>>,
+    mut hit_events: ResMut<Events<HitEvent>>,
+    mut death_events: ResMut<Events<DeathEvent>>,
+    mut detect_events: ResMut<Events<DetectEvent>>,
+    mut level_selection: ResMut<LevelSelection>,
+    mut player_defected: ResMut<PlayerDefected>,
+    mut alarm: ResMut<Alarm>,
+) {
+    // Respawn map
+    for map in &map_query {
+        commands.entity(map).despawn_recursive();
+    }
     MapTemplate.spawn(&mut commands, &handle);
 
-    // HUD
+    // Reset events
+    collision_events.clear();
+    hit_events.clear();
+    death_events.clear();
+    detect_events.clear();
+
+    // Reset resources
+    *level_selection = default();
+    *player_defected = default();
+    *alarm = default();
+}
+
+fn spawn_game(mut commands: Commands, handle: Res<Handles>) {
+    // Spawn map
+    MapTemplate.spawn(&mut commands, &handle);
+
+    // Spawn HUD
     AlarmMeterTemplate.spawn(&mut commands);
 
-    // Camera
+    // Spawn camera
     GameCameraTemplate.spawn(&mut commands);
 }
