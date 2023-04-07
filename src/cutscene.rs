@@ -1,12 +1,11 @@
 use bevy::prelude::*;
 
-use crate::asset::{AudioKey, FontKey, Handles};
+use crate::{
+    asset::{AudioKey, FontKey, Handles},
+    mob::player::PlayerControl,
+};
 const NUM_LINES: usize = 3;
-const TEXT_LINES: [&str; NUM_LINES] = [
-    "You are Sai.",
-    "You have decided to defect.",
-    "TOTALLY FITS THE THEME",
-];
+const TEXT_LINES: [&str; NUM_LINES] = ["You are Sai.", "You have decided to defect.", "GOOD LUCK!"];
 const LINE_VOLUMES: [f32; NUM_LINES] = [1.0, 1.0, 0.3];
 
 #[derive(Component, Reflect)]
@@ -36,6 +35,7 @@ impl StartText {
     pub fn advance(
         mut commands: Commands,
         mut start_text_query: Query<(Entity, &mut Text, &mut StartText)>,
+        mut player_query: Query<&mut PlayerControl>,
         audio: Res<Audio>,
     ) {
         for (entity, mut text, mut start_text) in &mut start_text_query {
@@ -57,6 +57,9 @@ impl StartText {
                     PlaybackSettings::default().with_volume(LINE_VOLUMES[phase_index]),
                 );
             } else {
+                for mut player in &mut player_query {
+                    player.allow_input = true;
+                }
                 commands.entity(entity).despawn_recursive();
             }
         }

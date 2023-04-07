@@ -231,7 +231,7 @@ pub fn spawn_level_entities(
                 transform,
                 ..default()
             }
-            .spawn(&mut commands, &handle),
+            .spawn(&mut commands, &handle, false),
             "enemy" => EnemyTemplate {
                 transform,
                 ..default()

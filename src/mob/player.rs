@@ -58,21 +58,29 @@ impl PlayerDefected {
 }
 
 #[derive(Component, Reflect, Default, Debug)]
-pub struct PlayerControl;
+pub struct PlayerControl {
+    pub allow_input: bool,
+}
 
 impl PlayerControl {
     pub fn record_inputs(
-        mut player_query: Query<
-            (&ActionState<PlayerAction>, &mut MobInputs, &GlobalTransform),
-            With<PlayerControl>,
-        >,
+        mut player_query: Query<(
+            &ActionState<PlayerAction>,
+            &mut MobInputs,
+            &GlobalTransform,
+            &PlayerControl,
+        )>,
         primary_window_query: Query<&Window, With<PrimaryWindow>>,
         camera: Query<(&Camera, &GlobalTransform), With<GameCamera>>,
     ) {
         let window = primary_window_query.single();
         let (camera, cam_gt) = camera.single();
 
-        for (action, mut inputs, mob_gt) in &mut player_query {
+        for (action, mut inputs, mob_gt, player_control) in &mut player_query {
+            if !player_control.allow_input {
+                continue;
+            }
+
             inputs.movement = Vec2::ZERO;
             if action.pressed(PlayerAction::Move) {
                 if let Some(axis_pair) = action.clamped_axis_pair(PlayerAction::Move) {
@@ -119,7 +127,7 @@ impl Default for PlayerTemplate {
 }
 
 impl PlayerTemplate {
-    pub fn spawn(self, commands: &mut Commands, handle: &Handles) -> Entity {
+    pub fn spawn(self, commands: &mut Commands, handle: &Handles, allow_input: bool) -> Entity {
         const FACTION: Faction = Faction::Player;
 
         // Children
@@ -166,7 +174,7 @@ impl PlayerTemplate {
                     .build(),
                 ..default()
             },
-            PlayerControl,
+            PlayerControl { allow_input },
         ));
         #[cfg(feature = "debug_mode")]
         player.insert(Name::new("Player"));
