@@ -78,6 +78,6 @@ pub trait SmoothApproach {
 
 impl SmoothApproach for Vec2 {
     fn smooth_approach(self, target: Self, rate: f32, dt: f32) -> Self {
-        (target - self) * dt * rate
+        (self - target) / ((rate * dt) + 1.0) + target
     }
 }
