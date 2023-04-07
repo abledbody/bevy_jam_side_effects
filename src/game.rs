@@ -1,7 +1,6 @@
 use bevy::{
     prelude::*,
     transform::systems::{propagate_transforms, sync_simple_transforms},
-    window::WindowMode,
 };
 use bevy_ecs_ldtk::prelude::*;
 use bevy_rapier2d::prelude::*;
@@ -21,7 +20,7 @@ use crate::{
     asset::{AudioKey, Handles},
     camera::{GameCamera, GameCameraTemplate},
     combat::{DeathEffects, DeathEvent, HitEffects, HitEvent, HurtEffects},
-    cutscene::{StartText, StartTextTemplate},
+    cutscene::{Cutscene, CutsceneTemplate},
     hud::{AlarmMeter, AlarmMeterTemplate, FontSizeHack, HealthBar},
     map::{spawn_level_entities, Exit, MapTemplate, Plate},
     mob::{
@@ -116,10 +115,13 @@ impl Plugin for GamePlugin {
         app.add_startup_system(spawn_game);
 
         // First systems
-        app.add_systems((
-            restart_game.run_if(action_just_pressed(GameAction::Restart)),
-            StartText::advance.run_if(action_just_pressed(GameAction::Confirm)),
-        ));
+        app.add_systems(
+            (
+                restart_game.run_if(action_just_pressed(GameAction::Restart)),
+                Cutscene::advance.run_if(action_just_pressed(GameAction::Confirm)),
+            )
+                .in_base_set(CoreSet::First),
+        );
 
         // Pre-update systems
         app.add_systems(
@@ -206,7 +208,7 @@ impl Plugin for GamePlugin {
         // UI systems
         #[cfg(not(feature = "wasm"))]
         app.add_system(bevy::window::close_on_esc);
-        app.add_systems((HealthBar::update, AlarmMeter::update, StartText::update));
+        app.add_systems((HealthBar::update, AlarmMeter::update, Cutscene::update));
     }
 }
 
@@ -250,7 +252,7 @@ fn spawn_game(mut commands: Commands, handle: Res<Handles>) {
 
     // Spawn HUD
     AlarmMeterTemplate.spawn(&mut commands);
-    StartTextTemplate.spawn(&mut commands, &handle);
+    CutsceneTemplate.spawn(&mut commands, &handle);
 
     // Spawn camera
     GameCameraTemplate.spawn(&mut commands);

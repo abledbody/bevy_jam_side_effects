@@ -19,6 +19,7 @@ use crate::{
     asset::Handles,
     camera::GameCamera,
     combat::{DeathEffects, HitEffects, HurtEffects},
+    cutscene::Cutscene,
     hud::{AlarmMeter, FontSizeHack, HealthBar},
     map::{Exit, Gate, Plate, Wall},
     mob::{
@@ -84,6 +85,7 @@ impl Plugin for DebugPlugin {
             .register_type::<Plate>()
             .register_type::<Gate>()
             .register_type::<GameCamera>()
+            .register_type::<Cutscene>()
             .register_type::<FontSizeHack>()
             .register_type::<HealthBar>()
             .register_type::<Alarm>()

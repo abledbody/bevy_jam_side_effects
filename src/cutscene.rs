@@ -4,71 +4,77 @@ use crate::{
     asset::{AudioKey, FontKey, Handles},
     mob::player::PlayerControl,
 };
+
 const NUM_LINES: usize = 3;
-const TEXT_LINES: [&str; NUM_LINES] = ["You are Sai.", "You have decided to defect.", "GOOD LUCK!"];
+const TEXT_LINES: [&str; NUM_LINES] = ["You are Sai.", "You have chosen to Defect.", "GOOD LUCK!"];
 const LINE_VOLUMES: [f32; NUM_LINES] = [1.0, 1.0, 0.3];
 
 #[derive(Component, Reflect)]
-pub struct StartText {
+pub struct Cutscene {
     pub phase: usize,
     pub section: usize,
     pub hue: f32,
     pub sounds: [Handle<AudioSource>; NUM_LINES],
 }
 
-impl StartText {
-    pub fn update(mut start_text_query: Query<(&mut Text, &mut StartText)>, time: Res<Time>) {
+impl Cutscene {
+    pub fn update(
+        mut cutscene_query: Query<(&mut Text, &mut Cutscene)>,
+        mut player_query: Query<&mut PlayerControl>,
+        time: Res<Time>,
+    ) {
+        let Ok(mut player) = player_query.get_single_mut() else { return };
+
         let dt = time.delta_seconds();
 
-        for (mut text, mut start_text) in &mut start_text_query {
-            start_text.hue += dt;
-            while start_text.hue >= 1.0 {
-                start_text.hue -= 1.0;
-            }
-
+        for (mut text, mut cutscene) in &mut cutscene_query {
+            player.deny_input = true;
+            println!("BAR");
+            cutscene.hue = (cutscene.hue + dt).fract();
             if let Some(section) = text.sections.get_mut(1) {
-                section.style.color = Color::hsl(start_text.hue * 360.0, 1.0, 0.5);
+                section.style.color = Color::hsl(cutscene.hue * 360.0, 1.0, 0.5);
             }
         }
     }
 
     pub fn advance(
         mut commands: Commands,
-        mut start_text_query: Query<(Entity, &mut Text, &mut StartText)>,
+        mut cutscene_query: Query<(Entity, &mut Text, &mut Cutscene)>,
         mut player_query: Query<&mut PlayerControl>,
         audio: Res<Audio>,
     ) {
-        for (entity, mut text, mut start_text) in &mut start_text_query {
-            start_text.phase += 1;
-            let phase_index = start_text.phase - 1;
+        let Ok(mut player) = player_query.get_single_mut() else { return };
 
-            if phase_index < NUM_LINES {
-                if phase_index == NUM_LINES - 1 {
-                    start_text.section += 1;
-                }
-
-                text.sections[start_text.section].value = format!(
-                    "{}\n\n\n\n{}",
-                    text.sections[start_text.section].value, TEXT_LINES[phase_index]
-                );
-
-                audio.play_with_settings(
-                    start_text.sounds[phase_index].clone(),
-                    PlaybackSettings::default().with_volume(LINE_VOLUMES[phase_index]),
-                );
-            } else {
-                for mut player in &mut player_query {
-                    player.allow_input = true;
-                }
+        for (entity, mut text, mut cutscene) in &mut cutscene_query {
+            if cutscene.phase >= NUM_LINES {
+                println!("FOO");
+                player.deny_input = false;
                 commands.entity(entity).despawn_recursive();
+                return;
             }
+
+            if cutscene.phase == NUM_LINES - 1 {
+                cutscene.section += 1;
+            }
+
+            text.sections[cutscene.section].value = format!(
+                "{}\n\n\n\n{}",
+                text.sections[cutscene.section].value, TEXT_LINES[cutscene.phase]
+            );
+
+            audio.play_with_settings(
+                cutscene.sounds[cutscene.phase].clone(),
+                PlaybackSettings::default().with_volume(LINE_VOLUMES[cutscene.phase]),
+            );
+
+            cutscene.phase += 1;
         }
     }
 }
 
-pub struct StartTextTemplate;
+pub struct CutsceneTemplate;
 
-impl StartTextTemplate {
+impl CutsceneTemplate {
     pub fn spawn(self, commands: &mut Commands, handle: &Handles) -> Entity {
         let text_style = TextStyle {
             font_size: 18.0,
@@ -95,7 +101,7 @@ impl StartTextTemplate {
                 },
                 ..default()
             },
-            StartText {
+            Cutscene {
                 phase: 0,
                 section: 0,
                 hue: 0.0,
@@ -107,7 +113,7 @@ impl StartTextTemplate {
             },
         ));
         #[cfg(feature = "debug_mode")]
-        entity.insert(Name::new("StartText"));
+        entity.insert(Name::new("Cutscene"));
 
         entity.id()
     }

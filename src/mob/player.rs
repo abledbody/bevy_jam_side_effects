@@ -59,7 +59,7 @@ impl PlayerDefected {
 
 #[derive(Component, Reflect, Default, Debug)]
 pub struct PlayerControl {
-    pub allow_input: bool,
+    pub deny_input: bool,
 }
 
 impl PlayerControl {
@@ -73,40 +73,40 @@ impl PlayerControl {
         primary_window_query: Query<&Window, With<PrimaryWindow>>,
         camera: Query<(&Camera, &GlobalTransform), With<GameCamera>>,
     ) {
-        let window = primary_window_query.single();
-        let (camera, cam_gt) = camera.single();
+        let Ok(window) = primary_window_query.get_single() else { return };
+        let Ok((camera, cam_gt)) = camera.get_single() else { return };
+        let Ok((action, mut inputs, player_gt, player)) = player_query.get_single_mut() else {
+            return
+        };
+        if player.deny_input {
+            return;
+        }
 
-        for (action, mut inputs, mob_gt, player_control) in &mut player_query {
-            if !player_control.allow_input {
-                continue;
+        inputs.movement = Vec2::ZERO;
+        if action.pressed(PlayerAction::Move) {
+            if let Some(axis_pair) = action.clamped_axis_pair(PlayerAction::Move) {
+                inputs.movement = axis_pair.xy();
             }
+        }
 
-            inputs.movement = Vec2::ZERO;
-            if action.pressed(PlayerAction::Move) {
-                if let Some(axis_pair) = action.clamped_axis_pair(PlayerAction::Move) {
-                    inputs.movement = axis_pair.xy();
-                }
+        let mut aim = None;
+        if let Some(axis_pair) = action.clamped_axis_pair(PlayerAction::Aim) {
+            let axis_pair = axis_pair.xy();
+            if axis_pair != Vec2::ZERO {
+                aim = Some(axis_pair);
             }
+        }
 
-            let mut aim = None;
-            if let Some(axis_pair) = action.clamped_axis_pair(PlayerAction::Aim) {
-                let axis_pair = axis_pair.xy();
-                if axis_pair != Vec2::ZERO {
-                    aim = Some(axis_pair);
-                }
-            }
-
-            inputs.attack = None;
-            if action.just_pressed(PlayerAction::Attack) {
-                inputs.attack = aim
-                    .or_else(|| {
-                        window
-                            .cursor_position()
-                            .and_then(|p| camera.viewport_to_world_2d(cam_gt, p))
-                            .map(|p| p - mob_gt.translation().xy())
-                    })
-                    .map(|d| d.normalize());
-            }
+        inputs.attack = None;
+        if action.just_pressed(PlayerAction::Attack) {
+            inputs.attack = aim
+                .or_else(|| {
+                    window
+                        .cursor_position()
+                        .and_then(|p| camera.viewport_to_world_2d(cam_gt, p))
+                        .map(|p| p - player_gt.translation().xy())
+                })
+                .map(|d| d.normalize());
         }
     }
 }
@@ -127,7 +127,7 @@ impl Default for PlayerTemplate {
 }
 
 impl PlayerTemplate {
-    pub fn spawn(self, commands: &mut Commands, handle: &Handles, allow_input: bool) -> Entity {
+    pub fn spawn(self, commands: &mut Commands, handle: &Handles) -> Entity {
         const FACTION: Faction = Faction::Player;
 
         // Children
@@ -174,7 +174,7 @@ impl PlayerTemplate {
                     .build(),
                 ..default()
             },
-            PlayerControl { allow_input },
+            PlayerControl::default(),
         ));
         #[cfg(feature = "debug_mode")]
         player.insert(Name::new("Player"));
