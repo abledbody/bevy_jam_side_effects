@@ -17,7 +17,7 @@ use crate::{
         VirtualParent,
         WalkAnimation,
     },
-    asset::Handles,
+    asset::{AudioKey, Handles},
     camera::{GameCamera, GameCameraTemplate},
     combat::{DeathEffects, DeathEvent, HitEffects, HitEvent, HurtEffects},
     cutscene::{StartText, StartTextTemplate},
@@ -215,6 +215,7 @@ fn restart_game(
     mut level_selection: ResMut<LevelSelection>,
     mut player_defected: ResMut<PlayerDefected>,
     mut alarm: ResMut<Alarm>,
+    audio: Res<Audio>,
 ) {
     // Respawn map
     for map in &map_query {
@@ -232,6 +233,9 @@ fn restart_game(
     *level_selection = default();
     *player_defected = default();
     *alarm = default();
+
+    // Play restart sound
+    audio.play(handle.audio[&AudioKey::Pop1].clone());
 }
 
 fn spawn_game(mut commands: Commands, handle: Res<Handles>) {
