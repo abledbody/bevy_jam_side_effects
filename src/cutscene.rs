@@ -27,7 +27,7 @@ impl StartText {
             let phase_index = start_text.phase - 1;
 
             if phase_index < NUM_LINES {
-                text.sections[0].value = TEXT_LINES[..start_text.phase].join("\n");
+                text.sections[0].value = TEXT_LINES[..start_text.phase].join("\n\n\n\n");
 
                 audio.play_with_settings(
                     start_text.sounds[phase_index].clone(),
@@ -45,7 +45,7 @@ pub struct StartTextTemplate;
 impl StartTextTemplate {
     pub fn spawn(self, commands: &mut Commands, handle: &Handles) -> Entity {
         let text_style = TextStyle {
-            font_size: 10.0,
+            font_size: 18.0,
             font: handle.font[&FontKey::Pixel].clone(),
             ..default()
         };
@@ -54,11 +54,8 @@ impl StartTextTemplate {
             TextBundle {
                 text: Text::from_section("", text_style).with_alignment(TextAlignment::Center),
                 style: Style {
-                    align_self: AlignSelf::Center,
-                    margin: UiRect::all(Val::Percent(5.0)),
-                    padding: UiRect::all(Val::Percent(3.0)),
+                    margin: UiRect::all(Val::Auto),
                     position_type: PositionType::Absolute,
-                    position: UiRect::all(Val::Px(0.0)),
                     ..default()
                 },
                 ..default()
