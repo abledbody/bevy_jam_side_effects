@@ -29,7 +29,6 @@ impl Cutscene {
 
         for (mut text, mut cutscene) in &mut cutscene_query {
             player.deny_input = true;
-            println!("BAR");
             cutscene.hue = (cutscene.hue + dt).fract();
             if let Some(section) = text.sections.get_mut(1) {
                 section.style.color = Color::hsl(cutscene.hue * 360.0, 1.0, 0.5);
@@ -47,7 +46,6 @@ impl Cutscene {
 
         for (entity, mut text, mut cutscene) in &mut cutscene_query {
             if cutscene.phase >= NUM_LINES {
-                println!("FOO");
                 player.deny_input = false;
                 commands.entity(entity).despawn_recursive();
                 return;

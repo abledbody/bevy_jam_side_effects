@@ -175,8 +175,11 @@ impl HealthBarTemplate {
     }
 }
 
-#[derive(Component, Reflect)]
-pub struct AlarmMeter;
+#[derive(Component, Reflect, Default)]
+pub struct AlarmMeter {
+    pub old_alarm: f32,
+    pub shake: f32,
+}
 
 impl AlarmMeter {
     const COLOR_RAMP: [Color; 6] = [
@@ -189,16 +192,29 @@ impl AlarmMeter {
     ];
 
     pub fn update(
-        mut alarm_meter_query: Query<(&mut BackgroundColor, &mut Style), With<AlarmMeter>>,
+        mut alarm_meter_query: Query<(&mut AlarmMeter, &mut BackgroundColor, &mut Style, &Parent)>,
+        mut backdrop_query: Query<&mut Style, Without<AlarmMeter>>,
         alarm: Res<Alarm>,
+        time: Res<Time>,
     ) {
-        for (mut color, mut style) in &mut alarm_meter_query {
+        let dt = time.delta_seconds();
+        for (mut meter, mut color, mut style, parent) in &mut alarm_meter_query {
             // Hack but it works
             let t = alarm.0.max(0.000001);
             let color_idx = (t * Self::COLOR_RAMP.len() as f32).ceil() as usize - 1;
 
             color.0 = Self::COLOR_RAMP[color_idx];
             style.size.width = Val::Percent(100.0 * t);
+
+            if let Ok(mut backdrop) = backdrop_query.get_mut(parent.get()) {
+                backdrop.position.top = Val::Percent(5.0 * meter.shake);
+            };
+
+            let shake_decay = 0.1f32;
+            let shake_scale = 60.0;
+            meter.shake *= shake_decay.powf(dt);
+            meter.shake += shake_scale * (alarm.0 - meter.old_alarm);
+            meter.old_alarm = alarm.0;
         }
     }
 }
@@ -207,7 +223,7 @@ pub struct AlarmMeterTemplate;
 
 impl AlarmMeterTemplate {
     pub fn spawn(self, commands: &mut Commands) -> Entity {
-        let mut alarm_meter = commands.spawn((NodeBundle::default(), AlarmMeter));
+        let mut alarm_meter = commands.spawn((NodeBundle::default(), AlarmMeter::default()));
         #[cfg(feature = "debug_mode")]
         alarm_meter.insert(Name::new("AlarmMeter"));
         let alarm_meter = alarm_meter.id();
