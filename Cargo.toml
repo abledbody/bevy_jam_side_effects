@@ -3,9 +3,6 @@ name = "bevy_jam_side_effects"
 version = "0.1.0"
 edition = "2021"
 
-[lib]
-crate-type = ["cdylib"]
-
 [dependencies]
 bevy = "0.10"
 bevy_ecs_ldtk = { version = "0.6", features = ["atlas"] }

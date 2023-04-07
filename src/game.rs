@@ -200,11 +200,7 @@ impl Plugin for GamePlugin {
         app.add_system(DespawnSet::apply.in_base_set(CoreSet::Last));
 
         // UI systems
-        app.add_systems((
-            bevy::window::close_on_esc,
-            HealthBar::update,
-            AlarmMeter::update,
-        ));
+        app.add_systems((HealthBar::update, AlarmMeter::update));
     }
 }
 
