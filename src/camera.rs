@@ -66,9 +66,9 @@ impl GameCamera {
         let camera_pos = camera_transform.translation.xy();
         let target_pos = target_transform.translation().xy();
 
-        camera_transform.translation += camera_pos
+        camera_transform.translation = camera_pos
             .smooth_approach(target_pos, camera.rate, dt)
-            .extend(0.0);
+            .extend(camera_transform.translation.z);
     }
 }
 
@@ -76,8 +76,17 @@ pub trait SmoothApproach {
     fn smooth_approach(self, target: Self, rate: f32, dt: f32) -> Self;
 }
 
-impl SmoothApproach for Vec2 {
+impl SmoothApproach for f32 {
     fn smooth_approach(self, target: Self, rate: f32, dt: f32) -> Self {
         (self - target) / ((rate * dt) + 1.0) + target
+    }
+}
+
+impl SmoothApproach for Vec2 {
+    fn smooth_approach(self, target: Self, rate: f32, dt: f32) -> Self {
+        Vec2::new(
+            self.x.smooth_approach(target.x, rate, dt),
+            self.y.smooth_approach(target.y, rate, dt),
+        )
     }
 }
