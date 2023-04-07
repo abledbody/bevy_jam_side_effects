@@ -276,20 +276,31 @@ impl EnemyAi {
         let Ok(player) = player_query.get_single() else { return };
 
         // Detect target
+        let detect_sound_settings = PlaybackSettings::default().with_volume(0.7);
         for &DetectEvent { sensor, target } in detect_events.iter() {
             if let Ok((mut enemy, ..)) = parent_query
                 .get(sensor)
                 .and_then(|parent| enemy_query.get_mut(parent.get()))
             {
+                if enemy.target.is_none() {
+                    audio.play_with_settings(
+                        handle.audio[&AudioKey::GnollDetect].clone(),
+                        detect_sound_settings,
+                    );
+                }
                 enemy.target = Some(target);
-                audio.play(handle.audio[&AudioKey::GnollDetect].clone());
             }
         }
         for &HitEvent { hurtbox, .. } in hit_events.iter() {
             if let Ok((mut enemy, ..)) = enemy_query.get_mut(hurtbox) {
+                if enemy.target.is_none() {
+                    audio.play_with_settings(
+                        handle.audio[&AudioKey::GnollDetect].clone(),
+                        detect_sound_settings,
+                    );
+                }
                 // Assume the hitbox originated from the player
                 enemy.target = Some(player);
-                audio.play(handle.audio[&AudioKey::GnollDetect].clone());
             }
         }
 
