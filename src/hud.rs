@@ -1,4 +1,5 @@
 use bevy::{math::vec2, prelude::*};
+use rand::{thread_rng, Rng};
 
 use crate::{
     animation::Offset,
@@ -207,11 +208,15 @@ impl AlarmMeter {
             style.size.width = Val::Percent(100.0 * t);
 
             if let Ok(mut backdrop) = backdrop_query.get_mut(parent.get()) {
-                backdrop.position.top = Val::Percent(5.0 * meter.shake);
+                let mut rng = thread_rng();
+                let dx = rng.gen_range(-1.0..1.0) * meter.shake;
+                let dy = rng.gen_range(-1.0..1.0) * meter.shake;
+                backdrop.position.left = Val::Percent(dx);
+                backdrop.position.top = Val::Percent(dy);
             };
 
-            let shake_decay = 0.1f32;
-            let shake_scale = 60.0;
+            let shake_decay = 0.05f32;
+            let shake_scale = 50.0;
             meter.shake *= shake_decay.powf(dt);
             meter.shake += shake_scale * (alarm.0 - meter.old_alarm);
             meter.old_alarm = alarm.0;
