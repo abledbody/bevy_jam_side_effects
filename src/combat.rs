@@ -247,7 +247,6 @@ pub struct DeathEvent(pub Entity);
 #[derive(Component, Reflect, Default)]
 pub struct DeathEffects {
     pub increase_alarm: f32,
-    // TODO: Animation, sound effect
 }
 
 impl DeathEffects {
@@ -255,6 +254,7 @@ impl DeathEffects {
         mut commands: Commands,
         mut death_events: EventReader<DeathEvent>,
         death_effects_query: Query<&DeathEffects>,
+        mut hurt_effects_query: Query<&mut HurtEffects>,
         mut alarm: ResMut<Alarm>,
         children_query: Query<&Children>,
         animation_query: Query<(), With<WalkAnimation>>, // And you can use animation_query.contains(child)
@@ -263,9 +263,13 @@ impl DeathEffects {
             // Turn into a dead body
             commands
                 .entity(entity)
-                .insert(Lifetime(5.0))
+                .insert((Lifetime(3.0), ColliderMassProperties::Mass(0.0001)))
                 .remove::<MobInputs>();
+            if let Ok(mut hurt_effects) = hurt_effects_query.get_mut(entity) {
+                hurt_effects.increase_alarm = 0.0;
+            }
 
+            // Play death animation
             if let Ok(children) = children_query.get(entity) {
                 for &child in children {
                     if animation_query.contains(child) {

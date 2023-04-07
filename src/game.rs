@@ -234,7 +234,7 @@ fn restart_game(
     *alarm = default();
 }
 
-fn spawn_game(mut commands: Commands, handle: Res<Handles>, audio: Res<Audio>) {
+fn spawn_game(mut commands: Commands, handle: Res<Handles>) {
     // Spawn map
     MapTemplate.spawn(&mut commands, &handle);
 

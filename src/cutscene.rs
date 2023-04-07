@@ -1,10 +1,6 @@
 use bevy::prelude::*;
-use leafwing_input_manager::prelude::*;
 
-use crate::{
-    asset::{AudioKey, FontKey, Handles},
-    game::GameAction,
-};
+use crate::asset::{AudioKey, FontKey, Handles};
 
 const NUM_LINES: usize = 3;
 const TEXT_LINES: [&str; NUM_LINES] = [
