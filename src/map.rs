@@ -79,7 +79,7 @@ impl ExitTemplate {
     pub fn spawn(self, commands: &mut Commands) -> Entity {
         let mut exit = commands.spawn((
             TransformBundle::from_transform(self.transform),
-            Collider::cuboid(8.0, 8.0),
+            Collider::ball(1.0),
             CollisionGroups {
                 memberships: COLLISION_GROUP,
                 filters: PLAYER_HURTBOX_GROUP,
@@ -155,7 +155,7 @@ impl PlateTemplate {
                 texture: handle.image[&ImageKey::PlateUnpressed].clone(),
                 ..default()
             },
-            Collider::cuboid(1.0, 1.0),
+            Collider::ball(1.0),
             CollisionGroups {
                 memberships: COLLISION_GROUP,
                 filters: PLAYER_HURTBOX_GROUP,
@@ -198,7 +198,7 @@ impl GateTemplate {
                 texture,
                 ..default()
             },
-            Collider::cuboid(8.0, 8.0),
+            Collider::ball(8.0),
             CollisionGroups {
                 memberships: COLLISION_GROUP,
                 filters,
