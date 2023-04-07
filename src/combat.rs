@@ -6,7 +6,7 @@ use bevy_rapier2d::prelude::*;
 use crate::{
     animation::{DeathAnimation, FlinchAnimation, Lifetime, WalkAnimation},
     asset::{AudioKey, Handles},
-    mob::{enemy::Alarm, DeadBody, Health, Mob, MobInputs},
+    mob::{enemy::Alarm, Health, Mob, MobInputs},
 };
 
 pub const COLLISION_GROUP: Group = Group::GROUP_1;
@@ -136,7 +136,10 @@ impl HitEffects {
             let Ok(mut hit) = hit_effects.get_mut(hitbox) else { return };
 
             if let Some(sound) = &hit.success_sound {
-                audio.play(sound.clone());
+                audio.play_with_settings(
+                    sound.clone(),
+                    PlaybackSettings::default().with_volume(0.6),
+                );
             }
             hit.success = true;
 
@@ -173,7 +176,10 @@ impl HitEffects {
         for (entity, effects) in &hit_effects_query {
             if !effects.success {
                 if let Some(sound) = &effects.failure_sound {
-                    audio.play(sound.clone());
+                    audio.play_with_settings(
+                        sound.clone(),
+                        PlaybackSettings::default().with_volume(0.6),
+                    );
                 }
             }
 
@@ -257,7 +263,7 @@ impl DeathEffects {
             // Turn into a dead body
             commands
                 .entity(entity)
-                .insert((DeadBody, Lifetime(10.0)))
+                .insert(Lifetime(5.0))
                 .remove::<MobInputs>();
 
             if let Ok(children) = children_query.get(entity) {

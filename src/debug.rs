@@ -25,7 +25,6 @@ use crate::{
         enemy::{Alarm, DifficultyCurve, EnemyAi},
         player::{PlayerControl, PlayerDefected},
         Body,
-        DeadBody,
         Health,
         Mob,
         MobInputs,
@@ -67,7 +66,6 @@ impl Plugin for DebugPlugin {
             .register_type::<PlayerDefected>()
             .register_type::<DifficultyCurve>()
             .register_type::<EnemyAi>()
-            .register_type::<DeadBody>()
             .register_type::<HitEffects>()
             .register_type::<HurtEffects>()
             .register_type::<DeathEffects>()
