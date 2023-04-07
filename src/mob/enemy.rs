@@ -153,7 +153,7 @@ impl EnemyTemplate {
             DifficultyCurve::default(),
             HurtEffects {
                 increase_alarm: self.hurt_increase_alarm,
-                sound: Some(handle.audio[&AudioKey::GnollHurt].clone()),
+                ..default()
             },
             DeathEffects {
                 increase_alarm: self.death_increase_alarm,
@@ -269,7 +269,9 @@ impl EnemyAi {
         parent_query: Query<&Parent>,
         player_query: Query<Entity, With<PlayerControl>>,
         transform_query: Query<&GlobalTransform, Without<EnemyAi>>,
+        handle: Res<Handles>,
         time: Res<Time>,
+        audio: Res<Audio>,
     ) {
         let Ok(player) = player_query.get_single() else { return };
 
@@ -280,12 +282,14 @@ impl EnemyAi {
                 .and_then(|parent| enemy_query.get_mut(parent.get()))
             {
                 enemy.target = Some(target);
+                audio.play(handle.audio[&AudioKey::GnollDetect].clone());
             }
         }
         for &HitEvent { hurtbox, .. } in hit_events.iter() {
             if let Ok((mut enemy, ..)) = enemy_query.get_mut(hurtbox) {
                 // Assume the hitbox originated from the player
                 enemy.target = Some(player);
+                audio.play(handle.audio[&AudioKey::GnollDetect].clone());
             }
         }
 
@@ -366,7 +370,7 @@ impl DetectorTemplate {
             Detector,
         ));
         #[cfg(feature = "debug_mode")]
-        detector.insert(Name::new("DetectionSensor"));
+        detector.insert(Name::new("Detector"));
 
         detector.id()
     }
