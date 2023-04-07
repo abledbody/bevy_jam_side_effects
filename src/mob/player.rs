@@ -3,9 +3,9 @@ use leafwing_input_manager::prelude::*;
 
 use super::{Health, Mob, MobBundle, MobInputs};
 use crate::{
-    asset::{Handles, ImageKey},
+    asset::{AudioKey, Handles, ImageKey},
     camera::GameCamera,
-    combat::Faction,
+    combat::{Faction, HurtEffects},
     hud::{HealthBarTemplate, NametagTemplate},
     mob::{enemy::Alarm, Body, BodyTemplate},
     vfx::DropShadowTemplate,
@@ -140,7 +140,10 @@ impl PlayerTemplate {
                 ..default()
             }
             .with_faction(FACTION),
-            PlayerControl,
+            HurtEffects {
+                sound: Some(handle.audio[&AudioKey::GnollHurt].clone()),
+                ..default()
+            },
             InputManagerBundle::<PlayerAction> {
                 input_map: InputMap::default()
                     .insert(VirtualDPad::wasd(), PlayerAction::Move)
@@ -152,6 +155,7 @@ impl PlayerTemplate {
                     .build(),
                 ..default()
             },
+            PlayerControl,
         ));
         #[cfg(feature = "debug_mode")]
         player.insert(Name::new("Player"));

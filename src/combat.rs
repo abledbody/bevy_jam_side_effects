@@ -68,8 +68,8 @@ impl HitboxTemplate {
             HitEffects {
                 damage: self.damage,
                 knockback: self.knockback * self.direction,
-                success_sound: Some(handle.audio[&AudioKey::PlayerAttack4].clone()),
-                failure_sound: Some(handle.audio[&AudioKey::PlayerAttackMiss].clone()),
+                success_sound: Some(handle.audio[&AudioKey::GnollAttack4].clone()),
+                failure_sound: Some(handle.audio[&AudioKey::GnollAttackMiss].clone()),
                 ..default()
             },
         ));

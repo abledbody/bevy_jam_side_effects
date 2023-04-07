@@ -4,7 +4,7 @@ use rand::{seq::SliceRandom, thread_rng, Rng};
 
 use super::MobInputs;
 use crate::{
-    asset::{Handles, ImageKey},
+    asset::{AudioKey, Handles, ImageKey},
     combat::{DeathEffects, Faction, HitEvent, HurtEffects},
     hud::{HealthBarTemplate, NametagTemplate},
     mob::{player::PlayerControl, BodyTemplate, Health, Mob, MobBundle},
@@ -153,7 +153,7 @@ impl EnemyTemplate {
             DifficultyCurve::default(),
             HurtEffects {
                 increase_alarm: self.hurt_increase_alarm,
-                ..default()
+                sound: Some(handle.audio[&AudioKey::GnollHurt].clone()),
             },
             DeathEffects {
                 increase_alarm: self.death_increase_alarm,
