@@ -3,6 +3,9 @@ name = "bevy_jam_side_effects"
 version = "0.1.0"
 edition = "2021"
 
+[lib]
+crate-type = ["cdylib"]
+
 [dependencies]
 bevy = "0.10"
 bevy_ecs_ldtk = { version = "0.6", features = ["atlas"] }
@@ -10,7 +13,7 @@ bevy_editor_pls = { version = "0.4", optional = true }
 bevy_rapier2d = "0.21"
 leafwing-input-manager = "0.9"
 rand = { version = "0.8", features = [ "small_rng" ] }
-seldom_map_nav = "0.3"
+wasm-bindgen = { version = "0.2", optional = true }
 wee_alloc = { version = "0.4", optional = true }
 
 [features]
@@ -25,6 +28,11 @@ debug_mode = [
 editor = [
     "debug_mode",
     "dep:bevy_editor_pls",
+]
+wasm = [
+    "bevy_rapier2d/wasm-bindgen",
+    "dep:wasm-bindgen",
+    "dep:wee_alloc",
 ]
 
 [profile.dev]
@@ -41,7 +49,7 @@ inherits = "release"
 opt-level = "z"
 # Do a second optimization pass removing duplicate or unused code from dependencies.
 # Slows compile times, marginal improvements
-lto = "fat"
+lto = "thin"
 # When building crates, optimize larger chunks at a time
 # Slows compile times, marginal improvements
 codegen-units = 1
