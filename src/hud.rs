@@ -183,12 +183,13 @@ pub struct AlarmMeter {
 }
 
 impl AlarmMeter {
-    const COLOR_RAMP: [Color; 5] = [
-        Color::rgba(0.7, 0.7, 0.3, 0.3),
-        Color::rgba(0.8, 0.5, 0.3, 0.4),
-        Color::rgba(0.8, 0.3, 0.2, 0.5),
-        Color::rgba(0.9, 0.2, 0.2, 0.6),
-        Color::rgba(1.0, 0.1, 0.1, 0.7),
+    const COLOR_RAMP: [Color; 6] = [
+        Color::rgba(0.8, 0.2, 0.2, 0.3),
+        Color::rgba(0.8, 0.2, 0.2, 0.4),
+        Color::rgba(0.9, 0.2, 0.2, 0.45),
+        Color::rgba(0.9, 0.15, 0.2, 0.5),
+        Color::rgba(0.95, 0.15, 0.2, 0.6),
+        Color::rgba(1.0, 0.1, 0.1, 0.8),
     ];
 
     pub fn update(
