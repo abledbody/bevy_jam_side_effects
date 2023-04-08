@@ -204,12 +204,12 @@ impl AlarmMeter {
         let dt = time.delta_seconds();
         for (mut meter, mut color, mut style, backdrop) in &mut alarm_meter_query {
             // Hack but it works
-            let t = alarm.0.max(0.000001);
-            let color_idx = (t * Self::COLOR_RAMP.len() as f32).ceil() as usize - 1;
+            let x = alarm.0.clamp(0.000001, 1.0);
+            let color_idx = (x * Self::COLOR_RAMP.len() as f32).ceil() as usize - 1;
 
             // Update color and size
             color.0 = Self::COLOR_RAMP[color_idx];
-            style.size.width = Val::Percent(100.0 * t);
+            style.size.width = Val::Percent(100.0 * x);
 
             // Calculate shake
             let shake_decay = 0.05f32;
@@ -233,9 +233,13 @@ impl AlarmMeter {
             container.position.top = Val::Percent(dy);
 
             // Apply alarm flashing
+            let t = time.elapsed_seconds();
             for &child in children {
                 let Ok(mut image) = alarm_icon_query.get_mut(child) else { continue };
-                image.texture = handle.image[&if meter.shake > 0.05 {
+                let shake_flash = meter.shake > 0.05;
+                let max_flash = alarm.0 >= 1.0 && t.fract() < 0.25;
+                let flash = shake_flash || max_flash;
+                image.texture = handle.image[&if flash {
                     ImageKey::AlarmMeterIconFlash
                 } else {
                     ImageKey::AlarmMeterIcon
