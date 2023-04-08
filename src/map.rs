@@ -213,7 +213,7 @@ impl PlateTemplate {
                 texture: handle.image[&ImageKey::PlateUnpressed].clone(),
                 ..default()
             },
-            Collider::ball(1.0),
+            Collider::ball(2.0),
             CollisionGroups {
                 memberships: COLLISION_GROUP,
                 filters: PLAYER_HURTBOX_GROUP,
