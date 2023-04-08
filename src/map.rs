@@ -286,6 +286,11 @@ pub fn spawn_level_entities(
             "player" => PlayerTemplate {
                 transform,
                 current_health: playthrough.health.unwrap_or(200.0),
+                texture: if playthrough.defected {
+                    ImageKey::GnollBlue
+                } else {
+                    ImageKey::GnollRed
+                },
                 ..default()
             }
             .spawn(&mut commands, &handle),

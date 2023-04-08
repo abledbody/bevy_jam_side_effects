@@ -123,6 +123,7 @@ impl PlayerControl {
 #[derive(Component, Reflect)]
 pub struct PlayerTemplate {
     pub transform: Transform,
+    pub texture: ImageKey,
     pub current_health: f32,
     pub max_health: f32,
 }
@@ -131,6 +132,7 @@ impl Default for PlayerTemplate {
     fn default() -> Self {
         Self {
             transform: default(),
+            texture: ImageKey::GnollRed,
             current_health: 200.0,
             max_health: 200.0,
         }
@@ -143,7 +145,7 @@ impl PlayerTemplate {
 
         // Children
         let body = BodyTemplate {
-            texture: ImageKey::GnollRed,
+            texture: self.texture,
             offset: Transform::from_xyz(2.0, 11.0, 0.0),
         }
         .spawn(commands, handle);
