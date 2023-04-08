@@ -19,12 +19,12 @@ use crate::{
     asset::Handles,
     camera::GameCamera,
     combat::{DeathEffects, HitEffects, HurtEffects},
-    cutscene::Cutscene,
+    cutscene::{Cutscene, Message},
     hud::{AlarmMeter, FontSizeHack, HealthBar},
     map::{Exit, Gate, Plate, Wall},
     mob::{
         enemy::{Alarm, DifficultyCurve, EnemyAi},
-        player::{PlayerControl, PlayerDefected},
+        player::{PlayerControl, Playthrough},
         Body,
         Health,
         Mob,
@@ -64,7 +64,7 @@ impl Plugin for DebugPlugin {
             .register_type::<MobInputs>()
             .register_type::<Body>()
             .register_type::<PlayerControl>()
-            .register_type::<PlayerDefected>()
+            .register_type::<Playthrough>()
             .register_type::<DifficultyCurve>()
             .register_type::<EnemyAi>()
             .register_type::<HitEffects>()
@@ -86,6 +86,7 @@ impl Plugin for DebugPlugin {
             .register_type::<Gate>()
             .register_type::<GameCamera>()
             .register_type::<Cutscene>()
+            .register_type::<Message>()
             .register_type::<FontSizeHack>()
             .register_type::<HealthBar>()
             .register_type::<Alarm>()

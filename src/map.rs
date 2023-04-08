@@ -5,7 +5,11 @@ use bevy_rapier2d::prelude::*;
 use crate::{
     asset::{AudioKey, Handles, ImageKey, LevelKey},
     combat::{COLLISION_GROUP, PLAYER_HURTBOX_GROUP},
-    mob::{enemy::EnemyTemplate, player::PlayerTemplate},
+    mob::{
+        enemy::EnemyTemplate,
+        player::{PlayerControl, PlayerTemplate, Playthrough},
+        Health,
+    },
 };
 
 pub struct MapTemplate;
@@ -57,14 +61,18 @@ impl Exit {
     pub fn detect(
         mut collision_events: EventReader<CollisionEvent>,
         mut level_selection: ResMut<LevelSelection>,
+        player_query: Query<&Health, With<PlayerControl>>,
+        mut playthrough: ResMut<Playthrough>,
         exit_query: Query<(), With<Exit>>,
     ) {
         let LevelSelection::Index(idx) = *level_selection else { return };
+        let Ok(player_health) = player_query.get_single() else { return };
 
         for &event in collision_events.iter() {
             let CollisionEvent::Started ( entity1, entity2, _) = event else { continue };
             if exit_query.contains(entity1) || exit_query.contains(entity2) {
                 *level_selection = LevelSelection::Index(idx + 1);
+                playthrough.health = Some(player_health.current);
                 break;
             }
         }
@@ -79,7 +87,7 @@ impl ExitTemplate {
     pub fn spawn(self, commands: &mut Commands) -> Entity {
         let mut exit = commands.spawn((
             TransformBundle::from_transform(self.transform),
-            Collider::ball(1.0),
+            Collider::ball(4.0),
             CollisionGroups {
                 memberships: COLLISION_GROUP,
                 filters: PLAYER_HURTBOX_GROUP,
@@ -92,6 +100,53 @@ impl ExitTemplate {
         exit.insert(Name::new("Exit"));
 
         exit.id()
+    }
+}
+
+#[derive(Resource, Reflect, Default)]
+#[reflect(Resource)]
+pub struct Victory(pub bool);
+
+#[derive(Component, Reflect)]
+pub struct VictorySquare;
+
+impl VictorySquare {
+    pub fn detect(
+        mut collision_events: EventReader<CollisionEvent>,
+        victory_query: Query<(), With<VictorySquare>>,
+        mut victory: ResMut<Victory>,
+    ) {
+        for &event in collision_events.iter() {
+            let CollisionEvent::Started ( entity1, entity2, _) = event else { continue };
+            if victory_query.contains(entity1) || victory_query.contains(entity2) {
+                victory.0 = true;
+                break;
+            }
+        }
+    }
+}
+
+struct VictorySquareTemplate {
+    transform: Transform,
+}
+
+impl VictorySquareTemplate {
+    pub fn spawn(self, commands: &mut Commands) -> Entity {
+        let mut victory_square = commands.spawn((
+            TransformBundle::from_transform(self.transform),
+            Collider::ball(4.0),
+            CollisionGroups {
+                memberships: COLLISION_GROUP,
+                filters: PLAYER_HURTBOX_GROUP,
+            },
+            Sensor,
+            ActiveEvents::COLLISION_EVENTS,
+            VictorySquare,
+        ));
+        #[cfg(feature = "debug_mode")]
+        victory_square.insert(Name::new("VictorySquare"));
+
+        victory_square.id()
     }
 }
 
@@ -222,6 +277,7 @@ pub fn spawn_level_entities(
     handle: Res<Handles>,
     entity_query: Query<(&Parent, &Transform, &EntityInstance), Added<EntityInstance>>,
     tile_query: Query<(&Parent, &Transform, &TileEnumTags), Added<TileEnumTags>>,
+    playthrough: Res<Playthrough>,
 ) {
     let mut gate_map = HashMap::new();
 
@@ -229,6 +285,7 @@ pub fn spawn_level_entities(
         let entity = match instance.identifier.as_str() {
             "player" => PlayerTemplate {
                 transform,
+                current_health: playthrough.health.unwrap_or(200.0),
                 ..default()
             }
             .spawn(&mut commands, &handle),
@@ -259,6 +316,7 @@ pub fn spawn_level_entities(
                 gate
             },
             "exit" => ExitTemplate { transform }.spawn(&mut commands),
+            "victory" => VictorySquareTemplate { transform }.spawn(&mut commands),
             _ => continue,
         };
         commands.entity(parent.get()).add_child(entity);

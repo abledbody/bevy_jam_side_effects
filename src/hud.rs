@@ -226,11 +226,13 @@ impl AlarmMeter {
             };
 
             // Apply shake
-            let mut rng = thread_rng();
-            let dx = rng.gen_range(-1.0..1.0) * meter.shake;
-            let dy = rng.gen_range(-1.0..1.0) * meter.shake;
-            container.position.left = Val::Percent(dx);
-            container.position.top = Val::Percent(dy);
+            if meter.shake > 0.01 {
+                let mut rng = thread_rng();
+                let dx = rng.gen_range(-1.0..1.0) * meter.shake;
+                let dy = rng.gen_range(-1.0..1.0) * meter.shake;
+                container.position.left = Val::Percent(dx);
+                container.position.top = Val::Percent(dy);
+            }
 
             // Apply alarm flashing
             let t = time.elapsed_seconds();

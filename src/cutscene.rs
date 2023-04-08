@@ -1,8 +1,14 @@
 use bevy::prelude::*;
 
 use crate::{
+    animation::Lifetime,
     asset::{AudioKey, FontKey, Handles},
-    mob::player::PlayerControl,
+    map::Victory,
+    mob::{
+        enemy::Alarm,
+        player::{PlayerControl, Playthrough},
+        Health,
+    },
 };
 
 const NUM_LINES: usize = 3;
@@ -114,5 +120,104 @@ impl CutsceneTemplate {
         entity.insert(Name::new("Cutscene"));
 
         entity.id()
+    }
+}
+
+#[derive(Component, Reflect)]
+pub struct Message;
+
+pub struct MessageTemplate {
+    title: String,
+    body: String,
+}
+
+impl MessageTemplate {
+    pub fn spawn(self, commands: &mut Commands, handle: &Handles) -> Entity {
+        let title_style = TextStyle {
+            font: handle.font[&FontKey::Pixel].clone(),
+            font_size: 24.0,
+            color: Color::WHITE,
+        };
+        let body_style = TextStyle {
+            font: handle.font[&FontKey::Pixel].clone(),
+            font_size: 16.0,
+            color: Color::WHITE,
+        };
+
+        let mut message = commands.spawn((
+            TextBundle {
+                style: Style {
+                    margin: UiRect::all(Val::Auto),
+                    position_type: PositionType::Absolute,
+                    ..default()
+                },
+                text: Text::from_sections([
+                    TextSection::new(self.title + "\n\n\n\n\n", title_style),
+                    TextSection::new(self.body, body_style),
+                ])
+                .with_alignment(TextAlignment::Center),
+                ..default()
+            },
+            Message,
+        ));
+        #[cfg(feature = "debug_mode")]
+        message.insert(Name::new("Message"));
+
+        message.id()
+    }
+}
+
+impl Message {
+    pub fn show_death_message(
+        mut commands: Commands,
+        handle: Res<Handles>,
+        message_query: Query<(), With<Message>>,
+        player_query: Query<(), (With<PlayerControl>, With<Lifetime>)>,
+    ) {
+        if !message_query.is_empty() || player_query.is_empty() {
+            return;
+        }
+
+        MessageTemplate {
+            title: "You died.".to_string(),
+            body: "(press R to restart)".to_string(),
+        }
+        .spawn(&mut commands, &handle);
+    }
+
+    pub fn show_victory_message(
+        mut commands: Commands,
+        handle: Res<Handles>,
+        message_query: Query<(), With<Message>>,
+        health_query: Query<&Health, With<PlayerControl>>,
+        playthrough: Res<Playthrough>,
+        victory: Res<Victory>,
+        alarm: Res<Alarm>,
+        time: Res<Time>,
+    ) {
+        if !victory.0 || !message_query.is_empty() {
+            return;
+        }
+        let Ok(health) = health_query.get_single() else { return };
+
+        let alarm_scale = 10_000.0;
+        let alarm_t = 1.0 - alarm.0;
+        let alarm_score = (alarm_scale * alarm_t).round() as i32;
+
+        let health_scale = 10_000.0;
+        let health_t = health.current / health.max;
+        let health_score = (health_scale * health_t).round() as i32;
+
+        let time_scale = 10_000.0 * 60.0;
+        let time_t = time.elapsed_seconds() - playthrough.start_time;
+        let time_score = (time_scale / time_t).round() as i32;
+
+        let score = alarm_score + health_score + time_score;
+
+        MessageTemplate {
+            title: "You escaped!".to_string(),
+            body: format!("Alarm score: {alarm_score}\n\n\n\n\nHealth score: {health_score}\n\n\n\n\nTime score: {time_score}\n\n\n\n\nTotal score: {score}\n\n\n\n\n(press R to play again)"),
+        }
+        .spawn(&mut commands, &handle);
     }
 }

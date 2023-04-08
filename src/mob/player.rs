@@ -22,20 +22,28 @@ pub enum PlayerAction {
     Attack,
 }
 
-#[derive(Resource, Reflect, Default, Eq, PartialEq)]
+#[derive(Resource, Reflect, Default)]
 #[reflect(Resource)]
-pub struct PlayerDefected(pub bool);
+pub struct Playthrough {
+    pub defected: bool,
+    pub start_time: f32,
+    pub health: Option<f32>,
+}
 
-impl PlayerDefected {
-    pub fn detect(
+impl Playthrough {
+    pub fn detect_defection(
         mut collision_events: EventReader<CollisionEvent>,
         plate_query: Query<(), With<Plate>>,
         player_query: Query<&Children, With<PlayerControl>>,
         mut body_query: Query<&mut Handle<Image>, With<Body>>,
         handle: Res<Handles>,
-        mut defected: ResMut<PlayerDefected>,
+        mut playthrough: ResMut<Playthrough>,
         mut alarm: ResMut<Alarm>,
+        time: Res<Time>,
     ) {
+        if playthrough.defected {
+            return;
+        }
         let Ok(children) = player_query.get_single() else { return };
 
         for &event in collision_events.iter() {
@@ -45,7 +53,8 @@ impl PlayerDefected {
                 continue;
             }
 
-            defected.0 = true;
+            playthrough.defected = true;
+            playthrough.start_time = time.elapsed_seconds();
             alarm.increase(0.065);
             for &child in children {
                 let Ok(mut body) = body_query.get_mut(child) else { continue };
@@ -114,14 +123,16 @@ impl PlayerControl {
 #[derive(Component, Reflect)]
 pub struct PlayerTemplate {
     pub transform: Transform,
-    pub health: f32,
+    pub current_health: f32,
+    pub max_health: f32,
 }
 
 impl Default for PlayerTemplate {
     fn default() -> Self {
         Self {
             transform: default(),
-            health: 200.0,
+            current_health: 200.0,
+            max_health: 200.0,
         }
     }
 }
@@ -155,7 +166,10 @@ impl PlayerTemplate {
             },
             MobBundle {
                 mob: Mob::player(),
-                health: Health::full(self.health),
+                health: Health {
+                    current: self.current_health,
+                    max: self.max_health,
+                },
                 ..default()
             }
             .with_faction(FACTION),

@@ -20,12 +20,12 @@ use crate::{
     asset::{AudioKey, Handles},
     camera::{GameCamera, GameCameraTemplate},
     combat::{DeathEffects, DeathEvent, HitEffects, HitEvent, HurtEffects},
-    cutscene::{Cutscene, CutsceneTemplate},
+    cutscene::{Cutscene, CutsceneTemplate, Message},
     hud::{AlarmMeter, AlarmMeterTemplate, FontSizeHack, HealthBar},
-    map::{spawn_level_entities, Exit, MapTemplate, Plate},
+    map::{spawn_level_entities, Exit, MapTemplate, Plate, Victory, VictorySquare},
     mob::{
         enemy::{Alarm, DetectEvent, DifficultyCurve, EnemyAi},
-        player::{PlayerAction, PlayerControl, PlayerDefected},
+        player::{PlayerAction, PlayerControl, Playthrough},
         Mob,
     },
     util::{DespawnSet, ZRampByY},
@@ -80,7 +80,8 @@ impl Plugin for GamePlugin {
         )
         .init_resource::<Handles>()
         .init_resource::<DespawnSet>()
-        .init_resource::<PlayerDefected>()
+        .init_resource::<Playthrough>()
+        .init_resource::<Victory>()
         .init_resource::<Alarm>();
 
         // Events
@@ -151,6 +152,7 @@ impl Plugin for GamePlugin {
                 VirtualParent::copy_transform.after(ZRampByY::apply),
                 Offset::apply.after(VirtualParent::copy_transform),
                 Plate::detect,
+                VictorySquare::detect,
                 HitEvent::detect.before(EnemyAi::think),
                 DetectEvent::detect.before(EnemyAi::think),
                 DifficultyCurve::apply.before(EnemyAi::think),
@@ -163,7 +165,7 @@ impl Plugin for GamePlugin {
         // Animation systems
         app.add_systems(
             (
-                PlayerDefected::detect.run_if(resource_equals(PlayerDefected(false))),
+                Playthrough::detect_defection,
                 GameCamera::cut_to_new_target,
                 GameCamera::follow_target,
                 FontSizeHack::scale,
@@ -208,28 +210,43 @@ impl Plugin for GamePlugin {
         // UI systems
         #[cfg(not(feature = "wasm"))]
         app.add_system(bevy::window::close_on_esc);
-        app.add_systems((HealthBar::update, AlarmMeter::update, Cutscene::update));
+        app.add_systems((
+            HealthBar::update,
+            AlarmMeter::update,
+            Cutscene::update,
+            Message::show_death_message,
+            Message::show_victory_message,
+        ));
     }
 }
 
 fn restart_game(
     mut commands: Commands,
     handle: Res<Handles>,
-    map_query: Query<Entity, (With<Handle<LdtkAsset>>, Without<Parent>)>,
+    entity_query: Query<
+        Entity,
+        (
+            Or<(With<Handle<LdtkAsset>>, With<Message>)>,
+            Without<Parent>,
+        ),
+    >,
     mut alarm_meter_query: Query<&mut AlarmMeter>,
     mut collision_events: ResMut<Events<CollisionEvent>>,
     mut hit_events: ResMut<Events<HitEvent>>,
     mut death_events: ResMut<Events<DeathEvent>>,
     mut detect_events: ResMut<Events<DetectEvent>>,
     mut level_selection: ResMut<LevelSelection>,
-    mut player_defected: ResMut<PlayerDefected>,
+    mut playthrough: ResMut<Playthrough>,
+    mut victory: ResMut<Victory>,
     mut alarm: ResMut<Alarm>,
     audio: Res<Audio>,
 ) {
-    // Respawn map
-    for map in &map_query {
-        commands.entity(map).despawn_recursive();
+    // Despawn entities
+    for entity in &entity_query {
+        commands.entity(entity).despawn_recursive();
     }
+
+    // Respawn map
     MapTemplate.spawn(&mut commands, &handle);
 
     // Reset alarm meter shake
@@ -246,7 +263,8 @@ fn restart_game(
 
     // Reset resources
     *level_selection = default();
-    *player_defected = default();
+    *playthrough = default();
+    *victory = default();
     *alarm = default();
 
     // Play restart sound
