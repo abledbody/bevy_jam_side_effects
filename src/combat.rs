@@ -263,7 +263,7 @@ impl DeathEffects {
             // Turn into a dead body
             commands
                 .entity(entity)
-                .insert((Lifetime(4.0), ColliderMassProperties::Mass(25.0)))
+                .insert((Lifetime(8.0), ColliderMassProperties::Mass(25.0)))
                 .remove::<MobInputs>();
             if let Ok(mut hurt_effects) = hurt_effects_query.get_mut(entity) {
                 hurt_effects.increase_alarm = 0.0;

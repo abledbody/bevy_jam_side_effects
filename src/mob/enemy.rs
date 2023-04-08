@@ -152,6 +152,7 @@ impl EnemyTemplate {
                 ..default()
             }
             .with_faction(FACTION),
+            ColliderMassProperties::Mass(5.0),
             EnemyAi::default(),
             DifficultyCurve::default(),
             HurtEffects {
