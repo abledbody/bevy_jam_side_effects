@@ -337,7 +337,6 @@ impl EnemyAi {
             // Give up on target
             if target_distance > enemy.follow_radius {
                 enemy.target = None;
-                enemy.attack_cooldown_t = enemy.attack_cooldown / 2.0;
                 continue;
             }
 
@@ -346,10 +345,14 @@ impl EnemyAi {
             inputs.movement = target_direction;
 
             // Attack target
-            enemy.attack_cooldown_t -= dt;
-            if target_distance <= enemy.attack_radius && enemy.attack_cooldown_t <= 0.0 {
-                inputs.attack = Some(target_direction);
-                enemy.attack_cooldown_t = enemy.attack_cooldown;
+            if target_distance <= enemy.attack_radius {
+                enemy.attack_cooldown_t -= dt;
+                if enemy.attack_cooldown_t <= 0.0 {
+                    inputs.attack = Some(target_direction);
+                    enemy.attack_cooldown_t = enemy.attack_cooldown;
+                }
+            } else {
+                enemy.attack_cooldown_t = enemy.attack_cooldown / 4.0;
             }
         }
     }
