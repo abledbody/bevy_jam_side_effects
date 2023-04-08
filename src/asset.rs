@@ -26,9 +26,10 @@ pub enum ImageKey {
     DropShadow,
     DetectPopup,
     AlarmMeterIcon,
+    AlarmMeterIconFlash,
 }
 
-const IMAGE_MAP: [(ImageKey, &str); 10] = [
+const IMAGE_MAP: [(ImageKey, &str); 11] = [
     (ImageKey::GnollRed, "sprites/character/gnoll_red.png"),
     (ImageKey::GnollGreen, "sprites/character/gnoll_green.png"),
     (ImageKey::GnollBlue, "sprites/character/gnoll_blue.png"),
@@ -45,6 +46,7 @@ const IMAGE_MAP: [(ImageKey, &str); 10] = [
     (ImageKey::DropShadow, "sprites/vfx/drop_shadow.png"),
     (ImageKey::DetectPopup, "sprites/vfx/detect_popup.png"),
     (ImageKey::AlarmMeterIcon, "sprites/ui/alarm.png"),
+    (ImageKey::AlarmMeterIconFlash, "sprites/ui/alarm_flash.png"),
 ];
 
 #[derive(Reflect, FromReflect, Eq, PartialEq, Hash)]

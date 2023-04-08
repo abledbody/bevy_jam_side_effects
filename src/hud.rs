@@ -194,36 +194,54 @@ impl AlarmMeter {
 
     pub fn update(
         mut alarm_meter_query: Query<(&mut AlarmMeter, &mut BackgroundColor, &mut Style, &Parent)>,
-        parent_query: Query<&Parent, Without<AlarmMeter>>,
-        mut backdrop_query: Query<&mut Style, Without<AlarmMeter>>,
+        backdrop_query: Query<&Parent, Without<AlarmMeter>>,
+        mut alarm_icon_query: Query<&mut UiImage>,
+        mut container_query: Query<(&mut Style, &Children), Without<AlarmMeter>>,
+        handle: Res<Handles>,
         alarm: Res<Alarm>,
         time: Res<Time>,
     ) {
         let dt = time.delta_seconds();
-        for (mut meter, mut color, mut style, parent) in &mut alarm_meter_query {
+        for (mut meter, mut color, mut style, backdrop) in &mut alarm_meter_query {
             // Hack but it works
             let t = alarm.0.max(0.000001);
             let color_idx = (t * Self::COLOR_RAMP.len() as f32).ceil() as usize - 1;
 
+            // Update color and size
             color.0 = Self::COLOR_RAMP[color_idx];
             style.size.width = Val::Percent(100.0 * t);
 
-            if let Ok(mut backdrop) = parent_query
-                .get(parent.get())
-                .and_then(|parent| backdrop_query.get_mut(parent.get()))
-            {
-                let mut rng = thread_rng();
-                let dx = rng.gen_range(-1.0..1.0) * meter.shake;
-                let dy = rng.gen_range(-1.0..1.0) * meter.shake;
-                backdrop.position.left = Val::Percent(dx);
-                backdrop.position.top = Val::Percent(dy);
-            };
-
+            // Calculate shake
             let shake_decay = 0.05f32;
             let shake_scale = 50.0;
             meter.shake *= shake_decay.powf(dt);
             meter.shake += shake_scale * (alarm.0 - meter.old_alarm);
             meter.old_alarm = alarm.0;
+
+            let Ok(container) = backdrop_query.get(backdrop.get()) else {
+                continue
+            };
+            let Ok((mut container, children)) = container_query.get_mut(container.get()) else {
+                continue
+            };
+
+            // Apply shake
+            let mut rng = thread_rng();
+            let dx = rng.gen_range(-1.0..1.0) * meter.shake;
+            let dy = rng.gen_range(-1.0..1.0) * meter.shake;
+            container.position.left = Val::Percent(dx);
+            container.position.top = Val::Percent(dy);
+
+            // Apply alarm flashing
+            for &child in children {
+                let Ok(mut image) = alarm_icon_query.get_mut(child) else { continue };
+                image.texture = handle.image[&if meter.shake > 0.05 {
+                    ImageKey::AlarmMeterIconFlash
+                } else {
+                    ImageKey::AlarmMeterIcon
+                }]
+                    .clone();
+            }
         }
     }
 }
