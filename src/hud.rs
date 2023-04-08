@@ -240,7 +240,7 @@ impl AlarmMeterTemplate {
             style: Style {
                 //margin: UiRect::all(Val::Percent(1.0)),
                 padding: UiRect::all(Val::Percent(0.35)),
-                size: Size::new(Val::Percent(100.0), Val::Percent(80.0)),
+                size: Size::new(Val::Percent(100.0), Val::Percent(70.0)),
                 ..default()
             },
             background_color: BackgroundColor(BackdropTemplate::COLOR),
@@ -255,8 +255,6 @@ impl AlarmMeterTemplate {
             style: Style {
                 margin: UiRect::left(Val::Percent(1.0)),
                 size: Size::new(Val::Auto, Val::Percent(100.0)),
-                aspect_ratio: Some(15.0 / 16.0),
-                flex_shrink: 0.0,
                 ..default()
             },
             image: UiImage::new(handle.image[&ImageKey::AlarmMeterIcon].clone()),
@@ -269,7 +267,7 @@ impl AlarmMeterTemplate {
         let mut container = commands.spawn(NodeBundle {
             style: Style {
                 margin: UiRect::all(Val::Percent(1.0)),
-                size: Size::new(Val::Percent(100.0), Val::Percent(10.0)),
+                size: Size::new(Val::Percent(100.0), Val::Percent(12.0)),
                 align_items: AlignItems::Center,
                 ..default()
             },
