@@ -8,6 +8,7 @@ use crate::{
         enemy::Alarm,
         player::{PlayerControl, Playthrough},
         Health,
+        MobInputs,
     },
 };
 
@@ -172,7 +173,7 @@ impl Message {
         mut commands: Commands,
         handle: Res<Handles>,
         message_query: Query<(), With<Message>>,
-        player_query: Query<(), (With<PlayerControl>, With<Lifetime>)>,
+        player_query: Query<(), (With<PlayerControl>, Without<MobInputs>)>,
     ) {
         if !message_query.is_empty() || player_query.is_empty() {
             return;
@@ -200,7 +201,7 @@ impl Message {
         }
         let Ok(health) = health_query.get_single() else { return };
 
-        let alarm_scale = 10_000.0;
+        let alarm_scale = 100_000.0;
         let alarm_t = 1.0 - alarm.0;
         let alarm_score = (alarm_scale * alarm_t).round() as i32;
 
