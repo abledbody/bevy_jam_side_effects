@@ -25,6 +25,7 @@ pub enum PlayerAction {
 #[derive(Resource, Reflect, Default)]
 #[reflect(Resource)]
 pub struct Playthrough {
+    pub playing_main_track: bool,
     pub defected: bool,
     pub start_time: f32,
     pub health: Option<f32>,
@@ -40,6 +41,7 @@ impl Playthrough {
         mut playthrough: ResMut<Playthrough>,
         mut alarm: ResMut<Alarm>,
         time: Res<Time>,
+        audio: Res<Audio>,
     ) {
         if playthrough.defected {
             return;
@@ -59,6 +61,15 @@ impl Playthrough {
             for &child in children {
                 let Ok(mut body) = body_query.get_mut(child) else { continue };
                 *body = handle.image[&ImageKey::GnollBlue].clone();
+            }
+
+            // Start main track
+            if !playthrough.playing_main_track {
+                playthrough.playing_main_track = true;
+                audio.play_with_settings(
+                    handle.audio[&AudioKey::MainTrack].clone(),
+                    PlaybackSettings::LOOP.with_volume(0.4),
+                );
             }
 
             return;

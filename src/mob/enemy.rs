@@ -22,11 +22,11 @@ const CASUAL_NAMES: [&str; 51] = [
     "Steve", "Ted", "Tina", "Tom", "Wanda", "Will",
 ];
 // Max length = 8
-const FANTASY_FIRST_NAMES: [&str; 26] = [
-    "Ambrosia",
+const FANTASY_FIRST_NAMES: [&str; 24] = [
     "Anastasia",
     "Augustus",
     "Benedict",
+    "Beatrice",
     "Claudius",
     "Cornelia",
     "Delphine",
@@ -34,9 +34,7 @@ const FANTASY_FIRST_NAMES: [&str; 26] = [
     "Flavius",
     "Gideon",
     "Gloria",
-    "Hyperion",
     "Leonardo",
-    "Lucius",
     "Lucretia",
     "Marcella",
     "Octavia",
@@ -231,7 +229,7 @@ impl Default for DifficultyCurve {
             speed: Curve::new(60.0, 100.0),
             detect_radius: Curve::new(0.0, 500.0),
             follow_radius: Curve::new(50.0, 550.0),
-            attack_radius: Curve::new(20.0, 30.0),
+            attack_radius: Curve::new(20.0, 25.0),
             attack_cooldown: Curve::new(1.0, 0.5),
         }
     }
@@ -307,7 +305,7 @@ impl EnemyAi {
         };
 
         // Detect target
-        let detect_sound_settings = PlaybackSettings::default().with_volume(0.7);
+        let detect_sound_settings = PlaybackSettings::default().with_volume(0.6);
         let mut handle_detection = |ai: &mut EnemyAi, enemy: Entity, target: Entity| {
             if ai.target.is_some() {
                 return;

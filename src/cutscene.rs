@@ -208,7 +208,7 @@ impl Message {
         let health_t = health.current / health.max;
         let health_score = (health_scale * health_t).round() as i32;
 
-        let time_scale = 10_000.0 * 60.0;
+        let time_scale = 50_000.0 * 60.0;
         let time_t = time.elapsed_seconds() - playthrough.start_time;
         let time_score = (time_scale / time_t).round() as i32;
 

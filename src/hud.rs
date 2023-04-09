@@ -213,7 +213,7 @@ impl AlarmMeter {
 
             // Calculate shake
             let shake_decay = 0.05f32;
-            let shake_scale = 50.0;
+            let shake_scale = 60.0;
             meter.shake *= shake_decay.powf(dt);
             meter.shake += shake_scale * (alarm.0 - meter.old_alarm);
             meter.old_alarm = alarm.0;

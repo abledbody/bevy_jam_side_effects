@@ -6,7 +6,7 @@
 /target
 
 # Map backups
-/assets/maps/**/backups/*
+/assets/map/**/backups/*
 
 # WASM
 /wasm

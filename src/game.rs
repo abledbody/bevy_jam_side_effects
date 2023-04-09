@@ -263,7 +263,10 @@ fn restart_game(
 
     // Reset resources
     *level_selection = default();
-    *playthrough = default();
+    *playthrough = Playthrough {
+        playing_main_track: playthrough.playing_main_track,
+        ..default()
+    };
     *victory = default();
     *alarm = default();
 

@@ -3,7 +3,7 @@ use bevy_ecs_ldtk::prelude::*;
 use bevy_rapier2d::prelude::*;
 
 use crate::{
-    asset::{AudioKey, Handles, ImageKey, LevelKey},
+    asset::{AudioKey, Handles, ImageKey, MapKey},
     combat::{COLLISION_GROUP, PLAYER_HURTBOX_GROUP},
     mob::{
         enemy::EnemyTemplate,
@@ -17,7 +17,7 @@ pub struct MapTemplate;
 impl MapTemplate {
     pub fn spawn(self, commands: &mut Commands, handle: &Handles) -> Entity {
         let mut map = commands.spawn(LdtkWorldBundle {
-            ldtk_handle: handle.levels[&LevelKey::GameMap].clone(),
+            ldtk_handle: handle.map[&MapKey::Game].clone(),
             ..default()
         });
         #[cfg(feature = "debug_mode")]
@@ -178,7 +178,10 @@ impl Plate {
                 plate.pressed = true;
                 *plate_image = handle.image[&ImageKey::PlatePressed].clone();
 
-                audio.play(handle.audio[&AudioKey::PlateTriggerGate].clone());
+                audio.play_with_settings(
+                    handle.audio[&AudioKey::PlateTriggerGate].clone(),
+                    PlaybackSettings::ONCE.with_volume(0.8),
+                );
 
                 for &entity in &plate.gates {
                     let Ok((mut gate, mut gate_image, mut gate_groups)) = gate_query.get_mut(entity) else {
