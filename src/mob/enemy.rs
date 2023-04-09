@@ -14,23 +14,27 @@ use crate::{
     vfx::{DetectPopupTemplate, DropShadowTemplate},
 };
 
-const CASUAL_NAMES: [&str; 51] = [
+const CASUAL_NAMES: [&str; 52] = [
     "Alex", "Amy", "Abby", "Ashley", "Becca", "Ben", "Cindy", "Chloe", "Chris", "Danny", "Diane",
-    "Eli", "Emma", "Greg", "Heather", "Henry", "Ian", "Ike", "Ivy", "Jack", "Jake", "Jenny",
-    "Jessica", "Joe", "John", "Jordan", "Kate", "Kim", "Kyle", "Liam", "Lily", "Lisa", "Lucy",
-    "Mary", "Megan", "Mike", "Ned", "Nick", "Pete", "Rick", "Rose", "Roy", "Ryan", "Sam", "Sarah",
-    "Steve", "Ted", "Tina", "Tom", "Wanda", "Will",
+    "Eli", "Emma", "Gnoll", "Greg", "Heather", "Henry", "Ian", "Ike", "Ivy", "Jack", "Jake",
+    "Jenny", "Jessica", "Joe", "John", "Jordan", "Kate", "Kim", "Kyle", "Liam", "Lily", "Lisa",
+    "Lucy", "Mary", "Megan", "Mike", "Ned", "Nick", "Pete", "Rick", "Rose", "Roy", "Ryan", "Sam",
+    "Sarah", "Steve", "Ted", "Tina", "Tom", "Wanda", "Will",
 ];
 // Max length = 8
-const FANTASY_FIRST_NAMES: [&str; 24] = [
+const FANTASY_FIRST_NAMES: [&str; 31] = [
+    "Alastair",
     "Anastasia",
     "Augustus",
     "Benedict",
     "Beatrice",
+    "Bonnabelle",
     "Claudius",
     "Cornelia",
     "Delphine",
+    "Dominic",
     "Eurydice",
+    "Evelyn",
     "Flavius",
     "Gideon",
     "Gloria",
@@ -40,8 +44,11 @@ const FANTASY_FIRST_NAMES: [&str; 24] = [
     "Octavia",
     "Pandora",
     "Penelope",
+    "Phineas",
+    "Professor",
     "Tatiana",
     "Tiberius",
+    "Thaddeus",
     "Theodore",
     "Ulysses",
     "Victoria",
