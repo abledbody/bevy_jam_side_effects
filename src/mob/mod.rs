@@ -26,10 +26,10 @@ impl Health {
 
 #[derive(Component, Reflect, Debug)]
 pub struct Mob {
-    speed: f32,
-    acceleration: f32,
-    brake_deceleration: f32,
-    idle_threshold: f32,
+    pub speed: f32,
+    pub acceleration: f32,
+    pub brake_deceleration: f32,
+    pub idle_threshold: f32,
     pub faction: Faction,
 }
 
@@ -81,10 +81,11 @@ impl Mob {
                 (Vec2::ZERO, 0.0)
             };
 
-            let mut acceleration = mob.acceleration;
-            if input_direction.dot(velocity.linvel) < 0.0 {
-                acceleration = mob.brake_deceleration;
-            }
+            let acceleration = if input_direction.dot(velocity.linvel) <= 0.0 {
+                mob.brake_deceleration
+            } else {
+                mob.acceleration
+            };
 
             let target_velocity = input_direction * input_magnitude * mob.speed;
             velocity.linvel = velocity

@@ -187,6 +187,7 @@ impl PlayerTemplate {
                 ..default()
             }
             .with_faction(FACTION),
+            ColliderMassProperties::Mass(5.0),
             HurtEffects {
                 sound: Some(handle.audio[&AudioKey::GnollHurt].clone()),
                 ..default()

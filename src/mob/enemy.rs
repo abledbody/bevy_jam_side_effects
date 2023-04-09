@@ -157,6 +157,10 @@ impl EnemyTemplate {
         let detector = DetectorTemplate.spawn(commands);
 
         // Parent
+        let mut mob = Mob::enemy();
+        if self.is_corpse {
+            mob.brake_deceleration = 700.0;
+        }
         let mut enemy = commands.spawn((
             SpatialBundle {
                 transform: self.transform,
@@ -164,11 +168,11 @@ impl EnemyTemplate {
             },
             MobBundle {
                 health: Health::full(self.health),
-                mob: Mob::enemy(),
+                mob,
                 ..default()
             }
             .with_faction(FACTION),
-            ColliderMassProperties::Mass(if self.is_corpse { 25.0 } else { 5.0 }),
+            ColliderMassProperties::Mass(if self.is_corpse { 25.0 } else { 1.0 }),
             EnemyAi::default(),
             DifficultyCurve::default(),
             HurtEffects {

@@ -202,7 +202,7 @@ impl HitEffects {
                 direction,
                 radius,
                 damage: 8.0,
-                knockback: 5.0,
+                knockback: 6.0,
                 faction: mob.faction,
             }
             .spawn(&mut commands, &handle);
@@ -250,6 +250,7 @@ impl DeathEffects {
         mut death_events: EventReader<DeathEvent>,
         death_effects_query: Query<&DeathEffects>,
         mut hurt_effects_query: Query<&mut HurtEffects>,
+        mut mob_query: Query<&mut Mob>,
         mut alarm: ResMut<Alarm>,
         children_query: Query<&Children>,
         animation_query: Query<(), With<WalkAnimation>>, // And you can use animation_query.contains(child)
@@ -262,6 +263,9 @@ impl DeathEffects {
                 .remove::<MobInputs>();
             if let Ok(mut hurt_effects) = hurt_effects_query.get_mut(entity) {
                 hurt_effects.increase_alarm = 0.0;
+            }
+            if let Ok(mut mob) = mob_query.get_mut(entity) {
+                mob.brake_deceleration = 700.0;
             }
 
             // Play death animation
