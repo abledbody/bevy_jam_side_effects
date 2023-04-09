@@ -136,7 +136,7 @@ impl EnemyTemplate {
         let body = BodyTemplate {
             texture: ImageKey::GnollRed,
             offset: Transform::from_xyz(2.0, 11.0, 0.0),
-            is_corpse: true,
+            is_corpse: self.is_corpse,
         }
         .spawn(commands, handle);
         let drop_shadow = DropShadowTemplate::default().spawn(commands, handle);
