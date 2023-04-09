@@ -2,7 +2,7 @@ use bevy::prelude::*;
 use bevy_rapier2d::prelude::*;
 
 use crate::{
-    animation::{AttackAnimation, Facing, FlinchAnimation, Offset, WalkAnimation},
+    animation::{AttackAnimation, DeathAnimation, Facing, FlinchAnimation, Offset, WalkAnimation},
     asset::{AudioKey, Handles, ImageKey},
     combat::{Faction, COLLISION_GROUP},
     math::MoveTowards,
@@ -184,6 +184,7 @@ pub struct Body;
 pub struct BodyTemplate {
     texture: ImageKey,
     offset: Transform,
+    is_corpse: bool,
 }
 
 impl BodyTemplate {
@@ -202,6 +203,9 @@ impl BodyTemplate {
             FlinchAnimation::default(),
             Body,
         ));
+        if self.is_corpse {
+            body.insert(DeathAnimation::default());
+        }
         #[cfg(feature = "debug_mode")]
         body.insert(Name::new("Body"));
 

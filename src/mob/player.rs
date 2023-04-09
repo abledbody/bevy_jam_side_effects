@@ -147,6 +147,7 @@ impl PlayerTemplate {
         let body = BodyTemplate {
             texture: self.texture,
             offset: Transform::from_xyz(2.0, 11.0, 0.0),
+            is_corpse: false,
         }
         .spawn(commands, handle);
         let drop_shadow = DropShadowTemplate::default().spawn(commands, handle);

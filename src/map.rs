@@ -300,6 +300,13 @@ pub fn spawn_level_entities(
             }
             .with_random_name()
             .spawn(&mut commands, &handle),
+            "corpse" => EnemyTemplate {
+                transform,
+                ..default()
+            }
+            .with_random_name()
+            .dead()
+            .spawn(&mut commands, &handle),
             "open_gate" => {
                 let gate = GateTemplate {
                     transform,

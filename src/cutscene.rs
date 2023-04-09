@@ -1,7 +1,6 @@
 use bevy::prelude::*;
 
 use crate::{
-    animation::Lifetime,
     asset::{AudioKey, FontKey, Handles},
     map::Victory,
     mob::{

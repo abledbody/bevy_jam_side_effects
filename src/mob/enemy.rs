@@ -86,6 +86,7 @@ pub struct EnemyTemplate {
     pub name: String,
     pub variant: ImageKey,
     pub health: f32,
+    pub is_corpse: bool,
     pub hurt_increase_alarm: f32,
     pub death_increase_alarm: f32,
 }
@@ -97,6 +98,7 @@ impl Default for EnemyTemplate {
             name: "Unnamed".to_string(),
             variant: ImageKey::GnollRed,
             health: 20.0,
+            is_corpse: false,
             hurt_increase_alarm: 0.0025,
             death_increase_alarm: 0.025,
         }
@@ -119,6 +121,14 @@ impl EnemyTemplate {
         self
     }
 
+    pub fn dead(mut self) -> Self {
+        self.is_corpse = true;
+        self.health = 0.0;
+        self.hurt_increase_alarm = 0.0;
+        self.death_increase_alarm = 0.0;
+        self
+    }
+
     pub fn spawn(self, commands: &mut Commands, handle: &Handles) -> Entity {
         const FACTION: Faction = Faction::Enemy;
 
@@ -126,6 +136,7 @@ impl EnemyTemplate {
         let body = BodyTemplate {
             texture: ImageKey::GnollRed,
             offset: Transform::from_xyz(2.0, 11.0, 0.0),
+            is_corpse: true,
         }
         .spawn(commands, handle);
         let drop_shadow = DropShadowTemplate::default().spawn(commands, handle);
@@ -152,7 +163,7 @@ impl EnemyTemplate {
                 ..default()
             }
             .with_faction(FACTION),
-            ColliderMassProperties::Mass(5.0),
+            ColliderMassProperties::Mass(if self.is_corpse { 25.0 } else { 5.0 }),
             EnemyAi::default(),
             DifficultyCurve::default(),
             HurtEffects {
@@ -163,6 +174,9 @@ impl EnemyTemplate {
                 increase_alarm: self.death_increase_alarm,
             },
         ));
+        if self.is_corpse {
+            enemy.remove::<MobInputs>();
+        }
         #[cfg(feature = "debug_mode")]
         enemy.insert(Name::new("Enemy"));
 

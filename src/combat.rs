@@ -4,7 +4,7 @@ use bevy::prelude::*;
 use bevy_rapier2d::prelude::*;
 
 use crate::{
-    animation::{DeathAnimation, FlinchAnimation, Lifetime, WalkAnimation},
+    animation::{DeathAnimation, FlinchAnimation, WalkAnimation},
     asset::{AudioKey, Handles},
     mob::{enemy::Alarm, Health, Mob, MobInputs},
 };
