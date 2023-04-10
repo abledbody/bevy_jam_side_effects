@@ -25,6 +25,7 @@ default = [
     "bevy/subpixel_glyph_atlas",
     "bevy/png",
     "bevy_kira_audio/wav",
+    "bevy_kira_audio/mp3",
 ]
 debug_mode = [
     "bevy/dynamic_linking",

@@ -85,9 +85,9 @@ const AUDIO_MAP: [(AudioKey, &str); 15] = [
     (AudioKey::PlateTriggerGate, "sound/sfx/button_gate.wav"),
     (AudioKey::Pop1, "sound/sfx/pop_1.wav"),
     (AudioKey::Pop2, "sound/sfx/pop_2.wav"),
-    (AudioKey::Jackpot, "sound/sfx/jackpot.wav"),
-    (AudioKey::MainTrack, "sound/music/game.wav"),
-    (AudioKey::VictoryTrack, "sound/music/victory.wav"),
+    (AudioKey::Jackpot, "sound/sfx/jackpot.mp3"),
+    (AudioKey::MainTrack, "sound/music/game.mp3"),
+    (AudioKey::VictoryTrack, "sound/music/victory.mp3"),
 ];
 
 #[derive(Reflect, FromReflect, Copy, Clone, Eq, PartialEq, Hash)]
