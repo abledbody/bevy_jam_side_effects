@@ -278,13 +278,13 @@ impl GateTemplate {
 pub fn spawn_level_entities(
     mut commands: Commands,
     handle: Res<Handles>,
-    entity_query: Query<(&Parent, &Transform, &EntityInstance), Added<EntityInstance>>,
+    entity_query: Query<(Entity, &Parent, &Transform, &EntityInstance), Added<EntityInstance>>,
     tile_query: Query<(&Parent, &Transform, &TileEnumTags), Added<TileEnumTags>>,
     playthrough: Res<Playthrough>,
 ) {
     let mut gate_map = HashMap::new();
 
-    for (parent, &transform, instance) in &entity_query {
+    for (entity, parent, &transform, instance) in &entity_query {
         let entity = match instance.identifier.as_str() {
             "player" => PlayerTemplate {
                 transform,
@@ -338,7 +338,10 @@ pub fn spawn_level_entities(
     }
 
     // Spawn plates last so they can link to gates by Entity
-    for (parent, &transform, instance) in &entity_query {
+    for (entity, parent, &transform, instance) in &entity_query {
+        // Despawn marker entity
+        commands.entity(entity).despawn_recursive();
+
         let entity = match instance.identifier.as_str() {
             "plate" => {
                 let mut gates = vec![];

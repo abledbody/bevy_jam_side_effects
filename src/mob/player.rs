@@ -158,6 +158,7 @@ impl PlayerTemplate {
         let body = BodyTemplate {
             texture: self.texture,
             offset: Transform::from_xyz(2.0, 11.0, 0.0),
+            walk_sound: Some(handle.audio[&AudioKey::GnollWalk].clone()),
             is_corpse: false,
         }
         .spawn(commands, handle);

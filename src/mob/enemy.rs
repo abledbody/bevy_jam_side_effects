@@ -141,6 +141,7 @@ impl EnemyTemplate {
         let body = BodyTemplate {
             texture: ImageKey::GnollRed,
             offset: Transform::from_xyz(2.0, 11.0, 0.0),
+            walk_sound: None,
             is_corpse: self.is_corpse,
         }
         .spawn(commands, handle);

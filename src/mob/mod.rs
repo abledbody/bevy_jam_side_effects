@@ -3,7 +3,7 @@ use bevy_rapier2d::prelude::*;
 
 use crate::{
     animation::{AttackAnimation, DeathAnimation, Facing, FlinchAnimation, Offset, WalkAnimation},
-    asset::{AudioKey, Handles, ImageKey},
+    asset::{Handles, ImageKey},
     combat::{Faction, COLLISION_GROUP},
     math::MoveTowards,
     util::ZRampByY,
@@ -185,6 +185,7 @@ pub struct Body;
 pub struct BodyTemplate {
     texture: ImageKey,
     offset: Transform,
+    walk_sound: Option<Handle<AudioSource>>,
     is_corpse: bool,
 }
 
@@ -197,7 +198,7 @@ impl BodyTemplate {
             },
             Offset(self.offset),
             WalkAnimation {
-                sound: Some(handle.audio[&AudioKey::GnollWalk].clone()),
+                sound: self.walk_sound,
                 ..default()
             },
             AttackAnimation::default(),
