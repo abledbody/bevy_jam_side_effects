@@ -4,18 +4,27 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-bevy = "0.10"
+bevy = { version = "0.10", default-features = false }
 bevy_ecs_ldtk = { version = "0.6", features = ["atlas"] }
 bevy_editor_pls = { version = "0.4", optional = true }
+bevy_kira_audio = "0.15"
 bevy_rapier2d = "0.21"
 leafwing-input-manager = "0.9"
 rand = { version = "0.8", features = [ "small_rng" ] }
 wasm-bindgen = { version = "0.2", optional = true }
-wee_alloc = { version = "0.4", optional = true }
 
 [features]
 default = [
-	"bevy/wav",
+    "bevy/bevy_core_pipeline",
+    "bevy/bevy_asset",
+    "bevy/bevy_winit",
+    "bevy/bevy_render",
+    "bevy/bevy_sprite",
+    "bevy/bevy_text",
+    "bevy/bevy_ui",
+    "bevy/subpixel_glyph_atlas",
+    "bevy/png",
+    "bevy_kira_audio/wav",
 ]
 debug_mode = [
     "bevy/dynamic_linking",
@@ -23,13 +32,12 @@ debug_mode = [
     "bevy_rapier2d/debug-render-2d",
 ]
 editor = [
-    "debug_mode",
     "dep:bevy_editor_pls",
+    "debug_mode",
 ]
 wasm = [
-    "bevy_rapier2d/wasm-bindgen",
     "dep:wasm-bindgen",
-    "dep:wee_alloc",
+    "bevy_rapier2d/wasm-bindgen",
 ]
 
 [profile.dev]

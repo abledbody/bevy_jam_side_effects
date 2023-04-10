@@ -3,6 +3,7 @@ use bevy::{
     transform::systems::{propagate_transforms, sync_simple_transforms},
 };
 use bevy_ecs_ldtk::prelude::*;
+use bevy_kira_audio::prelude::*;
 use bevy_rapier2d::prelude::*;
 use leafwing_input_manager::{common_conditions::action_just_pressed, prelude::*};
 
@@ -104,6 +105,7 @@ impl Plugin for GamePlugin {
                 })
                 .set(ImagePlugin::default_nearest()),
         )
+        .add_plugin(AudioPlugin)
         .add_plugin(RapierPhysicsPlugin::<NoUserData>::default())
         .add_plugin(InputManagerPlugin::<GameAction>::default())
         .add_plugin(InputManagerPlugin::<PlayerAction>::default())

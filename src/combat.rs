@@ -1,6 +1,7 @@
 use std::f32::consts::PI;
 
 use bevy::prelude::*;
+use bevy_kira_audio::prelude::*;
 use bevy_rapier2d::prelude::*;
 
 use crate::{
@@ -136,7 +137,7 @@ impl HitEffects {
             let Ok(mut hit) = hit_effects.get_mut(hitbox) else { return };
 
             if let Some(sound) = &hit.success_sound {
-                audio.play_with_settings(sound.clone(), PlaybackSettings::ONCE.with_volume(0.4));
+                audio.play(sound.clone()).with_volume(0.4);
             }
             hit.success = true;
 
@@ -173,8 +174,7 @@ impl HitEffects {
         for (entity, effects) in &hit_effects_query {
             if !effects.success {
                 if let Some(sound) = &effects.failure_sound {
-                    audio
-                        .play_with_settings(sound.clone(), PlaybackSettings::ONCE.with_volume(0.4));
+                    audio.play(sound.clone()).with_volume(0.4);
                 }
             }
 
@@ -231,7 +231,7 @@ impl HurtEffects {
 
             // Play sound
             if let Some(sound) = &hurt.sound {
-                audio.play_with_settings(sound.clone(), PlaybackSettings::ONCE.with_volume(0.4));
+                audio.play(sound.clone()).with_volume(0.4);
             }
         }
     }

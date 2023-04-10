@@ -1,5 +1,6 @@
 use bevy::{prelude::*, utils::HashMap};
 use bevy_ecs_ldtk::prelude::*;
+use bevy_kira_audio::prelude::*;
 use bevy_rapier2d::prelude::*;
 
 use crate::{
@@ -178,10 +179,9 @@ impl Plate {
                 plate.pressed = true;
                 *plate_image = handle.image[&ImageKey::PlatePressed].clone();
 
-                audio.play_with_settings(
-                    handle.audio[&AudioKey::PlateTriggerGate].clone(),
-                    PlaybackSettings::ONCE.with_volume(0.8),
-                );
+                audio
+                    .play(handle.audio[&AudioKey::PlateTriggerGate].clone())
+                    .with_volume(0.8);
 
                 for &entity in &plate.gates {
                     let Ok((mut gate, mut gate_image, mut gate_groups)) = gate_query.get_mut(entity) else {
@@ -284,7 +284,7 @@ pub fn spawn_level_entities(
 ) {
     let mut gate_map = HashMap::new();
 
-    for (entity, parent, &transform, instance) in &entity_query {
+    for (_, parent, &transform, instance) in &entity_query {
         let entity = match instance.identifier.as_str() {
             "player" => PlayerTemplate {
                 transform,

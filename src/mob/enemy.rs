@@ -2,6 +2,7 @@ use bevy::{
     math::{vec2, Vec3Swizzles},
     prelude::*,
 };
+use bevy_kira_audio::prelude::*;
 use bevy_rapier2d::prelude::*;
 use rand::{seq::SliceRandom, thread_rng, Rng};
 
@@ -317,16 +318,14 @@ impl EnemyAi {
         };
 
         // Detect target
-        let detect_sound_settings = PlaybackSettings::default().with_volume(0.6);
         let mut handle_detection = |ai: &mut EnemyAi, enemy: Entity, target: Entity| {
             if ai.target.is_some() {
                 return;
             }
 
-            audio.play_with_settings(
-                handle.audio[&AudioKey::GnollDetect].clone(),
-                detect_sound_settings,
-            );
+            audio
+                .play(handle.audio[&AudioKey::GnollDetect].clone())
+                .with_volume(0.6);
             ai.target = Some(target);
             let popup = DetectPopupTemplate {
                 offset: Transform::from_xyz(0.0, 38.0, 0.0),

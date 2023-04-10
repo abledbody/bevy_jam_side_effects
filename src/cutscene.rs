@@ -1,4 +1,5 @@
 use bevy::prelude::*;
+use bevy_kira_audio::prelude::*;
 
 use crate::{
     asset::{AudioKey, FontKey, Handles},
@@ -13,7 +14,7 @@ use crate::{
 
 const NUM_LINES: usize = 3;
 const TEXT_LINES: [&str; NUM_LINES] = ["You are Sai.", "You have chosen to Defect.", "GOOD LUCK!"];
-const LINE_VOLUMES: [f32; NUM_LINES] = [1.0, 1.0, 0.3];
+const LINE_VOLUMES: [f64; NUM_LINES] = [1.0, 1.0, 0.3];
 
 #[derive(Component, Reflect)]
 pub struct Cutscene {
@@ -66,10 +67,9 @@ impl Cutscene {
                 text.sections[cutscene.section].value, TEXT_LINES[cutscene.phase]
             );
 
-            audio.play_with_settings(
-                cutscene.sounds[cutscene.phase].clone(),
-                PlaybackSettings::default().with_volume(LINE_VOLUMES[cutscene.phase]),
-            );
+            audio
+                .play(cutscene.sounds[cutscene.phase].clone())
+                .with_volume(LINE_VOLUMES[cutscene.phase]);
 
             cutscene.phase += 1;
         }

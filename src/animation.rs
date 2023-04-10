@@ -4,6 +4,7 @@ use bevy::{
     math::{vec2, Vec3Swizzles},
     prelude::*,
 };
+use bevy_kira_audio::prelude::*;
 
 use crate::{
     mob::{player::PlayerControl, MobInputs},
@@ -202,16 +203,12 @@ impl WalkAnimation {
             let Some(sound) = &anim.sound else { continue };
 
             let pos = transform.translation().xy();
-            let dist_to_player = (player_pos - pos).length();
+            let dist_to_player = (player_pos - pos).length() as f64;
             let max_volume = 0.3;
 
-            audio.play_with_settings(
-                sound.clone(),
-                PlaybackSettings {
-                    volume: max_volume / (0.2 * dist_to_player).max(1.0),
-                    ..default()
-                },
-            );
+            audio
+                .play(sound.clone())
+                .with_volume(max_volume / (0.2 * dist_to_player).max(1.0));
         }
     }
 

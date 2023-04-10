@@ -1,4 +1,5 @@
 use bevy::{math::Vec3Swizzles, prelude::*, window::PrimaryWindow};
+use bevy_kira_audio::prelude::*;
 use bevy_rapier2d::prelude::*;
 use leafwing_input_manager::prelude::*;
 
@@ -66,10 +67,11 @@ impl Playthrough {
             // Start main track
             if !playthrough.playing_main_track {
                 playthrough.playing_main_track = true;
-                audio.play_with_settings(
-                    handle.audio[&AudioKey::MainTrack].clone(),
-                    PlaybackSettings::LOOP.with_volume(0.4),
-                );
+                // TODO: Save handle
+                audio
+                    .play(handle.audio[&AudioKey::MainTrack].clone())
+                    .with_volume(0.4)
+                    .looped();
             }
 
             return;

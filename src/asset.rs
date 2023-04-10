@@ -1,5 +1,6 @@
 use bevy::{prelude::*, utils::HashMap};
 use bevy_ecs_ldtk::LdtkAsset;
+use bevy_kira_audio::prelude::*;
 
 #[derive(Reflect, FromReflect, Eq, PartialEq, Hash)]
 pub enum FontKey {
