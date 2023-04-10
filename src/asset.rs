@@ -53,10 +53,6 @@ const IMAGE_MAP: [(ImageKey, &str); 11] = [
 #[derive(Reflect, FromReflect, Copy, Clone, Eq, PartialEq, Hash)]
 pub enum AudioKey {
     GnollWalk,
-    GnollAttack1,
-    GnollAttack2,
-    GnollAttack3,
-    GnollAttack4,
     GnollAttackHit,
     GnollAttackMiss,
     GnollHurt,
@@ -69,25 +65,18 @@ pub enum AudioKey {
     VictoryTrack,
 }
 
-const AUDIO_MAP: [(AudioKey, &str); 15] = [
+const AUDIO_MAP: [(AudioKey, &str); 11] = [
     (AudioKey::GnollWalk, "sound/sfx/walk.wav"),
-    (AudioKey::GnollAttack1, "sound/sfx/player_attack_1.wav"),
-    (AudioKey::GnollAttack2, "sound/sfx/player_attack_2.wav"),
-    (AudioKey::GnollAttack3, "sound/sfx/player_attack_3.wav"),
-    (AudioKey::GnollAttack4, "sound/sfx/player_attack_4.wav"),
-    (AudioKey::GnollAttackHit, "sound/sfx/player_hit.wav"),
-    (
-        AudioKey::GnollAttackMiss,
-        "sound/sfx/player_attack_miss.wav",
-    ),
+    (AudioKey::GnollAttackHit, "sound/sfx/gnoll_attack_hit.wav"),
+    (AudioKey::GnollAttackMiss, "sound/sfx/gnoll_attack_miss.wav"),
     (AudioKey::GnollHurt, "sound/sfx/gnoll_hurt.wav"),
     (AudioKey::GnollDetect, "sound/sfx/alert.wav"),
     (AudioKey::PlateTriggerGate, "sound/sfx/button_gate.wav"),
     (AudioKey::Pop1, "sound/sfx/pop_1.wav"),
     (AudioKey::Pop2, "sound/sfx/pop_2.wav"),
-    (AudioKey::Jackpot, "sound/sfx/jackpot.mp3"),
-    (AudioKey::MainTrack, "sound/music/game.mp3"),
-    (AudioKey::VictoryTrack, "sound/music/victory.mp3"),
+    (AudioKey::Jackpot, "sound/sfx/jackpot.wav"),
+    (AudioKey::MainTrack, "sound/music/game.wav"),
+    (AudioKey::VictoryTrack, "sound/music/victory.wav"),
 ];
 
 #[derive(Reflect, FromReflect, Copy, Clone, Eq, PartialEq, Hash)]
