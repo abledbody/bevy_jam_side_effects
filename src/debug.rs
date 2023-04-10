@@ -30,6 +30,7 @@ use crate::{
         Mob,
         MobInputs,
     },
+    music::Music,
     util::{DespawnSet, ZRampByY},
 };
 
@@ -84,6 +85,7 @@ impl Plugin for DebugPlugin {
             .register_type::<Exit>()
             .register_type::<Plate>()
             .register_type::<Gate>()
+            .register_type::<Music>()
             .register_type::<GameCamera>()
             .register_type::<Cutscene>()
             .register_type::<Message>()

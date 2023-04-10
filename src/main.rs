@@ -13,6 +13,7 @@ mod hud;
 mod map;
 mod math;
 mod mob;
+mod music;
 mod util;
 mod vfx;
 

@@ -2,7 +2,7 @@ use bevy::{prelude::*, utils::HashMap};
 use bevy_ecs_ldtk::LdtkAsset;
 use bevy_kira_audio::prelude::*;
 
-#[derive(Reflect, FromReflect, Eq, PartialEq, Hash)]
+#[derive(Reflect, FromReflect, Copy, Clone, Eq, PartialEq, Hash)]
 pub enum FontKey {
     Regular,
     Bold,
@@ -15,7 +15,7 @@ const FONT_MAP: [(FontKey, &str); 3] = [
     (FontKey::Pixel, "font/Jaywalk.ttf"),
 ];
 
-#[derive(Reflect, FromReflect, Eq, PartialEq, Hash)]
+#[derive(Reflect, FromReflect, Copy, Clone, Eq, PartialEq, Hash)]
 pub enum ImageKey {
     GnollRed,
     GnollGreen,
@@ -50,7 +50,7 @@ const IMAGE_MAP: [(ImageKey, &str); 11] = [
     (ImageKey::AlarmMeterIconFlash, "image/ui/alarm_flash.png"),
 ];
 
-#[derive(Reflect, FromReflect, Eq, PartialEq, Hash)]
+#[derive(Reflect, FromReflect, Copy, Clone, Eq, PartialEq, Hash)]
 pub enum AudioKey {
     GnollWalk,
     GnollAttack1,
@@ -66,9 +66,10 @@ pub enum AudioKey {
     Pop2,
     Jackpot,
     MainTrack,
+    VictoryTrack,
 }
 
-const AUDIO_MAP: [(AudioKey, &str); 14] = [
+const AUDIO_MAP: [(AudioKey, &str); 15] = [
     (AudioKey::GnollWalk, "sound/sfx/walk.wav"),
     (AudioKey::GnollAttack1, "sound/sfx/player_attack_1.wav"),
     (AudioKey::GnollAttack2, "sound/sfx/player_attack_2.wav"),
@@ -86,9 +87,10 @@ const AUDIO_MAP: [(AudioKey, &str); 14] = [
     (AudioKey::Pop2, "sound/sfx/pop_2.wav"),
     (AudioKey::Jackpot, "sound/sfx/jackpot.wav"),
     (AudioKey::MainTrack, "sound/music/game.wav"),
+    (AudioKey::VictoryTrack, "sound/music/victory.wav"),
 ];
 
-#[derive(Reflect, FromReflect, Eq, PartialEq, Hash)]
+#[derive(Reflect, FromReflect, Copy, Clone, Eq, PartialEq, Hash)]
 pub enum MapKey {
     Game,
 }

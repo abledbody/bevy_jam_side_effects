@@ -29,6 +29,7 @@ use crate::{
         player::{PlayerAction, PlayerControl, Playthrough},
         Mob,
     },
+    music::Music,
     util::{DespawnSet, ZRampByY},
 };
 
@@ -81,6 +82,7 @@ impl Plugin for GamePlugin {
         )
         .init_resource::<Handles>()
         .init_resource::<DespawnSet>()
+        .init_resource::<Music>()
         .init_resource::<Playthrough>()
         .init_resource::<Victory>()
         .init_resource::<Alarm>();
@@ -216,6 +218,7 @@ impl Plugin for GamePlugin {
             HealthBar::update,
             AlarmMeter::update,
             Cutscene::update,
+            Music::update,
             Message::show_death_message,
             Message::show_victory_message,
         ));
@@ -265,10 +268,7 @@ fn restart_game(
 
     // Reset resources
     *level_selection = default();
-    *playthrough = Playthrough {
-        playing_main_track: playthrough.playing_main_track,
-        ..default()
-    };
+    *playthrough = default();
     *victory = default();
     *alarm = default();
 
