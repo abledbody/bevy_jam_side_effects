@@ -10,7 +10,7 @@ bevy_editor_pls = { version = "0.4", optional = true }
 bevy_kira_audio = "0.15"
 bevy_rapier2d = "0.21"
 leafwing-input-manager = "0.9"
-rand = { version = "0.8", features = [ "small_rng" ] }
+rand = { version = "0.8", features = ["small_rng"] }
 wasm-bindgen = { version = "0.2", optional = true }
 
 [features]
@@ -31,14 +31,8 @@ debug_mode = [
     "bevy/filesystem_watcher",
     "bevy_rapier2d/debug-render-2d",
 ]
-editor = [
-    "dep:bevy_editor_pls",
-    "debug_mode",
-]
-wasm = [
-    "dep:wasm-bindgen",
-    "bevy_rapier2d/wasm-bindgen",
-]
+editor = ["dep:bevy_editor_pls", "debug_mode"]
+wasm = ["dep:wasm-bindgen", "bevy_rapier2d/wasm-bindgen"]
 
 [profile.dev]
 opt-level = 1

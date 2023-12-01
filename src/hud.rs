@@ -44,8 +44,12 @@ impl FontSizeHack {
         camera_query: Query<(&OrthographicProjection, &Camera), With<GameCamera>>,
         mut text_query: Query<(&mut Text, &mut Transform, &FontSizeHack)>,
     ) {
-        let Ok((camera_proj, camera)) = camera_query.get_single() else { return };
-        let Some(viewport_size) = camera.logical_viewport_size() else { return };
+        let Ok((camera_proj, camera)) = camera_query.get_single() else {
+            return;
+        };
+        let Some(viewport_size) = camera.logical_viewport_size() else {
+            return;
+        };
 
         let units_per_pixel = camera_proj.area.width() / viewport_size.x;
         let scale = Vec2::splat(units_per_pixel).extend(1.0);
@@ -130,9 +134,11 @@ impl HealthBar {
         health_query: Query<&Health>,
     ) {
         for (mut sprite, parent) in &mut health_bar_query {
-            let Ok(parent) = parent_query.get(parent.get()) else { continue };
+            let Ok(parent) = parent_query.get(parent.get()) else {
+                continue;
+            };
             let Ok(health) = health_query.get(parent.get()) else {
-                continue
+                continue;
             };
 
             // Hack but it works
@@ -219,10 +225,10 @@ impl AlarmMeter {
             meter.old_alarm = alarm.0;
 
             let Ok(container) = backdrop_query.get(backdrop.get()) else {
-                continue
+                continue;
             };
             let Ok((mut container, children)) = container_query.get_mut(container.get()) else {
-                continue
+                continue;
             };
 
             // Apply shake
@@ -237,7 +243,9 @@ impl AlarmMeter {
             // Apply alarm flashing
             let t = time.elapsed_seconds();
             for &child in children {
-                let Ok(mut image) = alarm_icon_query.get_mut(child) else { continue };
+                let Ok(mut image) = alarm_icon_query.get_mut(child) else {
+                    continue;
+                };
                 let shake_flash = meter.shake > 0.05;
                 let max_flash = alarm.0 >= 1.0 && t.fract() < 0.25;
                 let flash = shake_flash || max_flash;

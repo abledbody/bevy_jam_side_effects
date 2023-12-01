@@ -262,7 +262,9 @@ impl DifficultyCurve {
             enemy.attack_cooldown = curve.attack_cooldown.at(alarm.0);
 
             for &child in children {
-                let Ok(mut transform) = detector_query.get_mut(child) else { continue };
+                let Ok(mut transform) = detector_query.get_mut(child) else {
+                    continue;
+                };
                 transform.scale = Vec2::splat(detect_radius).extend(1.0);
             }
         }
@@ -312,9 +314,10 @@ impl EnemyAi {
 
                 enemy.target = None;
                 inputs.attack = None;
-                inputs.movement = vec2(rng.gen_range(-1.0..1.0), rng.gen_range(-1.0..1.0)).normalize_or_zero();
+                inputs.movement =
+                    vec2(rng.gen_range(-1.0..1.0), rng.gen_range(-1.0..1.0)).normalize_or_zero();
             }
-            return
+            return;
         };
 
         // Detect target
@@ -335,7 +338,9 @@ impl EnemyAi {
         };
 
         for &DetectEvent { sensor, target } in detect_events.iter() {
-            let Ok(parent) = parent_query.get(sensor) else { continue };
+            let Ok(parent) = parent_query.get(sensor) else {
+                continue;
+            };
             if let Ok((mut enemy, ..)) = enemy_query.get_mut(parent.get()) {
                 handle_detection(&mut enemy, parent.get(), target);
             }
@@ -350,7 +355,9 @@ impl EnemyAi {
         let dt = time.delta_seconds();
         for (mut enemy, mut inputs, mob_gt) in &mut enemy_query {
             let Some(target) = enemy.target else { continue };
-            let Ok(target_gt) = transform_query.get(target) else { continue };
+            let Ok(target_gt) = transform_query.get(target) else {
+                continue;
+            };
 
             inputs.attack = None;
             inputs.movement = Vec2::ZERO;
@@ -395,7 +402,7 @@ impl DetectEvent {
     ) {
         for &event in collision_events.iter() {
             let CollisionEvent::Started(entity1, entity2, _) = event else {
-                continue
+                continue;
             };
 
             let mut handle_collision = |sensor: Entity, target: Entity| {

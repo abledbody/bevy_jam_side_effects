@@ -44,10 +44,14 @@ impl Playthrough {
         if playthrough.defected {
             return;
         }
-        let Ok(children) = player_query.get_single() else { return };
+        let Ok(children) = player_query.get_single() else {
+            return;
+        };
 
         for &event in collision_events.iter() {
-            let CollisionEvent::Started ( entity1, entity2, _) = event else { continue };
+            let CollisionEvent::Started(entity1, entity2, _) = event else {
+                continue;
+            };
 
             if !plate_query.contains(entity1) && !plate_query.contains(entity2) {
                 continue;
@@ -57,7 +61,9 @@ impl Playthrough {
             playthrough.start_time = time.elapsed_seconds();
             alarm.increase(0.065);
             for &child in children {
-                let Ok(mut body) = body_query.get_mut(child) else { continue };
+                let Ok(mut body) = body_query.get_mut(child) else {
+                    continue;
+                };
                 *body = handle.image[&ImageKey::GnollBlue].clone();
             }
 
@@ -82,10 +88,14 @@ impl PlayerControl {
         primary_window_query: Query<&Window, With<PrimaryWindow>>,
         camera: Query<(&Camera, &GlobalTransform), With<GameCamera>>,
     ) {
-        let Ok(window) = primary_window_query.get_single() else { return };
-        let Ok((camera, cam_gt)) = camera.get_single() else { return };
+        let Ok(window) = primary_window_query.get_single() else {
+            return;
+        };
+        let Ok((camera, cam_gt)) = camera.get_single() else {
+            return;
+        };
         let Ok((action, mut inputs, player_gt, player)) = player_query.get_single_mut() else {
-            return
+            return;
         };
         if player.deny_input {
             return;

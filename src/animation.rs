@@ -41,7 +41,7 @@ impl VirtualParent {
     ) {
         for (virtual_parent, mut transform) in &mut virtual_parent_query {
             let Ok(&parent_transform) = transform_query.get(virtual_parent.0) else {
-                continue
+                continue;
             };
 
             *transform = parent_transform;
@@ -84,7 +84,7 @@ impl Facing {
     ) {
         for (child, parent) in &parent_query {
             let Ok(facing) = facing_query.get(parent.get()) else {
-                continue
+                continue;
             };
 
             if let Ok(mut sprite) = sprite_query.get_mut(child) {
@@ -101,19 +101,19 @@ impl Facing {
 
         for (child, virtual_parent) in &virtual_parent_query {
             let Ok(facing) = facing_query.get(virtual_parent.0) else {
-                continue
+                continue;
             };
             if facing.right() {
                 continue;
             }
             let parent_x = {
                 let Ok(parent_transform) = transform_query.get(virtual_parent.0) else {
-                    continue
+                    continue;
                 };
                 parent_transform.translation.x
             };
             let Ok(mut child_transform) = transform_query.get_mut(child) else {
-                continue
+                continue;
             };
 
             // Reflect child's X about parent's X
@@ -177,7 +177,9 @@ impl WalkAnimation {
                 continue;
             }
 
-            let Ok(inputs) = inputs_query.get(parent.get()) else { continue };
+            let Ok(inputs) = inputs_query.get(parent.get()) else {
+                continue;
+            };
             if inputs.movement.length() == 0.0 {
                 anim.t = 1.0;
                 continue;
@@ -193,7 +195,9 @@ impl WalkAnimation {
         animation_query: Query<(&WalkAnimation, &GlobalTransform), Without<PlayerControl>>,
         audio: Res<Audio>,
     ) {
-        let Ok(player) = player_query.get_single() else { return };
+        let Ok(player) = player_query.get_single() else {
+            return;
+        };
         let player_pos = player.translation().xy();
 
         for (anim, transform) in &animation_query {
@@ -243,8 +247,12 @@ impl AttackAnimation {
         inputs_query: Query<&MobInputs>,
     ) {
         for (mut anim, parent) in &mut animation_query {
-            let Ok(inputs) = inputs_query.get(parent.get()) else { continue };
-            let Some(attack) = inputs.attack else { continue };
+            let Ok(inputs) = inputs_query.get(parent.get()) else {
+                continue;
+            };
+            let Some(attack) = inputs.attack else {
+                continue;
+            };
 
             anim.t = 0.0;
             anim.direction = vec2(attack.x.abs(), attack.y);

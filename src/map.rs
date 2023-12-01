@@ -66,11 +66,17 @@ impl Exit {
         mut playthrough: ResMut<Playthrough>,
         exit_query: Query<(), With<Exit>>,
     ) {
-        let LevelSelection::Index(idx) = *level_selection else { return };
-        let Ok(player_health) = player_query.get_single() else { return };
+        let LevelSelection::Index(idx) = *level_selection else {
+            return;
+        };
+        let Ok(player_health) = player_query.get_single() else {
+            return;
+        };
 
         for &event in collision_events.iter() {
-            let CollisionEvent::Started ( entity1, entity2, _) = event else { continue };
+            let CollisionEvent::Started(entity1, entity2, _) = event else {
+                continue;
+            };
             if exit_query.contains(entity1) || exit_query.contains(entity2) {
                 *level_selection = LevelSelection::Index(idx + 1);
                 playthrough.health = Some(player_health.current);
@@ -118,7 +124,9 @@ impl VictorySquare {
         mut victory: ResMut<Victory>,
     ) {
         for &event in collision_events.iter() {
-            let CollisionEvent::Started ( entity1, entity2, _) = event else { continue };
+            let CollisionEvent::Started(entity1, entity2, _) = event else {
+                continue;
+            };
             if victory_query.contains(entity1) || victory_query.contains(entity2) {
                 victory.0 = true;
                 break;
@@ -169,10 +177,14 @@ impl Plate {
         audio: Res<Audio>,
     ) {
         for &event in collision_events.iter() {
-            let CollisionEvent::Started ( entity1, entity2, _) = event else { continue };
+            let CollisionEvent::Started(entity1, entity2, _) = event else {
+                continue;
+            };
 
             let mut handle_collision = |entity: Entity| {
-                let Ok((mut plate, mut plate_image)) = plate_query.get_mut(entity) else { return };
+                let Ok((mut plate, mut plate_image)) = plate_query.get_mut(entity) else {
+                    return;
+                };
                 if plate.pressed {
                     return;
                 }
@@ -184,8 +196,10 @@ impl Plate {
                     .with_volume(0.8);
 
                 for &entity in &plate.gates {
-                    let Ok((mut gate, mut gate_image, mut gate_groups)) = gate_query.get_mut(entity) else {
-                        continue
+                    let Ok((mut gate, mut gate_image, mut gate_groups)) =
+                        gate_query.get_mut(entity)
+                    else {
+                        continue;
                     };
 
                     gate.open = !gate.open;
@@ -349,7 +363,9 @@ pub fn spawn_level_entities(
                     if field.identifier != "gates" {
                         continue;
                     }
-                    let FieldValue::EntityRefs(entity_refs) = &field.value else { continue };
+                    let FieldValue::EntityRefs(entity_refs) = &field.value else {
+                        continue;
+                    };
 
                     gates.extend(
                         entity_refs

@@ -1,10 +1,14 @@
-#!/bin/sh
+#!/bin/bash
 
 set -u
 shopt -s globstar
 
 NAME='sai_defects'
-BUILD_DIR='target/build'
+BUILD_DIR='build'
+
+function usage() {
+  echo "Usage: $0 [web|windows|linux|mac]..."
+}
 
 # Web
 function web() {
@@ -13,28 +17,18 @@ function web() {
   OUT_DIR="${BUILD_DIR}/${PLATFORM}"
   OUT_ZIP="${BUILD_DIR}/${NAME}_${PLATFORM}.zip"
 
+  # Clear output location
   mkdir -p "${OUT_DIR}"
-  rm -rf "${OUT_DIR}/*" "${OUT_ZIP}"
-  cargo build --profile wasm-release --features wasm --target "${TARGET}"
-  wasm-bindgen --no-typescript --out-name "${NAME}" --out-dir "${OUT_DIR}" --target web target/"${TARGET}"/wasm-release/"${NAME}".wasm
+  rm -rf "${OUT_DIR:?}/"* "${OUT_ZIP}"
+
+  # Build
+  cargo build --profile=wasm-release --features=web --target="${TARGET}"
+  wasm-bindgen --no-typescript --out-name run --out-dir "${OUT_DIR}" --target web "target/${TARGET}/wasm-release/run.wasm"
+  wasm-opt -O -ol 100 -s 100 -o "${OUT_DIR}/run_bg.wasm" "${OUT_DIR}/run_bg.wasm"
+
+  # Prepare zip
   cp -r assets web/* "${OUT_DIR}"
-  rm "${OUT_DIR}"/**/*.aseprite
-  wasm-opt -O -ol 100 -s 100 -o "${OUT_DIR}/${NAME}"_bg.wasm "${OUT_DIR}/${NAME}"_bg.wasm
-  zip -r "${OUT_ZIP}" "${OUT_DIR}"
-}
-
-# Linux
-function linux() {
-  PLATFORM='linux'
-  TARGET='x86_64-unknown-linux-gnu'
-  OUT_DIR="${BUILD_DIR}/${PLATFORM}"
-  OUT_ZIP="${BUILD_DIR}/${NAME}_${PLATFORM}.zip"
-
-  mkdir -p "${OUT_DIR}"
-  rm -rf "${OUT_DIR}"/* "${OUT_ZIP}"
-  cargo build --release --features bevy/x11 --target "${TARGET}"
-  cp -r assets target/"${TARGET}"/release/"${NAME}" "${OUT_DIR}"
-  rm "${OUT_DIR}"/**/*.aseprite
+  rm "${OUT_DIR:?}"/**/*.aseprite
   zip -r "${OUT_ZIP}" "${OUT_DIR}"
 }
 
@@ -45,14 +39,40 @@ function windows() {
   OUT_DIR="${BUILD_DIR}/${PLATFORM}"
   OUT_ZIP="${BUILD_DIR}/${NAME}_${PLATFORM}.zip"
 
+  # Clear output location
   mkdir -p "${OUT_DIR}"
-  rm -rf "${OUT_DIR}"/* "${OUT_ZIP}"
-  cargo build --release --target "${TARGET}"
-  cp -r assets target/"${TARGET}"/release/"${NAME}".exe "${OUT_DIR}"
-  rm "${OUT_DIR}"/**/*.aseprite
+  rm -rf "${OUT_DIR:?}"/* "${OUT_ZIP}"
+
+  # Build
+  cargo build --release --features=native --target="${TARGET}"
+
+  # Prepare zip
+  cp -r assets "target/${TARGET}/release/run.exe" "${OUT_DIR}"
+  rm "${OUT_DIR:?}"/**/*.aseprite
   zip -r "${OUT_ZIP}" "${OUT_DIR}"
 }
 
+# Linux
+function linux() {
+  PLATFORM='linux'
+  TARGET='x86_64-unknown-linux-gnu'
+  OUT_DIR="${BUILD_DIR}/${PLATFORM}"
+  OUT_ZIP="${BUILD_DIR}/${NAME}_${PLATFORM}.zip"
+
+  # Clear output location
+  mkdir -p "${OUT_DIR}"
+  rm -rf "${OUT_DIR:?}"/* "${OUT_ZIP}"
+
+  # Build
+  cargo build --release --features=native --target="${TARGET}"
+
+  # Prepare zip
+  cp -r assets "target/${TARGET}/release/run" "${OUT_DIR}"
+  rm "${OUT_DIR:?}"/**/*.aseprite
+  zip -r "${OUT_ZIP}" "${OUT_DIR}"
+}
+
+# FIXME: Requires a cross-compiler?
 # Mac
 function mac() {
   PLATFORM='mac'
@@ -60,14 +80,35 @@ function mac() {
   OUT_DIR="${BUILD_DIR}/${PLATFORM}"
   OUT_ZIP="${BUILD_DIR}/${NAME}_${PLATFORM}.zip"
 
+  # Clear output location
   mkdir -p "${OUT_DIR}"
-  rm -rf "${OUT_DIR}"/* "${OUT_ZIP}"
-  cargo build --release --target "${TARGET}"
-  cp -r assets target/"${TARGET}"/release/"${NAME}".exe "${OUT_DIR}"
-  rm "${OUT_DIR}"/**/*.aseprite
+  rm -rf "${OUT_DIR:?}"/* "${OUT_ZIP}"
+
+  # Build
+  cargo build --release --features=native --target="${TARGET}"
+
+  # Prepare zip
+  cp -r assets "target/${TARGET}/release/run.exe" "${OUT_DIR}"
+  rm "${OUT_DIR:?}"/**/*.aseprite
   zip -r "${OUT_ZIP}" "${OUT_DIR}"
 }
 
-mac
+function main() {
+  [ "$#" -eq 0 ] && usage
+
+  while [ "$#" -ge 1 ]; do
+    case "$1" in
+    web) web ;;
+    windows) windows ;;
+    linux) linux ;;
+    mac) mac ;;
+    *) usage ;;
+    esac
+
+    shift 1
+  done
+}
+
+main "$@"
 
 exit 0

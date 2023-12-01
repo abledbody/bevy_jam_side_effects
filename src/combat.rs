@@ -94,7 +94,7 @@ impl HitEvent {
     ) {
         for &event in collision_events.iter() {
             let CollisionEvent::Started(entity1, entity2, _) = event else {
-                continue
+                continue;
             };
 
             let mut handle_collision = |hitbox: Entity, target: Entity| {
@@ -134,7 +134,9 @@ impl HitEffects {
         audio: Res<Audio>,
     ) {
         for &HitEvent { hitbox, hurtbox } in hit_events.iter() {
-            let Ok(mut hit) = hit_effects.get_mut(hitbox) else { return };
+            let Ok(mut hit) = hit_effects.get_mut(hitbox) else {
+                return;
+            };
 
             if let Some(sound) = &hit.success_sound {
                 audio.play(sound.clone()).with_volume(0.4);
@@ -189,7 +191,7 @@ impl HitEffects {
     ) {
         for (mob, transform, inputs) in &mob_query {
             let Some(direction) = inputs.attack else {
-                continue
+                continue;
             };
 
             // Make the hitbox offset slightly ovular
@@ -224,7 +226,9 @@ impl HurtEffects {
         audio: Res<Audio>,
     ) {
         for &HitEvent { hurtbox, .. } in hit_events.iter() {
-            let Ok(hurt) = hurt_effects_query.get(hurtbox) else { continue };
+            let Ok(hurt) = hurt_effects_query.get(hurtbox) else {
+                continue;
+            };
 
             // Increase alarm
             alarm.increase(hurt.increase_alarm);
@@ -278,7 +282,7 @@ impl DeathEffects {
             }
 
             let Ok(death) = death_effects_query.get(entity) else {
-                continue
+                continue;
             };
 
             // Increase alarm

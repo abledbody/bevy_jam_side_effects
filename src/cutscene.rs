@@ -30,7 +30,9 @@ impl Cutscene {
         mut player_query: Query<&mut PlayerControl>,
         time: Res<Time>,
     ) {
-        let Ok(mut player) = player_query.get_single_mut() else { return };
+        let Ok(mut player) = player_query.get_single_mut() else {
+            return;
+        };
 
         let dt = time.delta_seconds();
 
@@ -49,7 +51,9 @@ impl Cutscene {
         mut player_query: Query<&mut PlayerControl>,
         audio: Res<Audio>,
     ) {
-        let Ok(mut player) = player_query.get_single_mut() else { return };
+        let Ok(mut player) = player_query.get_single_mut() else {
+            return;
+        };
 
         for (entity, mut text, mut cutscene) in &mut cutscene_query {
             if cutscene.phase >= NUM_LINES {
@@ -198,7 +202,9 @@ impl Message {
         if !victory.0 || !message_query.is_empty() {
             return;
         }
-        let Ok(health) = health_query.get_single() else { return };
+        let Ok(health) = health_query.get_single() else {
+            return;
+        };
 
         let alarm_scale = 100_000.0;
         let alarm_t = 1.0 - alarm.0;

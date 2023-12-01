@@ -45,8 +45,12 @@ impl GameCamera {
         mut camera_query: Query<&mut Transform, With<GameCamera>>,
         target_query: Query<&GlobalTransform, Added<PlayerControl>>,
     ) {
-        let Ok(mut camera_transform) = camera_query.get_single_mut() else { return };
-        let Ok(target_transform) = target_query.get_single() else { return };
+        let Ok(mut camera_transform) = camera_query.get_single_mut() else {
+            return;
+        };
+        let Ok(target_transform) = target_query.get_single() else {
+            return;
+        };
 
         let target_pos = target_transform.translation().xy();
         camera_transform.translation.x = target_pos.x;
@@ -58,8 +62,12 @@ impl GameCamera {
         target_query: Query<&GlobalTransform, With<PlayerControl>>,
         time: Res<Time>,
     ) {
-        let Ok((camera, mut camera_transform)) = camera_query.get_single_mut() else { return };
-        let Ok(target_transform) = target_query.get_single() else { return };
+        let Ok((camera, mut camera_transform)) = camera_query.get_single_mut() else {
+            return;
+        };
+        let Ok(target_transform) = target_query.get_single() else {
+            return;
+        };
 
         let dt = time.delta_seconds();
 
