@@ -109,7 +109,7 @@ impl CutsceneTemplate {
                     TextSection::new("", text_style.clone()),
                     TextSection::new("", text_style),
                 ])
-                .with_alignment(TextAlignment::Center),
+                .with_justify(JustifyText::Center),
                 style: Style {
                     margin: UiRect {
                         left: Auto,
@@ -172,7 +172,7 @@ impl MessageTemplate {
                     TextSection::new(self.title + "\n\n\n\n\n", title_style),
                     TextSection::new(self.body, body_style),
                 ])
-                .with_alignment(TextAlignment::Center),
+                .with_justify(JustifyText::Center),
                 ..default()
             },
             Message,

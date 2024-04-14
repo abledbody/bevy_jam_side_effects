@@ -126,14 +126,14 @@ fn record_player_intent(
     }
 
     intent.movement = Vec2::ZERO;
-    if action.pressed(PlayerAction::Move) {
-        if let Some(axis_pair) = action.clamped_axis_pair(PlayerAction::Move) {
+    if action.pressed(&PlayerAction::Move) {
+        if let Some(axis_pair) = action.clamped_axis_pair(&PlayerAction::Move) {
             intent.movement = axis_pair.xy();
         }
     }
 
     let mut aim = None;
-    if let Some(axis_pair) = action.clamped_axis_pair(PlayerAction::Aim) {
+    if let Some(axis_pair) = action.clamped_axis_pair(&PlayerAction::Aim) {
         let axis_pair = axis_pair.xy();
         if axis_pair != Vec2::ZERO {
             aim = Some(axis_pair);
@@ -141,7 +141,7 @@ fn record_player_intent(
     }
 
     intent.attack = None;
-    if action.just_pressed(PlayerAction::Attack) {
+    if action.just_pressed(&PlayerAction::Attack) {
         intent.attack = aim
             .or_else(|| {
                 window
@@ -216,12 +216,12 @@ impl PlayerTemplate {
             },
             InputManagerBundle::<PlayerAction> {
                 input_map: InputMap::default()
-                    .insert(VirtualDPad::wasd(), PlayerAction::Move)
-                    .insert(VirtualDPad::arrow_keys(), PlayerAction::Move)
-                    .insert(DualAxis::left_stick(), PlayerAction::Move)
-                    .insert(DualAxis::right_stick(), PlayerAction::Aim)
-                    .insert(GamepadButtonType::RightTrigger, PlayerAction::Attack)
-                    .insert(MouseButton::Left, PlayerAction::Attack)
+                    .insert(PlayerAction::Move, VirtualDPad::wasd())
+                    .insert(PlayerAction::Move, VirtualDPad::arrow_keys())
+                    .insert(PlayerAction::Move, DualAxis::left_stick())
+                    .insert(PlayerAction::Aim, DualAxis::right_stick())
+                    .insert(PlayerAction::Attack, GamepadButtonType::RightTrigger)
+                    .insert(PlayerAction::Attack, MouseButton::Left)
                     .build(),
                 ..default()
             },

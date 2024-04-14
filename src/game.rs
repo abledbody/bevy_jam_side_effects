@@ -34,10 +34,10 @@ impl Plugin for GamePlugin {
         app.init_resource::<ActionState<GameAction>>()
             .insert_resource(
                 InputMap::default()
-                    .insert(KeyCode::R, GameAction::Restart)
-                    .insert(KeyCode::Space, GameAction::Confirm)
-                    .insert(KeyCode::Return, GameAction::Confirm)
-                    .insert(MouseButton::Left, GameAction::Confirm)
+                    .insert(GameAction::Restart, KeyCode::KeyR)
+                    .insert(GameAction::Confirm, KeyCode::Space)
+                    .insert(GameAction::Confirm, KeyCode::Enter)
+                    .insert(GameAction::Confirm, MouseButton::Left)
                     .build(),
             )
             .add_plugins(InputManagerPlugin::<GameAction>::default())

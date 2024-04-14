@@ -20,24 +20,24 @@ pub struct CombatPlugin;
 
 impl Plugin for CombatPlugin {
     fn build(&self, app: &mut App) {
+        app.add_systems(
+            Update,
+            (
+                spawn_attack_hitboxes.in_set(UpdateSet::ApplyIntents),
+                clean_up_hitboxes.in_set(UpdateSet::Update),
+            ),
+        );
+
         app.add_event::<HitEvent>()
             .add_systems(Update, detect_hit_events.in_set(UpdateSet::Start));
 
-        app.add_event::<DeathEvent>();
-
-        app.register_type::<HitEffects>().add_systems(
-            Update,
-            (
-                spawn_hitbox_from_attack.in_set(UpdateSet::ApplyIntents),
-                (apply_hit_effects, clean_up_hitboxes)
-                    .chain()
-                    .in_set(UpdateSet::HandleEvents),
-            )
-                .chain(),
-        );
+        app.register_type::<HitEffects>()
+            .add_systems(Update, apply_hit_effects.in_set(UpdateSet::HandleEvents));
 
         app.register_type::<HurtEffects>()
             .add_systems(Update, apply_hurt_effects.in_set(UpdateSet::HandleEvents));
+
+        app.add_event::<DeathEvent>();
 
         app.register_type::<DeathEffects>()
             .add_systems(Update, apply_death_effects.in_set(UpdateSet::HandleEvents));
@@ -115,7 +115,7 @@ impl HitboxTemplate {
     }
 }
 
-pub fn spawn_hitbox_from_attack(
+pub fn spawn_attack_hitboxes(
     mut commands: Commands,
     actor_query: Query<(&Actor, &GlobalTransform, &ActorIntent)>,
     handle: Res<Handles>,

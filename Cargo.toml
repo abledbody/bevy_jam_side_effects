@@ -4,18 +4,22 @@ version = "0.1.0"
 edition = "2021"
 default-run = "run"
 
+[patch.crates-io]
+bevy_ecs_ldtk = { git = "https://github.com/Trouv/bevy_ecs_ldtk.git", rev = "2ee602f" }
+bevy_ecs_tilemap = { git = "https://github.com/StarArawn/bevy_ecs_tilemap.git", branch = "main" }
+
 [dependencies]
-bevy = { version = "0.12", default-features = false }
-bevy_common_assets = { version = "0.9", features = ["ron"] }
+bevy = { version = "0.13", default-features = false }
+bevy_common_assets = { version = "0.10", features = ["ron"] }
 bevy_ecs_ldtk = { version = "0.9", features = ["atlas"] }
-bevy_editor_pls = { version = "0.6", optional = true }
-bevy_kira_audio = "0.18"
+bevy_editor_pls = { version = "0.8", optional = true }
+bevy_kira_audio = "0.19"
 bevy_mod_debugdump = { version = "0.10", optional = true }
-bevy_mod_picking = { version = "0.17", default-features = false, features = [
+bevy_mod_picking = { version = "0.18", default-features = false, features = [
     "backend_bevy_ui",
 ] }
-bevy_rapier2d = "0.23"
-leafwing-input-manager = "0.11"
+bevy_rapier2d = "0.25"
+leafwing-input-manager = "0.13"
 rand = { version = "0.8", features = ["small_rng"] }
 serde = "1"
 strum = { version = "0.26", features = ["derive"] }
