@@ -23,7 +23,7 @@ pub struct DebugPlugin {
     //pub log_sequence_state_transitions: bool,
 
     // 3rd-party debug tools
-    //pub debug_picking: bool,
+    pub debug_picking: bool,
     pub debug_physics: bool,
     pub editor: bool,
     //
@@ -42,8 +42,8 @@ impl Default for DebugPlugin {
             log_diagnostics: true,
             log_ambiguity_detection: true,
             //log_sequence_state_transitions: true,
-
-            //debug_picking: true,
+            //
+            debug_picking: true,
             debug_physics: true,
             editor: true,
             //
@@ -81,7 +81,6 @@ impl Plugin for DebugPlugin {
             }
         }
 
-        /*
         // Debug picking
         if self.debug_picking {
             use bevy_mod_picking::debug::DebugPickingMode::*;
@@ -106,7 +105,6 @@ impl Plugin for DebugPlugin {
                 ),
             );
         }
-        */
 
         // Debug render
         if self.debug_physics {

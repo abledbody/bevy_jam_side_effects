@@ -6,7 +6,7 @@ mod debug;
 mod level;
 mod music;
 mod physics;
-mod theme;
+pub mod theme;
 pub mod window;
 
 use bevy::prelude::*;

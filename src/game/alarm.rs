@@ -124,10 +124,9 @@ impl AlarmMeterTemplate {
                 Name::new("AlarmMeterBackdrop"),
                 NodeBundle {
                     style: Style {
-                        //margin: UiRect::all(Percent(1.0)),
-                        padding: UiRect::all(Percent(0.35)),
                         width: Percent(100.0),
                         height: Percent(70.0),
+                        padding: UiRect::all(Percent(0.35)),
                         ..default()
                     },
                     background_color: BackgroundColor(BackdropTemplate::COLOR),
@@ -142,7 +141,6 @@ impl AlarmMeterTemplate {
                 Name::new("AlarmMeterIcon"),
                 ImageBundle {
                     style: Style {
-                        margin: UiRect::left(Percent(1.0)),
                         width: Auto,
                         height: Percent(100.0),
                         ..default()
@@ -158,13 +156,13 @@ impl AlarmMeterTemplate {
                 Name::new("AlarmMeterContainer"),
                 NodeBundle {
                     style: Style {
-                        margin: UiRect::all(Percent(1.0)),
                         width: Percent(100.0),
                         height: Percent(12.0),
                         align_items: AlignItems::Center,
+                        margin: UiRect::all(Percent(1.0)),
+                        column_gap: Percent(1.0),
                         ..default()
                     },
-                    z_index: ZIndex::Global(100),
                     ..default()
                 },
             ))

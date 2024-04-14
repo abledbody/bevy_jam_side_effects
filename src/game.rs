@@ -18,6 +18,7 @@ use crate::game::cutscene::CutsceneTemplate;
 use crate::game::cutscene::Message;
 use crate::game::map::MapTemplate;
 use crate::game::map::Victory;
+use crate::util::ui::UiRoot;
 use crate::util::DespawnSet;
 
 pub mod actor;
@@ -58,13 +59,16 @@ impl Plugin for GamePlugin {
 }
 
 // TODO: This should be handled in the respective plugins on game state exit / enter
-fn spawn_game(mut commands: Commands, handle: Res<Handles>) {
+fn spawn_game(mut commands: Commands, ui_root: Res<UiRoot>, handle: Res<Handles>) {
     // Spawn map
     MapTemplate.spawn(&mut commands, &handle);
 
     // Spawn HUD
-    AlarmMeterTemplate.spawn(&mut commands, &handle);
-    CutsceneTemplate.spawn(&mut commands, &handle);
+    let alarm_meter = AlarmMeterTemplate.spawn(&mut commands, &handle);
+    commands.entity(alarm_meter).set_parent(ui_root.body);
+
+    let cutscene = CutsceneTemplate.spawn(&mut commands, &handle);
+    commands.entity(cutscene).set_parent(ui_root.body);
 }
 
 #[derive(Actionlike, Reflect, Clone, Hash, PartialEq, Eq)]
