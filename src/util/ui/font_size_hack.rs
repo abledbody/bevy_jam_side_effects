@@ -4,6 +4,15 @@ use bevy::utils::HashMap;
 
 use crate::common::camera::GameCamera;
 
+pub struct FontSizeHackPlugin;
+
+impl Plugin for FontSizeHackPlugin {
+    fn build(&self, app: &mut App) {
+        app.register_type::<FontSizeHack>()
+            .add_systems(Update, FontSizeHack::scale);
+    }
+}
+
 #[derive(Component, Reflect)]
 pub struct FontSizeHack(pub f32);
 

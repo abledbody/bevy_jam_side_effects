@@ -5,8 +5,58 @@ use bevy::math::vec2;
 use bevy::prelude::*;
 use bevy_kira_audio::prelude::*;
 
+use crate::common::PostTransformSet;
+use crate::common::UpdateSet;
 use crate::game::mob::player::PlayerControl;
 use crate::game::mob::MobInputs;
+
+pub struct AnimationPlugin;
+
+impl Plugin for AnimationPlugin {
+    fn build(&self, app: &mut App) {
+        app.register_type::<WalkAnimation>()
+            .add_systems(
+                Update,
+                (
+                    WalkAnimation::update.in_set(UpdateSet::Start),
+                    WalkAnimation::trigger.in_set(UpdateSet::ApplyIntents),
+                    WalkAnimation::play_step_sound,
+                ),
+            )
+            .add_systems(
+                PostUpdate,
+                WalkAnimation::apply.in_set(PostTransformSet::Blend),
+            );
+
+        app.register_type::<AttackAnimation>()
+            .add_systems(
+                Update,
+                (
+                    AttackAnimation::update.in_set(UpdateSet::Start),
+                    AttackAnimation::trigger.in_set(UpdateSet::ApplyIntents),
+                )
+                    .chain(),
+            )
+            .add_systems(
+                PostUpdate,
+                AttackAnimation::apply.in_set(PostTransformSet::Blend),
+            );
+
+        app.register_type::<FlinchAnimation>()
+            .add_systems(Update, FlinchAnimation::update.in_set(UpdateSet::Start))
+            .add_systems(
+                PostUpdate,
+                FlinchAnimation::apply.in_set(PostTransformSet::Blend),
+            );
+
+        app.register_type::<DeathAnimation>()
+            .add_systems(Update, DeathAnimation::update.in_set(UpdateSet::Start))
+            .add_systems(
+                PostUpdate,
+                DeathAnimation::apply.in_set(PostTransformSet::Blend),
+            );
+    }
+}
 
 #[derive(Component, Reflect)]
 pub struct WalkAnimation {

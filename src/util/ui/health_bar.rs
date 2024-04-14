@@ -1,8 +1,18 @@
 use bevy::math::vec2;
 use bevy::prelude::*;
 
+use crate::common::UpdateSet;
 use crate::game::mob::Health;
 use crate::util::ui::backdrop::BackdropTemplate;
+
+pub struct HealthBarPlugin;
+
+impl Plugin for HealthBarPlugin {
+    fn build(&self, app: &mut App) {
+        app.register_type::<HealthBar>()
+            .add_systems(Update, HealthBar::update.in_set(UpdateSet::UpdateUi));
+    }
+}
 
 #[derive(Component, Reflect)]
 pub struct HealthBar;

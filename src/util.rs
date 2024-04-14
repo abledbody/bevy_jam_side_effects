@@ -18,6 +18,11 @@ pub struct UtilPlugin;
 
 impl Plugin for UtilPlugin {
     fn build(&self, app: &mut App) {
-        app.add_plugins(despawn::DespawnPlugin);
+        app.add_plugins((
+            animation::AnimationPlugin,
+            despawn::DespawnPlugin,
+            ui::UiPlugin,
+            y_sort::YSortPlugin,
+        ));
     }
 }

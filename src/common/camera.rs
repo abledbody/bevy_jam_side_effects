@@ -1,7 +1,20 @@
 use bevy::prelude::*;
 use bevy::render::camera::ScalingMode;
 
+use crate::common::PostTransformSet;
 use crate::game::mob::player::PlayerControl;
+
+pub struct CameraPlugin;
+
+impl Plugin for CameraPlugin {
+    fn build(&self, app: &mut App) {
+        app.register_type::<GameCamera>().add_systems(
+            PostUpdate,
+            (GameCamera::cut_to_new_target, GameCamera::follow_target)
+                .in_set(PostTransformSet::Blend),
+        );
+    }
+}
 
 pub struct GameCameraTemplate;
 

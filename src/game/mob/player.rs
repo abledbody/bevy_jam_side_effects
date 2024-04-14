@@ -11,6 +11,7 @@ use crate::common::asset::AudioKey;
 use crate::common::asset::Handles;
 use crate::common::asset::ImageKey;
 use crate::common::camera::GameCamera;
+use crate::common::UpdateSet;
 use crate::game::combat::Faction;
 use crate::game::combat::HurtEffects;
 use crate::game::map::Plate;
@@ -20,6 +21,27 @@ use crate::game::mob::BodyTemplate;
 use crate::util::ui::health_bar::HealthBarTemplate;
 use crate::util::ui::nametag::NametagTemplate;
 use crate::util::vfx::DropShadowTemplate;
+
+pub struct PlayerPlugin;
+
+impl Plugin for PlayerPlugin {
+    fn build(&self, app: &mut App) {
+        app.register_type::<PlayerAction>()
+            .add_plugins(InputManagerPlugin::<PlayerAction>::default());
+
+        app.register_type::<Playthrough>()
+            .init_resource::<Playthrough>()
+            .add_systems(
+                Update,
+                Playthrough::detect_defection.in_set(UpdateSet::Start),
+            );
+
+        app.register_type::<PlayerControl>().add_systems(
+            Update,
+            PlayerControl::record_inputs.in_set(UpdateSet::RecordIntents),
+        );
+    }
+}
 
 const PLAYER_NAME: &str = "Sai";
 
@@ -80,7 +102,7 @@ impl Playthrough {
     }
 }
 
-#[derive(Component, Reflect, Default, Debug)]
+#[derive(Component, Reflect, Default)]
 pub struct PlayerControl {
     pub deny_input: bool,
 }
@@ -138,7 +160,6 @@ impl PlayerControl {
     }
 }
 
-#[derive(Component, Reflect)]
 pub struct PlayerTemplate {
     pub transform: Transform,
     pub texture: ImageKey,

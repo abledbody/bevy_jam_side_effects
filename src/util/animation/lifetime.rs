@@ -1,6 +1,16 @@
 use bevy::prelude::*;
 
+use crate::common::UpdateSet;
 use crate::util::DespawnSet;
+
+pub struct LifetimePlugin;
+
+impl Plugin for LifetimePlugin {
+    fn build(&self, app: &mut App) {
+        app.register_type::<Lifetime>()
+            .add_systems(Update, Lifetime::apply.in_set(UpdateSet::Start));
+    }
+}
 
 #[derive(Component, Reflect)]
 pub struct Lifetime(pub f32);

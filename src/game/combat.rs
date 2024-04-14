@@ -6,6 +6,7 @@ use bevy_rapier2d::prelude::*;
 
 use crate::common::asset::AudioKey;
 use crate::common::asset::Handles;
+use crate::common::UpdateSet;
 use crate::game::mob::animation::DeathAnimation;
 use crate::game::mob::animation::FlinchAnimation;
 use crate::game::mob::animation::WalkAnimation;
@@ -13,6 +14,35 @@ use crate::game::mob::enemy::Alarm;
 use crate::game::mob::Health;
 use crate::game::mob::Mob;
 use crate::game::mob::MobInputs;
+use crate::util::DespawnSet;
+
+pub struct CombatPlugin;
+
+impl Plugin for CombatPlugin {
+    fn build(&self, app: &mut App) {
+        app.add_event::<HitEvent>()
+            .add_systems(Update, HitEvent::detect.in_set(UpdateSet::Start));
+
+        app.add_event::<DeathEvent>();
+
+        app.register_type::<HitEffects>().add_systems(
+            Update,
+            (
+                spawn_hitbox_from_inputs.in_set(UpdateSet::ApplyIntents),
+                (HitEffects::apply, HitEffects::clean_up)
+                    .chain()
+                    .in_set(UpdateSet::HandleEvents),
+            )
+                .chain(),
+        );
+
+        app.register_type::<HurtEffects>()
+            .add_systems(Update, HurtEffects::apply.in_set(UpdateSet::HandleEvents));
+
+        app.register_type::<DeathEffects>()
+            .add_systems(Update, DeathEffects::apply.in_set(UpdateSet::HandleEvents));
+    }
+}
 
 pub const COLLISION_GROUP: Group = Group::GROUP_1;
 pub const HITBOX_GROUP: Group = Group::GROUP_2;
@@ -85,6 +115,33 @@ impl HitboxTemplate {
     }
 }
 
+pub fn spawn_hitbox_from_inputs(
+    mut commands: Commands,
+    mob_query: Query<(&Mob, &GlobalTransform, &MobInputs)>,
+    handle: Res<Handles>,
+) {
+    for (mob, gt, inputs) in &mob_query {
+        let Some(direction) = inputs.attack else {
+            continue;
+        };
+
+        // Make the hitbox offset slightly ovular
+        let ovular_dir = Quat::from_rotation_x(0.5 * PI * 0.3) * direction.extend(0.0);
+        let radius = 12.0;
+        let distance = radius;
+
+        HitboxTemplate {
+            position: gt.translation() + distance * ovular_dir,
+            direction,
+            radius,
+            damage: 8.0,
+            knockback: 6.0,
+            faction: mob.faction,
+        }
+        .spawn(&mut commands, &handle);
+    }
+}
+
 #[derive(Event)]
 pub struct HitEvent {
     pub hitbox: Entity,
@@ -131,16 +188,18 @@ impl HitEffects {
     pub fn apply(
         mut hit_events: EventReader<HitEvent>,
         mut death_events: EventWriter<DeathEvent>,
-        mut hit_effects: Query<&mut HitEffects>,
-        mut health_query: Query<&mut Health>,
-        mut velocity_query: Query<&mut Velocity>,
-        child_query: Query<&Children>,
-        mut flinch_query: Query<&mut FlinchAnimation>,
+        mut hitbox_query: Query<&mut HitEffects>,
+        mut hurtbox_query: Query<(
+            Option<&mut Health>,
+            Option<&mut Velocity>,
+            Option<&Children>,
+        )>,
+        mut body_query: Query<&mut FlinchAnimation>,
         audio: Res<Audio>,
     ) {
         for &HitEvent { hitbox, hurtbox } in hit_events.read() {
-            let Ok(mut hit) = hit_effects.get_mut(hitbox) else {
-                return;
+            let Ok(mut hit) = hitbox_query.get_mut(hitbox) else {
+                continue;
             };
 
             if let Some(sound) = &hit.success_sound {
@@ -148,8 +207,12 @@ impl HitEffects {
             }
             hit.success = true;
 
+            let Ok((health, velocity, children)) = hurtbox_query.get_mut(hurtbox) else {
+                continue;
+            };
+
             // Damage
-            if let Ok(mut health) = health_query.get_mut(hurtbox) {
+            if let Some(mut health) = health {
                 if 0.0 < health.current && health.current <= hit.damage {
                     death_events.send(DeathEvent(hurtbox));
                 }
@@ -157,62 +220,33 @@ impl HitEffects {
             }
 
             // Knockback
-            if let Ok(mut velocity) = velocity_query.get_mut(hurtbox) {
+            if let Some(mut velocity) = velocity {
                 let scale = 40.0;
                 velocity.linvel = hit.knockback * scale;
             }
 
             // Flinch
-            if let Ok(children) = child_query.get(hurtbox) {
-                for child in children.iter() {
-                    if let Ok(mut flinch) = flinch_query.get_mut(*child) {
-                        flinch.trigger(hit.knockback.normalize_or_zero());
-                    }
+            for &child in children.into_iter().flatten() {
+                if let Ok(mut flinch) = body_query.get_mut(child) {
+                    flinch.trigger(hit.knockback.normalize_or_zero());
                 }
             }
         }
     }
 
-    pub fn cleanup(
-        mut commands: Commands,
-        hit_effects_query: Query<(Entity, &HitEffects)>,
+    pub fn clean_up(
+        mut despawn: ResMut<DespawnSet>,
+        hitbox_query: Query<(Entity, &HitEffects)>,
         audio: Res<Audio>,
     ) {
-        for (entity, effects) in &hit_effects_query {
+        for (entity, effects) in &hitbox_query {
             if !effects.success {
                 if let Some(sound) = &effects.failure_sound {
                     audio.play(sound.clone()).with_volume(0.4);
                 }
             }
 
-            commands.entity(entity).despawn_recursive();
-        }
-    }
-
-    pub fn spawn_from_inputs(
-        mut commands: Commands,
-        mob_query: Query<(&Mob, &GlobalTransform, &MobInputs)>,
-        handle: Res<Handles>,
-    ) {
-        for (mob, transform, inputs) in &mob_query {
-            let Some(direction) = inputs.attack else {
-                continue;
-            };
-
-            // Make the hitbox offset slightly ovular
-            let ovular_dir = Quat::from_rotation_x(0.5 * PI * 0.3) * direction.extend(0.0);
-            let radius = 12.0;
-            let distance = radius;
-
-            HitboxTemplate {
-                position: transform.translation() + distance * ovular_dir,
-                direction,
-                radius,
-                damage: 8.0,
-                knockback: 6.0,
-                faction: mob.faction,
-            }
-            .spawn(&mut commands, &handle);
+            despawn.recursive(entity);
         }
     }
 }

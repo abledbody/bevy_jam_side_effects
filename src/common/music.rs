@@ -6,6 +6,16 @@ use crate::common::asset::Handles;
 use crate::game::map::Victory;
 use crate::game::mob::player::Playthrough;
 
+pub struct MusicPlugin;
+
+impl Plugin for MusicPlugin {
+    fn build(&self, app: &mut App) {
+        app.register_type::<Music>()
+            .init_resource::<Music>()
+            .add_systems(Update, Music::update);
+    }
+}
+
 #[derive(Resource, Reflect, Default)]
 #[reflect(Resource)]
 pub struct Music {

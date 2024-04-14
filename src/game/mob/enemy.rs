@@ -10,6 +10,7 @@ use super::MobInputs;
 use crate::common::asset::AudioKey;
 use crate::common::asset::Handles;
 use crate::common::asset::ImageKey;
+use crate::common::UpdateSet;
 use crate::game::combat::DeathEffects;
 use crate::game::combat::Faction;
 use crate::game::combat::HitEvent;
@@ -23,6 +24,23 @@ use crate::util::ui::health_bar::HealthBarTemplate;
 use crate::util::ui::nametag::NametagTemplate;
 use crate::util::vfx::DetectPopupTemplate;
 use crate::util::vfx::DropShadowTemplate;
+
+pub struct EnemyPlugin;
+
+impl Plugin for EnemyPlugin {
+    fn build(&self, app: &mut App) {
+        app.register_type::<Alarm>().init_resource::<Alarm>();
+
+        app.register_type::<DifficultyCurve>()
+            .add_systems(Update, DifficultyCurve::apply.in_set(UpdateSet::Start));
+
+        app.register_type::<EnemyAi>()
+            .add_systems(Update, EnemyAi::think.in_set(UpdateSet::RecordIntents));
+
+        app.add_event::<DetectEvent>()
+            .add_systems(Update, DetectEvent::detect.in_set(UpdateSet::Start));
+    }
+}
 
 const CASUAL_NAMES: [&str; 52] = [
     "Alex", "Amy", "Abby", "Ashley", "Becca", "Ben", "Cindy", "Chloe", "Chris", "Danny", "Diane",

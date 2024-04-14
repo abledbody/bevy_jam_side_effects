@@ -4,8 +4,18 @@ use rand::Rng;
 
 use crate::common::asset::Handles;
 use crate::common::asset::ImageKey;
+use crate::common::UpdateSet;
 use crate::game::mob::enemy::Alarm;
 use crate::util::ui::backdrop::BackdropTemplate;
+
+pub struct AlarmMeterPlugin;
+
+impl Plugin for AlarmMeterPlugin {
+    fn build(&self, app: &mut App) {
+        app.register_type::<AlarmMeter>()
+            .add_systems(Update, AlarmMeter::update.in_set(UpdateSet::UpdateUi));
+    }
+}
 
 #[derive(Component, Reflect, Default)]
 pub struct AlarmMeter {

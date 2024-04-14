@@ -1,7 +1,18 @@
 use bevy::prelude::*;
 
+use crate::common::PostTransformSet;
+
 pub const Z_MAX: f32 = 10.0;
 pub const Z_SCALE: f32 = 0.001;
+
+pub struct YSortPlugin;
+
+impl Plugin for YSortPlugin {
+    fn build(&self, app: &mut App) {
+        app.register_type::<YSort>()
+            .add_systems(PostUpdate, YSort::apply.in_set(PostTransformSet::Blend));
+    }
+}
 
 #[derive(Component, Reflect, Default, Clone, Debug)]
 pub struct YSort;

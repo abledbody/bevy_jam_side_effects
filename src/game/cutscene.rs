@@ -1,15 +1,40 @@
 use bevy::prelude::*;
 use bevy_kira_audio::prelude::*;
+use leafwing_input_manager::common_conditions::action_just_pressed;
 
 use crate::common::asset::AudioKey;
 use crate::common::asset::FontKey;
 use crate::common::asset::Handles;
+use crate::common::GameAction;
+use crate::common::UpdateSet;
 use crate::game::map::Victory;
 use crate::game::mob::enemy::Alarm;
 use crate::game::mob::player::PlayerControl;
 use crate::game::mob::player::Playthrough;
 use crate::game::mob::Health;
 use crate::game::mob::MobInputs;
+use crate::util::DespawnSet;
+
+pub struct CutscenePlugin;
+
+impl Plugin for CutscenePlugin {
+    fn build(&self, app: &mut App) {
+        app.register_type::<Cutscene>().add_systems(
+            Update,
+            (
+                Cutscene::update.in_set(UpdateSet::Update),
+                Cutscene::advance
+                    .run_if(action_just_pressed(GameAction::Confirm))
+                    .in_set(UpdateSet::HandleActions),
+            ),
+        );
+
+        app.register_type::<Message>().add_systems(
+            Update,
+            (Message::show_death_message, Message::show_victory_message),
+        );
+    }
+}
 
 const NUM_LINES: usize = 3;
 const TEXT_LINES: [&str; NUM_LINES] = ["You are Sai.", "You have chosen to Defect.", "GOOD LUCK!"];
@@ -29,14 +54,12 @@ impl Cutscene {
         mut player_query: Query<&mut PlayerControl>,
         time: Res<Time>,
     ) {
-        let Ok(mut player) = player_query.get_single_mut() else {
-            return;
+        if let Ok(mut player) = player_query.get_single_mut() {
+            player.deny_input = !cutscene_query.is_empty();
         };
 
         let dt = time.delta_seconds();
-
         for (mut text, mut cutscene) in &mut cutscene_query {
-            player.deny_input = true;
             cutscene.hue = (cutscene.hue + dt).fract();
             if let Some(section) = text.sections.get_mut(1) {
                 section.style.color = Color::hsl(cutscene.hue * 360.0, 1.0, 0.5);
@@ -45,20 +68,14 @@ impl Cutscene {
     }
 
     pub fn advance(
-        mut commands: Commands,
+        mut despawn: ResMut<DespawnSet>,
         mut cutscene_query: Query<(Entity, &mut Text, &mut Cutscene)>,
-        mut player_query: Query<&mut PlayerControl>,
         audio: Res<Audio>,
     ) {
-        let Ok(mut player) = player_query.get_single_mut() else {
-            return;
-        };
-
         for (entity, mut text, mut cutscene) in &mut cutscene_query {
             if cutscene.phase >= NUM_LINES {
-                player.deny_input = false;
-                commands.entity(entity).despawn_recursive();
-                return;
+                despawn.recursive(entity);
+                continue;
             }
 
             if cutscene.phase == NUM_LINES - 1 {

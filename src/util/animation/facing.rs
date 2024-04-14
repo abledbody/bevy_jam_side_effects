@@ -1,6 +1,18 @@
 use bevy::prelude::*;
 
+use crate::common::PostTransformSet;
 use crate::util::animation::follow::Follow;
+
+pub struct FacingPlugin;
+
+impl Plugin for FacingPlugin {
+    fn build(&self, app: &mut App) {
+        app.register_type::<Facing>().add_systems(
+            PostUpdate,
+            Facing::apply.in_set(PostTransformSet::ApplyFacing),
+        );
+    }
+}
 
 #[derive(Component, Reflect, Debug, Default)]
 pub enum Facing {

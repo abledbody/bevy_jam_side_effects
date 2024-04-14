@@ -8,5 +8,12 @@ pub mod mob;
 pub struct GamePlugin;
 
 impl Plugin for GamePlugin {
-    fn build(&self, _app: &mut App) {}
+    fn build(&self, app: &mut App) {
+        app.add_plugins((
+            combat::CombatPlugin,
+            cutscene::CutscenePlugin,
+            map::MapPlugin,
+            mob::MobPlugin,
+        ));
+    }
 }

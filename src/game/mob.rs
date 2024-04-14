@@ -8,6 +8,7 @@ use bevy_rapier2d::prelude::*;
 
 use crate::common::asset::Handles;
 use crate::common::asset::ImageKey;
+use crate::common::UpdateSet;
 use crate::game::combat::Faction;
 use crate::game::combat::COLLISION_GROUP;
 use crate::game::mob::animation::AttackAnimation;
@@ -19,7 +20,33 @@ use crate::util::animation::offset::Offset;
 use crate::util::math::MoveTowards;
 use crate::util::y_sort::YSort;
 
-#[derive(Component, Reflect, Debug)]
+pub struct MobPlugin;
+
+impl Plugin for MobPlugin {
+    fn build(&self, app: &mut App) {
+        app.register_type::<Health>();
+
+        app.register_type::<Mob>().add_systems(
+            Update,
+            (
+                Mob::set_facing.in_set(UpdateSet::ApplyIntents),
+                Mob::apply_movement.in_set(UpdateSet::ApplyIntents),
+            ),
+        );
+
+        app.register_type::<MobInputs>();
+
+        app.register_type::<Body>();
+
+        app.add_plugins((
+            animation::AnimationPlugin,
+            enemy::EnemyPlugin,
+            player::PlayerPlugin,
+        ));
+    }
+}
+
+#[derive(Component, Reflect)]
 pub struct Health {
     pub current: f32,
     pub max: f32,
@@ -31,7 +58,7 @@ impl Health {
     }
 }
 
-#[derive(Component, Reflect, Debug)]
+#[derive(Component, Reflect)]
 pub struct Mob {
     pub speed: f32,
     pub acceleration: f32,
@@ -50,21 +77,20 @@ impl Mob {
                 continue;
             }
 
-            *facing = if children
-                .and_then(|children| {
-                    children
-                        .iter()
-                        .filter_map(|&child| {
-                            attack_animation_query
-                                .get(child)
-                                .ok()
-                                .filter(|anim| anim.t < 1.0)
-                                .map(|anim| anim.x_sign < 0.0)
-                        })
-                        .next()
-                })
-                .unwrap_or(inputs.movement.x < 0.0)
-            {
+            *facing = if inputs.attack.map(|dir| dir.x < 0.0).unwrap_or_else(|| {
+                children
+                    .into_iter()
+                    .flatten()
+                    .filter_map(|&child| {
+                        attack_animation_query
+                            .get(child)
+                            .ok()
+                            .filter(|anim| anim.t < 1.0)
+                            .map(|anim| anim.x_sign < 0.0)
+                    })
+                    .next()
+                    .unwrap_or(inputs.movement.x < 0.0)
+            }) {
                 Facing::Left
             } else {
                 Facing::Right
@@ -127,7 +153,7 @@ impl Default for Mob {
     }
 }
 
-#[derive(Bundle, Reflect)]
+#[derive(Bundle)]
 pub struct MobBundle {
     pub mob: Mob,
     pub mob_inputs: MobInputs,
@@ -138,7 +164,6 @@ pub struct MobBundle {
     pub rigid_body: RigidBody,
     pub locked_axes: LockedAxes,
     pub friction: Friction,
-    #[reflect(ignore)]
     pub collider: Collider,
     pub collision_groups: CollisionGroups,
     pub solver_groups: SolverGroups,
@@ -179,7 +204,7 @@ impl MobBundle {
     }
 }
 
-#[derive(Component, Reflect, Default, Debug)]
+#[derive(Component, Reflect, Default)]
 pub struct MobInputs {
     pub movement: Vec2,
     pub attack: Option<Vec2>,

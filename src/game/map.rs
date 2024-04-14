@@ -8,6 +8,7 @@ use crate::common::asset::AudioKey;
 use crate::common::asset::Handles;
 use crate::common::asset::ImageKey;
 use crate::common::asset::MapKey;
+use crate::common::UpdateSet;
 use crate::game::combat::COLLISION_GROUP;
 use crate::game::combat::PLAYER_HURTBOX_GROUP;
 use crate::game::mob::enemy::EnemyTemplate;
@@ -15,6 +16,29 @@ use crate::game::mob::player::PlayerControl;
 use crate::game::mob::player::PlayerTemplate;
 use crate::game::mob::player::Playthrough;
 use crate::game::mob::Health;
+
+pub struct MapPlugin;
+
+impl Plugin for MapPlugin {
+    fn build(&self, app: &mut App) {
+        app.add_systems(PreUpdate, spawn_level_entities);
+
+        app.register_type::<Wall>();
+
+        app.register_type::<Exit>()
+            .add_systems(Update, Exit::detect.in_set(UpdateSet::Start));
+
+        app.register_type::<Victory>().init_resource::<Victory>();
+
+        app.register_type::<VictorySquare>()
+            .add_systems(Update, VictorySquare::detect.in_set(UpdateSet::Start));
+
+        app.register_type::<Plate>()
+            .add_systems(Update, Plate::detect.in_set(UpdateSet::Start));
+
+        app.register_type::<Gate>();
+    }
+}
 
 pub struct MapTemplate;
 
@@ -69,7 +93,7 @@ impl Exit {
         mut playthrough: ResMut<Playthrough>,
         exit_query: Query<(), With<Exit>>,
     ) {
-        let LevelSelection::Uid(idx) = *level_selection else {
+        let LevelSelection::Indices(idx) = *level_selection else {
             return;
         };
         let Ok(player_health) = player_query.get_single() else {
@@ -81,7 +105,7 @@ impl Exit {
                 continue;
             };
             if exit_query.contains(entity1) || exit_query.contains(entity2) {
-                *level_selection = LevelSelection::Uid(idx + 1);
+                *level_selection = LevelSelection::Indices(LevelIndices::in_root(idx.level + 1));
                 playthrough.health = Some(player_health.current);
                 break;
             }

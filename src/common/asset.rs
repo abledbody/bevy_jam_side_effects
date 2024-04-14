@@ -3,6 +3,16 @@ use bevy::utils::HashMap;
 use bevy_ecs_ldtk::assets::LdtkProject;
 use bevy_kira_audio::prelude::*;
 
+pub struct AssetPlugin;
+
+impl Plugin for AssetPlugin {
+    fn build(&self, app: &mut App) {
+        app.register_type::<Handles>()
+            .init_resource::<Handles>()
+            .add_systems(PreStartup, Handles::load);
+    }
+}
+
 #[derive(Reflect, Copy, Clone, Eq, PartialEq, Hash)]
 pub enum FontKey {
     Regular,
