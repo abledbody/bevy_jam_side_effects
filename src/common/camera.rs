@@ -2,7 +2,7 @@ use bevy::prelude::*;
 use bevy::render::camera::ScalingMode;
 
 use crate::common::PostTransformSet;
-use crate::game::mob::player::PlayerControl;
+use crate::game::actor::player::PlayerControl;
 
 pub struct CameraPlugin;
 

@@ -3,8 +3,8 @@ use bevy_kira_audio::prelude::*;
 
 use crate::common::asset::AudioKey;
 use crate::common::asset::Handles;
+use crate::game::actor::player::Playthrough;
 use crate::game::map::Victory;
-use crate::game::mob::player::Playthrough;
 
 pub struct MusicPlugin;
 

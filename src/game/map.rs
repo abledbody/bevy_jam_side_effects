@@ -9,13 +9,13 @@ use crate::common::asset::Handles;
 use crate::common::asset::ImageKey;
 use crate::common::asset::MapKey;
 use crate::common::UpdateSet;
+use crate::game::actor::enemy::EnemyTemplate;
+use crate::game::actor::player::PlayerControl;
+use crate::game::actor::player::PlayerTemplate;
+use crate::game::actor::player::Playthrough;
+use crate::game::actor::Health;
 use crate::game::combat::COLLISION_GROUP;
 use crate::game::combat::PLAYER_HURTBOX_GROUP;
-use crate::game::mob::enemy::EnemyTemplate;
-use crate::game::mob::player::PlayerControl;
-use crate::game::mob::player::PlayerTemplate;
-use crate::game::mob::player::Playthrough;
-use crate::game::mob::Health;
 
 pub struct MapPlugin;
 

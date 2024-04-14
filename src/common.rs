@@ -15,15 +15,15 @@ use leafwing_input_manager::prelude::*;
 use crate::common::asset::AudioKey;
 use crate::common::asset::Handles;
 use crate::common::camera::GameCameraTemplate;
+use crate::game::actor::enemy::Alarm;
+use crate::game::actor::enemy::DetectEvent;
+use crate::game::actor::player::Playthrough;
 use crate::game::combat::DeathEvent;
 use crate::game::combat::HitEvent;
 use crate::game::cutscene::CutsceneTemplate;
 use crate::game::cutscene::Message;
 use crate::game::map::MapTemplate;
 use crate::game::map::Victory;
-use crate::game::mob::enemy::Alarm;
-use crate::game::mob::enemy::DetectEvent;
-use crate::game::mob::player::Playthrough;
 use crate::util::ui::alarm_meter::AlarmMeter;
 use crate::util::ui::alarm_meter::AlarmMeterTemplate;
 

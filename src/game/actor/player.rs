@@ -3,21 +3,21 @@ use bevy::window::PrimaryWindow;
 use bevy_rapier2d::prelude::*;
 use leafwing_input_manager::prelude::*;
 
+use super::Actor;
+use super::ActorBundle;
+use super::ActorIntent;
 use super::Health;
-use super::Mob;
-use super::MobBundle;
-use super::MobInputs;
 use crate::common::asset::AudioKey;
 use crate::common::asset::Handles;
 use crate::common::asset::ImageKey;
 use crate::common::camera::GameCamera;
 use crate::common::UpdateSet;
+use crate::game::actor::enemy::Alarm;
+use crate::game::actor::Body;
+use crate::game::actor::BodyTemplate;
 use crate::game::combat::Faction;
 use crate::game::combat::HurtEffects;
 use crate::game::map::Plate;
-use crate::game::mob::enemy::Alarm;
-use crate::game::mob::Body;
-use crate::game::mob::BodyTemplate;
 use crate::util::ui::health_bar::HealthBarTemplate;
 use crate::util::ui::nametag::NametagTemplate;
 use crate::util::vfx::DropShadowTemplate;
@@ -38,7 +38,7 @@ impl Plugin for PlayerPlugin {
 
         app.register_type::<PlayerControl>().add_systems(
             Update,
-            PlayerControl::record_inputs.in_set(UpdateSet::RecordIntents),
+            PlayerControl::record_intent.in_set(UpdateSet::RecordIntents),
         );
     }
 }
@@ -108,10 +108,10 @@ pub struct PlayerControl {
 }
 
 impl PlayerControl {
-    pub fn record_inputs(
+    pub fn record_intent(
         mut player_query: Query<(
             &ActionState<PlayerAction>,
-            &mut MobInputs,
+            &mut ActorIntent,
             &GlobalTransform,
             &PlayerControl,
         )>,
@@ -124,17 +124,17 @@ impl PlayerControl {
         let Ok((camera, cam_gt)) = camera.get_single() else {
             return;
         };
-        let Ok((action, mut inputs, player_gt, player)) = player_query.get_single_mut() else {
+        let Ok((action, mut intent, player_gt, player)) = player_query.get_single_mut() else {
             return;
         };
         if player.deny_input {
             return;
         }
 
-        inputs.movement = Vec2::ZERO;
+        intent.movement = Vec2::ZERO;
         if action.pressed(PlayerAction::Move) {
             if let Some(axis_pair) = action.clamped_axis_pair(PlayerAction::Move) {
-                inputs.movement = axis_pair.xy();
+                intent.movement = axis_pair.xy();
             }
         }
 
@@ -146,9 +146,9 @@ impl PlayerControl {
             }
         }
 
-        inputs.attack = None;
+        intent.attack = None;
         if action.just_pressed(PlayerAction::Attack) {
-            inputs.attack = aim
+            intent.attack = aim
                 .or_else(|| {
                     window
                         .cursor_position()
@@ -207,8 +207,8 @@ impl PlayerTemplate {
                 transform: self.transform,
                 ..default()
             },
-            MobBundle {
-                mob: Mob::player(),
+            ActorBundle {
+                actor: Actor::player(),
                 health: Health {
                     current: self.current_health,
                     max: self.max_health,

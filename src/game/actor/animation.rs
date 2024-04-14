@@ -7,8 +7,8 @@ use bevy_kira_audio::prelude::*;
 
 use crate::common::PostTransformSet;
 use crate::common::UpdateSet;
-use crate::game::mob::player::PlayerControl;
-use crate::game::mob::MobInputs;
+use crate::game::actor::player::PlayerControl;
+use crate::game::actor::ActorIntent;
 
 pub struct AnimationPlugin;
 
@@ -82,7 +82,7 @@ impl Default for WalkAnimation {
 impl WalkAnimation {
     pub fn trigger(
         mut animation_query: Query<(&mut WalkAnimation, &Parent)>,
-        inputs_query: Query<&MobInputs>,
+        intent_query: Query<&ActorIntent>,
     ) {
         for (mut anim, parent) in &mut animation_query {
             if anim.t < 1.0 {
@@ -90,10 +90,10 @@ impl WalkAnimation {
                 continue;
             }
 
-            let Ok(inputs) = inputs_query.get(parent.get()) else {
+            let Ok(intent) = intent_query.get(parent.get()) else {
                 continue;
             };
-            if inputs.movement.length() == 0.0 {
+            if intent.movement.length() == 0.0 {
                 anim.t = 1.0;
                 continue;
             }
@@ -157,13 +157,13 @@ pub struct AttackAnimation {
 impl AttackAnimation {
     pub fn trigger(
         mut animation_query: Query<(&mut AttackAnimation, &Parent)>,
-        inputs_query: Query<&MobInputs>,
+        intent_query: Query<&ActorIntent>,
     ) {
         for (mut anim, parent) in &mut animation_query {
-            let Ok(inputs) = inputs_query.get(parent.get()) else {
+            let Ok(intent) = intent_query.get(parent.get()) else {
                 continue;
             };
-            let Some(attack) = inputs.attack else {
+            let Some(attack) = intent.attack else {
                 continue;
             };
 

@@ -7,12 +7,12 @@ use crate::common::asset::FontKey;
 use crate::common::asset::Handles;
 use crate::common::GameAction;
 use crate::common::UpdateSet;
+use crate::game::actor::enemy::Alarm;
+use crate::game::actor::player::PlayerControl;
+use crate::game::actor::player::Playthrough;
+use crate::game::actor::ActorIntent;
+use crate::game::actor::Health;
 use crate::game::map::Victory;
-use crate::game::mob::enemy::Alarm;
-use crate::game::mob::player::PlayerControl;
-use crate::game::mob::player::Playthrough;
-use crate::game::mob::Health;
-use crate::game::mob::MobInputs;
 use crate::util::DespawnSet;
 
 pub struct CutscenePlugin;
@@ -192,7 +192,7 @@ impl Message {
         mut commands: Commands,
         handle: Res<Handles>,
         message_query: Query<(), With<Message>>,
-        player_query: Query<(), (With<PlayerControl>, Without<MobInputs>)>,
+        player_query: Query<(), (With<PlayerControl>, Without<ActorIntent>)>,
     ) {
         if !message_query.is_empty() || player_query.is_empty() {
             return;

@@ -1,9 +1,9 @@
 use bevy::prelude::*;
 
+pub mod actor;
 pub mod combat;
 pub mod cutscene;
 pub mod map;
-pub mod mob;
 
 pub struct GamePlugin;
 
@@ -13,7 +13,7 @@ impl Plugin for GamePlugin {
             combat::CombatPlugin,
             cutscene::CutscenePlugin,
             map::MapPlugin,
-            mob::MobPlugin,
+            actor::ActorPlugin,
         ));
     }
 }

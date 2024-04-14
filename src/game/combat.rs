@@ -7,13 +7,13 @@ use bevy_rapier2d::prelude::*;
 use crate::common::asset::AudioKey;
 use crate::common::asset::Handles;
 use crate::common::UpdateSet;
-use crate::game::mob::animation::DeathAnimation;
-use crate::game::mob::animation::FlinchAnimation;
-use crate::game::mob::animation::WalkAnimation;
-use crate::game::mob::enemy::Alarm;
-use crate::game::mob::Health;
-use crate::game::mob::Mob;
-use crate::game::mob::MobInputs;
+use crate::game::actor::animation::DeathAnimation;
+use crate::game::actor::animation::FlinchAnimation;
+use crate::game::actor::animation::WalkAnimation;
+use crate::game::actor::enemy::Alarm;
+use crate::game::actor::Actor;
+use crate::game::actor::ActorIntent;
+use crate::game::actor::Health;
 use crate::util::DespawnSet;
 
 pub struct CombatPlugin;
@@ -28,7 +28,7 @@ impl Plugin for CombatPlugin {
         app.register_type::<HitEffects>().add_systems(
             Update,
             (
-                spawn_hitbox_from_inputs.in_set(UpdateSet::ApplyIntents),
+                spawn_hitbox_from_attack.in_set(UpdateSet::ApplyIntents),
                 (HitEffects::apply, HitEffects::clean_up)
                     .chain()
                     .in_set(UpdateSet::HandleEvents),
@@ -115,13 +115,13 @@ impl HitboxTemplate {
     }
 }
 
-pub fn spawn_hitbox_from_inputs(
+pub fn spawn_hitbox_from_attack(
     mut commands: Commands,
-    mob_query: Query<(&Mob, &GlobalTransform, &MobInputs)>,
+    actor_query: Query<(&Actor, &GlobalTransform, &ActorIntent)>,
     handle: Res<Handles>,
 ) {
-    for (mob, gt, inputs) in &mob_query {
-        let Some(direction) = inputs.attack else {
+    for (actor, gt, intent) in &actor_query {
+        let Some(direction) = intent.attack else {
             continue;
         };
 
@@ -136,7 +136,7 @@ pub fn spawn_hitbox_from_inputs(
             radius,
             damage: 8.0,
             knockback: 6.0,
-            faction: mob.faction,
+            faction: actor.faction,
         }
         .spawn(&mut commands, &handle);
     }
@@ -294,7 +294,7 @@ impl DeathEffects {
         mut death_events: EventReader<DeathEvent>,
         death_effects_query: Query<&DeathEffects>,
         mut hurt_effects_query: Query<&mut HurtEffects>,
-        mut mob_query: Query<&mut Mob>,
+        mut actor_query: Query<&mut Actor>,
         mut alarm: ResMut<Alarm>,
         children_query: Query<&Children>,
         animation_query: Query<(), With<WalkAnimation>>, // And you can use animation_query.contains(child)
@@ -304,12 +304,12 @@ impl DeathEffects {
             commands
                 .entity(entity)
                 .insert(ColliderMassProperties::Mass(25.0))
-                .remove::<MobInputs>();
+                .remove::<ActorIntent>();
             if let Ok(mut hurt_effects) = hurt_effects_query.get_mut(entity) {
                 hurt_effects.increase_alarm = 0.0;
             }
-            if let Ok(mut mob) = mob_query.get_mut(entity) {
-                mob.brake_deceleration = 700.0;
+            if let Ok(mut actor) = actor_query.get_mut(entity) {
+                actor.brake_deceleration = 700.0;
             }
 
             // Play death animation

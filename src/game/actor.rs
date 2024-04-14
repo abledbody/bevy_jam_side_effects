@@ -9,32 +9,32 @@ use bevy_rapier2d::prelude::*;
 use crate::common::asset::Handles;
 use crate::common::asset::ImageKey;
 use crate::common::UpdateSet;
+use crate::game::actor::animation::AttackAnimation;
+use crate::game::actor::animation::DeathAnimation;
+use crate::game::actor::animation::FlinchAnimation;
+use crate::game::actor::animation::WalkAnimation;
 use crate::game::combat::Faction;
 use crate::game::combat::COLLISION_GROUP;
-use crate::game::mob::animation::AttackAnimation;
-use crate::game::mob::animation::DeathAnimation;
-use crate::game::mob::animation::FlinchAnimation;
-use crate::game::mob::animation::WalkAnimation;
 use crate::util::animation::facing::Facing;
 use crate::util::animation::offset::Offset;
 use crate::util::math::MoveTowards;
 use crate::util::y_sort::YSort;
 
-pub struct MobPlugin;
+pub struct ActorPlugin;
 
-impl Plugin for MobPlugin {
+impl Plugin for ActorPlugin {
     fn build(&self, app: &mut App) {
         app.register_type::<Health>();
 
-        app.register_type::<Mob>().add_systems(
+        app.register_type::<Actor>().add_systems(
             Update,
             (
-                Mob::set_facing.in_set(UpdateSet::ApplyIntents),
-                Mob::apply_movement.in_set(UpdateSet::ApplyIntents),
+                Actor::set_facing.in_set(UpdateSet::ApplyIntents),
+                Actor::apply_movement.in_set(UpdateSet::ApplyIntents),
             ),
         );
 
-        app.register_type::<MobInputs>();
+        app.register_type::<ActorIntent>();
 
         app.register_type::<Body>();
 
@@ -59,7 +59,7 @@ impl Health {
 }
 
 #[derive(Component, Reflect)]
-pub struct Mob {
+pub struct Actor {
     pub speed: f32,
     pub acceleration: f32,
     pub brake_deceleration: f32,
@@ -67,17 +67,17 @@ pub struct Mob {
     pub faction: Faction,
 }
 
-impl Mob {
+impl Actor {
     pub fn set_facing(
-        mut mob_query: Query<(&MobInputs, Option<&Children>, &mut Facing)>,
+        mut actor_query: Query<(&ActorIntent, Option<&Children>, &mut Facing)>,
         attack_animation_query: Query<&AttackAnimation>,
     ) {
-        for (inputs, children, mut facing) in &mut mob_query {
-            if inputs.movement.x == 0.0 && inputs.attack.is_none() {
+        for (intent, children, mut facing) in &mut actor_query {
+            if intent.movement.x == 0.0 && intent.attack.is_none() {
                 continue;
             }
 
-            *facing = if inputs.attack.map(|dir| dir.x < 0.0).unwrap_or_else(|| {
+            *facing = if intent.attack.map(|dir| dir.x < 0.0).unwrap_or_else(|| {
                 children
                     .into_iter()
                     .flatten()
@@ -89,7 +89,7 @@ impl Mob {
                             .map(|anim| anim.x_sign < 0.0)
                     })
                     .next()
-                    .unwrap_or(inputs.movement.x < 0.0)
+                    .unwrap_or(intent.movement.x < 0.0)
             }) {
                 Facing::Left
             } else {
@@ -99,27 +99,27 @@ impl Mob {
     }
 
     pub fn apply_movement(
-        mut mob_query: Query<(&Mob, &mut Velocity, Option<&MobInputs>)>,
+        mut actor_query: Query<(&Actor, &mut Velocity, Option<&ActorIntent>)>,
         time: Res<Time>,
     ) {
         let dt = time.delta_seconds();
-        for (mob, mut velocity, inputs) in &mut mob_query {
-            let (input_direction, input_magnitude) = if let Some(inputs) = inputs {
+        for (actor, mut velocity, intent) in &mut actor_query {
+            let (intent_direction, intent_magnitude) = if let Some(intent) = intent {
                 (
-                    inputs.movement.normalize_or_zero(),
-                    inputs.movement.length().min(1.0),
+                    intent.movement.normalize_or_zero(),
+                    intent.movement.length().min(1.0),
                 )
             } else {
                 (Vec2::ZERO, 0.0)
             };
 
-            let acceleration = if input_direction.dot(velocity.linvel) <= 0.0 {
-                mob.brake_deceleration
+            let acceleration = if intent_direction.dot(velocity.linvel) <= 0.0 {
+                actor.brake_deceleration
             } else {
-                mob.acceleration
+                actor.acceleration
             };
 
-            let target_velocity = input_direction * input_magnitude * mob.speed;
+            let target_velocity = intent_direction * intent_magnitude * actor.speed;
             velocity.linvel = velocity
                 .linvel
                 .move_towards(target_velocity, acceleration * dt);
@@ -147,20 +147,20 @@ impl Mob {
     }
 }
 
-impl Default for Mob {
+impl Default for Actor {
     fn default() -> Self {
-        Mob::player()
+        Actor::player()
     }
 }
 
 #[derive(Bundle)]
-pub struct MobBundle {
-    pub mob: Mob,
-    pub mob_inputs: MobInputs,
+pub struct ActorBundle {
+    pub actor: Actor,
+    pub actor_intent: ActorIntent,
     pub facing: Facing,
     pub health: Health,
     pub velocity: Velocity,
-    pub z_ramp_by_y: YSort,
+    pub y_sort: YSort,
     pub rigid_body: RigidBody,
     pub locked_axes: LockedAxes,
     pub friction: Friction,
@@ -169,14 +169,14 @@ pub struct MobBundle {
     pub solver_groups: SolverGroups,
 }
 
-impl Default for MobBundle {
+impl Default for ActorBundle {
     fn default() -> Self {
         Self {
-            mob: default(),
-            mob_inputs: default(),
+            actor: default(),
+            actor_intent: default(),
             facing: default(),
             health: Health::full(100.0),
-            z_ramp_by_y: YSort,
+            y_sort: YSort,
             velocity: default(),
             rigid_body: default(),
             locked_axes: LockedAxes::ROTATION_LOCKED,
@@ -194,18 +194,18 @@ impl Default for MobBundle {
     }
 }
 
-impl MobBundle {
+impl ActorBundle {
     pub fn with_faction(mut self, faction: Faction) -> Self {
         let hurtbox_groups = faction.hurtbox_groups();
         self.collision_groups.memberships |= hurtbox_groups.memberships;
         self.collision_groups.filters |= hurtbox_groups.filters;
-        self.mob.faction = faction;
+        self.actor.faction = faction;
         self
     }
 }
 
 #[derive(Component, Reflect, Default)]
-pub struct MobInputs {
+pub struct ActorIntent {
     pub movement: Vec2,
     pub attack: Option<Vec2>,
 }

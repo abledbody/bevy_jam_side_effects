@@ -2,7 +2,7 @@ use bevy::math::vec2;
 use bevy::prelude::*;
 
 use crate::common::UpdateSet;
-use crate::game::mob::Health;
+use crate::game::actor::Health;
 use crate::util::ui::backdrop::BackdropTemplate;
 
 pub struct HealthBarPlugin;

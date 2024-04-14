@@ -6,20 +6,20 @@ use rand::seq::SliceRandom;
 use rand::thread_rng;
 use rand::Rng;
 
-use super::MobInputs;
+use super::ActorIntent;
 use crate::common::asset::AudioKey;
 use crate::common::asset::Handles;
 use crate::common::asset::ImageKey;
 use crate::common::UpdateSet;
+use crate::game::actor::player::PlayerControl;
+use crate::game::actor::Actor;
+use crate::game::actor::ActorBundle;
+use crate::game::actor::BodyTemplate;
+use crate::game::actor::Health;
 use crate::game::combat::DeathEffects;
 use crate::game::combat::Faction;
 use crate::game::combat::HitEvent;
 use crate::game::combat::HurtEffects;
-use crate::game::mob::player::PlayerControl;
-use crate::game::mob::BodyTemplate;
-use crate::game::mob::Health;
-use crate::game::mob::Mob;
-use crate::game::mob::MobBundle;
 use crate::util::ui::health_bar::HealthBarTemplate;
 use crate::util::ui::nametag::NametagTemplate;
 use crate::util::vfx::DetectPopupTemplate;
@@ -174,18 +174,18 @@ impl EnemyTemplate {
         let detector = DetectorTemplate.spawn(commands);
 
         // Parent
-        let mut mob = Mob::enemy();
+        let mut actor = Actor::enemy();
         if self.is_corpse {
-            mob.brake_deceleration = 700.0;
+            actor.brake_deceleration = 700.0;
         }
         let mut enemy = commands.spawn((
             SpatialBundle {
                 transform: self.transform,
                 ..default()
             },
-            MobBundle {
+            ActorBundle {
                 health: Health::full(self.health),
-                mob,
+                actor,
                 ..default()
             }
             .with_faction(FACTION),
@@ -201,7 +201,7 @@ impl EnemyTemplate {
             },
         ));
         if self.is_corpse {
-            enemy.remove::<MobInputs>();
+            enemy.remove::<ActorIntent>();
         }
         #[cfg(feature = "dev")]
         enemy.insert(Name::new("Enemy"));
@@ -266,11 +266,11 @@ impl Default for DifficultyCurve {
 impl DifficultyCurve {
     pub fn apply(
         alarm: Res<Alarm>,
-        mut curve_query: Query<(&DifficultyCurve, &mut EnemyAi, &mut Mob, &Children)>,
+        mut curve_query: Query<(&DifficultyCurve, &mut EnemyAi, &mut Actor, &Children)>,
         mut detector_query: Query<&mut Transform, With<Detector>>,
     ) {
-        for (curve, mut enemy, mut mob, children) in &mut curve_query {
-            mob.speed = curve.speed.at(alarm.0);
+        for (curve, mut enemy, mut actor, children) in &mut curve_query {
+            actor.speed = curve.speed.at(alarm.0);
             let detect_radius = curve.detect_radius.at(alarm.0);
             enemy.follow_radius = curve.follow_radius.at(alarm.0);
             enemy.attack_radius = curve.attack_radius.at(alarm.0);
@@ -310,7 +310,7 @@ impl Default for EnemyAi {
 impl EnemyAi {
     pub fn think(
         mut commands: Commands,
-        mut enemy_query: Query<(&mut EnemyAi, &mut MobInputs, &GlobalTransform)>,
+        mut enemy_query: Query<(&mut EnemyAi, &mut ActorIntent, &GlobalTransform)>,
         mut detect_events: EventReader<DetectEvent>,
         mut hit_events: EventReader<HitEvent>,
         parent_query: Query<&Parent>,
@@ -322,14 +322,14 @@ impl EnemyAi {
     ) {
         let Ok(player) = player_query.get_single() else {
             let mut rng = thread_rng();
-            for (mut enemy, mut inputs, _) in &mut enemy_query {
+            for (mut enemy, mut intent, _) in &mut enemy_query {
                 if enemy.target.is_none() {
                     continue;
                 }
 
                 enemy.target = None;
-                inputs.attack = None;
-                inputs.movement =
+                intent.attack = None;
+                intent.movement =
                     vec2(rng.gen_range(-1.0..1.0), rng.gen_range(-1.0..1.0)).normalize_or_zero();
             }
             return;
@@ -368,16 +368,16 @@ impl EnemyAi {
         }
 
         let dt = time.delta_seconds();
-        for (mut enemy, mut inputs, mob_gt) in &mut enemy_query {
+        for (mut enemy, mut intent, actor_gt) in &mut enemy_query {
             let Some(target) = enemy.target else { continue };
             let Ok(target_gt) = transform_query.get(target) else {
                 continue;
             };
 
-            inputs.attack = None;
-            inputs.movement = Vec2::ZERO;
+            intent.attack = None;
+            intent.movement = Vec2::ZERO;
 
-            let target_delta = target_gt.translation().xy() - mob_gt.translation().xy();
+            let target_delta = target_gt.translation().xy() - actor_gt.translation().xy();
             let target_distance = target_delta.length();
 
             // Give up on target
@@ -388,13 +388,13 @@ impl EnemyAi {
 
             // Move towards target
             let target_direction = target_delta.normalize();
-            inputs.movement = target_direction;
+            intent.movement = target_direction;
 
             // Attack target
             if target_distance <= enemy.attack_radius {
                 enemy.attack_cooldown_t -= dt;
                 if enemy.attack_cooldown_t <= 0.0 {
-                    inputs.attack = Some(target_direction);
+                    intent.attack = Some(target_direction);
                     enemy.attack_cooldown_t = enemy.attack_cooldown;
                 }
             } else {

@@ -5,7 +5,7 @@ use rand::Rng;
 use crate::common::asset::Handles;
 use crate::common::asset::ImageKey;
 use crate::common::UpdateSet;
-use crate::game::mob::enemy::Alarm;
+use crate::game::actor::enemy::Alarm;
 use crate::util::ui::backdrop::BackdropTemplate;
 
 pub struct AlarmMeterPlugin;
