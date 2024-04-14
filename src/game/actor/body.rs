@@ -5,15 +5,20 @@ use bevy::math::vec2;
 use bevy::prelude::*;
 use bevy_kira_audio::prelude::*;
 
+use crate::common::asset::Handles;
+use crate::common::asset::ImageKey;
 use crate::common::PostTransformSet;
 use crate::common::UpdateSet;
+use crate::game::actor::intent::ActorIntent;
 use crate::game::actor::player::PlayerControl;
-use crate::game::actor::ActorIntent;
+use crate::util::animation::offset::Offset;
 
-pub struct AnimationPlugin;
+pub struct BodyPlugin;
 
-impl Plugin for AnimationPlugin {
+impl Plugin for BodyPlugin {
     fn build(&self, app: &mut App) {
+        app.register_type::<Body>();
+
         app.register_type::<WalkAnimation>()
             .add_systems(
                 Update,
@@ -55,6 +60,44 @@ impl Plugin for AnimationPlugin {
                 PostUpdate,
                 apply_death_animation.in_set(PostTransformSet::Blend),
             );
+    }
+}
+
+#[derive(Component, Reflect)]
+pub struct Body;
+
+pub struct BodyTemplate {
+    pub texture: ImageKey,
+    pub offset: Transform,
+    pub walk_sound: Option<Handle<AudioSource>>,
+    pub is_corpse: bool,
+}
+
+impl BodyTemplate {
+    pub fn spawn(self, commands: &mut Commands, handle: &Handles) -> Entity {
+        let body = commands
+            .spawn((
+                Name::new("Body"),
+                SpriteBundle {
+                    texture: handle.image[&self.texture].clone(),
+                    ..default()
+                },
+                Offset(self.offset),
+                WalkAnimation {
+                    sound: self.walk_sound,
+                    ..default()
+                },
+                AttackAnimation::default(),
+                FlinchAnimation::default(),
+                Body,
+            ))
+            .id();
+
+        if self.is_corpse {
+            commands.entity(body).insert(DeathAnimation::default());
+        }
+
+        body
     }
 }
 

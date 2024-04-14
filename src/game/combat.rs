@@ -7,13 +7,13 @@ use bevy_rapier2d::prelude::*;
 use crate::common::asset::AudioKey;
 use crate::common::asset::Handles;
 use crate::common::UpdateSet;
-use crate::game::actor::animation::DeathAnimation;
-use crate::game::actor::animation::FlinchAnimation;
-use crate::game::actor::animation::WalkAnimation;
+use crate::game::actor::body::DeathAnimation;
+use crate::game::actor::body::FlinchAnimation;
+use crate::game::actor::body::WalkAnimation;
 use crate::game::actor::enemy::Alarm;
+use crate::game::actor::health::Health;
+use crate::game::actor::intent::ActorIntent;
 use crate::game::actor::Actor;
-use crate::game::actor::ActorIntent;
-use crate::game::actor::Health;
 use crate::util::DespawnSet;
 
 pub struct CombatPlugin;
