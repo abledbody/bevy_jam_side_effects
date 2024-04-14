@@ -10,10 +10,10 @@ use crate::common::UpdateSet;
 use crate::game::actor::body::DeathAnimation;
 use crate::game::actor::body::FlinchAnimation;
 use crate::game::actor::body::WalkAnimation;
-use crate::game::actor::enemy::Alarm;
 use crate::game::actor::health::Health;
 use crate::game::actor::intent::ActorIntent;
 use crate::game::actor::Actor;
+use crate::game::alarm::Alarm;
 use crate::util::DespawnSet;
 
 pub struct CombatPlugin;

@@ -16,6 +16,7 @@ use crate::game::actor::intent::ActorIntent;
 use crate::game::actor::player::PlayerControl;
 use crate::game::actor::Actor;
 use crate::game::actor::ActorBundle;
+use crate::game::alarm::Alarm;
 use crate::game::combat::DeathEffects;
 use crate::game::combat::Faction;
 use crate::game::combat::HitEvent;
@@ -29,8 +30,6 @@ pub struct EnemyPlugin;
 
 impl Plugin for EnemyPlugin {
     fn build(&self, app: &mut App) {
-        app.register_type::<Alarm>().init_resource::<Alarm>();
-
         app.register_type::<DifficultyCurve>()
             .add_systems(Update, apply_difficulty_curve.in_set(UpdateSet::Start));
 
@@ -218,18 +217,8 @@ impl EnemyTemplate {
     }
 }
 
-#[derive(Resource, Reflect, Default)]
-#[reflect(Resource)]
-pub struct Alarm(pub f32);
-
-impl Alarm {
-    pub fn increase(&mut self, value: f32) {
-        self.0 = (self.0 + value).min(1.0);
-    }
-}
-
 #[derive(Reflect)]
-pub struct Curve {
+struct Curve {
     pub y0: f32,
     pub y1: f32,
 }
@@ -245,7 +234,7 @@ impl Curve {
 }
 
 #[derive(Component, Reflect)]
-pub struct DifficultyCurve {
+struct DifficultyCurve {
     speed: Curve,
     detect_radius: Curve,
     follow_radius: Curve,
@@ -287,7 +276,7 @@ fn apply_difficulty_curve(
 }
 
 #[derive(Component, Reflect)]
-pub struct EnemyAi {
+struct EnemyAi {
     follow_radius: f32,
     attack_radius: f32,
     attack_cooldown: f32,

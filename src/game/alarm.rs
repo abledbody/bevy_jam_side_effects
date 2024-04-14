@@ -6,15 +6,26 @@ use rand::Rng;
 use crate::common::asset::Handles;
 use crate::common::asset::ImageKey;
 use crate::common::UpdateSet;
-use crate::game::actor::enemy::Alarm;
 use crate::util::ui::backdrop::BackdropTemplate;
 
-pub struct AlarmMeterPlugin;
+pub struct AlarmPlugin;
 
-impl Plugin for AlarmMeterPlugin {
+impl Plugin for AlarmPlugin {
     fn build(&self, app: &mut App) {
+        app.register_type::<Alarm>().init_resource::<Alarm>();
+
         app.register_type::<AlarmMeter>()
             .add_systems(Update, update_alarm_meter.in_set(UpdateSet::UpdateUi));
+    }
+}
+
+#[derive(Resource, Reflect, Default)]
+#[reflect(Resource)]
+pub struct Alarm(pub f32);
+
+impl Alarm {
+    pub fn increase(&mut self, value: f32) {
+        self.0 = (self.0 + value).min(1.0);
     }
 }
 

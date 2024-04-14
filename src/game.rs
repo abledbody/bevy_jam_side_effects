@@ -7,20 +7,21 @@ use leafwing_input_manager::prelude::*;
 
 use crate::common::asset::AudioKey;
 use crate::common::asset::Handles;
-use crate::game::actor::enemy::Alarm;
 use crate::game::actor::enemy::AlertEvent;
 use crate::game::actor::player::Playthrough;
+use crate::game::alarm::Alarm;
+use crate::game::alarm::AlarmMeter;
+use crate::game::alarm::AlarmMeterTemplate;
 use crate::game::combat::DeathEvent;
 use crate::game::combat::HitEvent;
 use crate::game::cutscene::CutsceneTemplate;
 use crate::game::cutscene::Message;
 use crate::game::map::MapTemplate;
 use crate::game::map::Victory;
-use crate::util::ui::alarm_meter::AlarmMeter;
-use crate::util::ui::alarm_meter::AlarmMeterTemplate;
 use crate::util::DespawnSet;
 
 pub mod actor;
+pub mod alarm;
 mod combat;
 mod cutscene;
 pub mod map;
@@ -47,10 +48,11 @@ impl Plugin for GamePlugin {
             );
 
         app.add_plugins((
+            actor::ActorPlugin,
+            alarm::AlarmPlugin,
             combat::CombatPlugin,
             cutscene::CutscenePlugin,
             map::MapPlugin,
-            actor::ActorPlugin,
         ));
     }
 }

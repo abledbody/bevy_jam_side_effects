@@ -10,11 +10,11 @@ use crate::common::camera::GameCamera;
 use crate::common::UpdateSet;
 use crate::game::actor::body::Body;
 use crate::game::actor::body::BodyTemplate;
-use crate::game::actor::enemy::Alarm;
 use crate::game::actor::health::Health;
 use crate::game::actor::intent::ActorIntent;
 use crate::game::actor::Actor;
 use crate::game::actor::ActorBundle;
+use crate::game::alarm::Alarm;
 use crate::game::combat::Faction;
 use crate::game::combat::HurtEffects;
 use crate::game::map::Plate;
@@ -43,7 +43,7 @@ impl Plugin for PlayerPlugin {
 const PLAYER_NAME: &str = "Sai";
 
 #[derive(Actionlike, Reflect, Clone, Hash, PartialEq, Eq)]
-pub enum PlayerAction {
+enum PlayerAction {
     Move,
     Aim,
     Attack,
