@@ -1,13 +1,6 @@
-# IDE metadata
-.idea
-.vscode
-
 # Build output
-/target
+/target/
+/build/
 
 # Map backups
 /assets/map/**/backups/*
-
-# WASM
-/wasm
-wasm.zip
