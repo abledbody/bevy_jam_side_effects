@@ -26,15 +26,15 @@ impl Plugin for MapPlugin {
         app.register_type::<Wall>();
 
         app.register_type::<Exit>()
-            .add_systems(Update, Exit::detect.in_set(UpdateSet::Start));
+            .add_systems(Update, detect_exit.in_set(UpdateSet::Start));
 
         app.register_type::<Victory>().init_resource::<Victory>();
 
         app.register_type::<VictorySquare>()
-            .add_systems(Update, VictorySquare::detect.in_set(UpdateSet::Start));
+            .add_systems(Update, detect_victory.in_set(UpdateSet::Start));
 
         app.register_type::<Plate>()
-            .add_systems(Update, Plate::detect.in_set(UpdateSet::Start));
+            .add_systems(Update, detect_plate_activation.in_set(UpdateSet::Start));
 
         app.register_type::<Gate>();
     }
@@ -85,30 +85,28 @@ impl WallTemplate {
 #[derive(Component, Reflect)]
 pub struct Exit;
 
-impl Exit {
-    pub fn detect(
-        mut collision_events: EventReader<CollisionEvent>,
-        mut level_selection: ResMut<LevelSelection>,
-        player_query: Query<&Health, With<PlayerControl>>,
-        mut playthrough: ResMut<Playthrough>,
-        exit_query: Query<(), With<Exit>>,
-    ) {
-        let LevelSelection::Indices(idx) = *level_selection else {
-            return;
-        };
-        let Ok(player_health) = player_query.get_single() else {
-            return;
-        };
+fn detect_exit(
+    mut collision_events: EventReader<CollisionEvent>,
+    mut level_selection: ResMut<LevelSelection>,
+    player_query: Query<&Health, With<PlayerControl>>,
+    mut playthrough: ResMut<Playthrough>,
+    exit_query: Query<(), With<Exit>>,
+) {
+    let LevelSelection::Indices(idx) = *level_selection else {
+        return;
+    };
+    let Ok(player_health) = player_query.get_single() else {
+        return;
+    };
 
-        for &event in collision_events.read() {
-            let CollisionEvent::Started(entity1, entity2, _) = event else {
-                continue;
-            };
-            if exit_query.contains(entity1) || exit_query.contains(entity2) {
-                *level_selection = LevelSelection::Indices(LevelIndices::in_root(idx.level + 1));
-                playthrough.health = Some(player_health.current);
-                break;
-            }
+    for &event in collision_events.read() {
+        let CollisionEvent::Started(entity1, entity2, _) = event else {
+            continue;
+        };
+        if exit_query.contains(entity1) || exit_query.contains(entity2) {
+            *level_selection = LevelSelection::Indices(LevelIndices::in_root(idx.level + 1));
+            playthrough.health = Some(player_health.current);
+            break;
         }
     }
 }
@@ -144,20 +142,18 @@ pub struct Victory(pub bool);
 #[derive(Component, Reflect)]
 pub struct VictorySquare;
 
-impl VictorySquare {
-    pub fn detect(
-        mut collision_events: EventReader<CollisionEvent>,
-        victory_query: Query<(), With<VictorySquare>>,
-        mut victory: ResMut<Victory>,
-    ) {
-        for &event in collision_events.read() {
-            let CollisionEvent::Started(entity1, entity2, _) = event else {
-                continue;
-            };
-            if victory_query.contains(entity1) || victory_query.contains(entity2) {
-                victory.0 = true;
-                break;
-            }
+fn detect_victory(
+    mut collision_events: EventReader<CollisionEvent>,
+    victory_query: Query<(), With<VictorySquare>>,
+    mut victory: ResMut<Victory>,
+) {
+    for &event in collision_events.read() {
+        let CollisionEvent::Started(entity1, entity2, _) = event else {
+            continue;
+        };
+        if victory_query.contains(entity1) || victory_query.contains(entity2) {
+            victory.0 = true;
+            break;
         }
     }
 }
@@ -192,55 +188,49 @@ pub struct Plate {
     pressed: bool,
 }
 
-impl Plate {
-    pub fn detect(
-        mut collision_events: EventReader<CollisionEvent>,
-        mut plate_query: Query<(&mut Plate, &mut Handle<Image>)>,
-        mut gate_query: Query<
-            (&mut Gate, &mut Handle<Image>, &mut CollisionGroups),
-            Without<Plate>,
-        >,
-        handle: Res<Handles>,
-        audio: Res<Audio>,
-    ) {
-        for &event in collision_events.read() {
-            let CollisionEvent::Started(entity1, entity2, _) = event else {
-                continue;
-            };
+fn detect_plate_activation(
+    mut collision_events: EventReader<CollisionEvent>,
+    mut plate_query: Query<(&mut Plate, &mut Handle<Image>)>,
+    mut gate_query: Query<(&mut Gate, &mut Handle<Image>, &mut CollisionGroups), Without<Plate>>,
+    handle: Res<Handles>,
+    audio: Res<Audio>,
+) {
+    for &event in collision_events.read() {
+        let CollisionEvent::Started(entity1, entity2, _) = event else {
+            continue;
+        };
 
-            let mut handle_collision = |entity: Entity| {
-                let Ok((mut plate, mut plate_image)) = plate_query.get_mut(entity) else {
-                    return;
+        let mut handle_collision = |entity: Entity| {
+            let Ok((mut plate, mut plate_image)) = plate_query.get_mut(entity) else {
+                return;
+            };
+            if plate.pressed {
+                return;
+            }
+            plate.pressed = true;
+            *plate_image = handle.image[&ImageKey::PlatePressed].clone();
+
+            audio
+                .play(handle.audio[&AudioKey::PlateTriggerGate].clone())
+                .with_volume(0.8);
+
+            for &entity in &plate.gates {
+                let Ok((mut gate, mut gate_image, mut gate_groups)) = gate_query.get_mut(entity)
+                else {
+                    continue;
                 };
-                if plate.pressed {
-                    return;
-                }
-                plate.pressed = true;
-                *plate_image = handle.image[&ImageKey::PlatePressed].clone();
 
-                audio
-                    .play(handle.audio[&AudioKey::PlateTriggerGate].clone())
-                    .with_volume(0.8);
+                gate.open = !gate.open;
+                (gate_groups.filters, *gate_image) = if gate.open {
+                    (Group::empty(), handle.image[&ImageKey::GateOpen].clone())
+                } else {
+                    (COLLISION_GROUP, handle.image[&ImageKey::GateClosed].clone())
+                };
+            }
+        };
 
-                for &entity in &plate.gates {
-                    let Ok((mut gate, mut gate_image, mut gate_groups)) =
-                        gate_query.get_mut(entity)
-                    else {
-                        continue;
-                    };
-
-                    gate.open = !gate.open;
-                    (gate_groups.filters, *gate_image) = if gate.open {
-                        (Group::empty(), handle.image[&ImageKey::GateOpen].clone())
-                    } else {
-                        (COLLISION_GROUP, handle.image[&ImageKey::GateClosed].clone())
-                    };
-                }
-            };
-
-            handle_collision(entity1);
-            handle_collision(entity2);
-        }
+        handle_collision(entity1);
+        handle_collision(entity2);
     }
 }
 

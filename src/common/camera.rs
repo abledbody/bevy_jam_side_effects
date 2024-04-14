@@ -10,8 +10,7 @@ impl Plugin for CameraPlugin {
     fn build(&self, app: &mut App) {
         app.register_type::<GameCamera>().add_systems(
             PostUpdate,
-            (GameCamera::cut_to_new_target, GameCamera::follow_target)
-                .in_set(PostTransformSet::Blend),
+            (snap_camera_to_new_target, camera_follow_target).in_set(PostTransformSet::Blend),
         );
     }
 }
@@ -48,44 +47,42 @@ pub struct GameCamera {
     pub rate: f32,
 }
 
-impl GameCamera {
-    pub fn cut_to_new_target(
-        mut camera_query: Query<&mut Transform, With<GameCamera>>,
-        target_query: Query<&GlobalTransform, Added<PlayerControl>>,
-    ) {
-        let Ok(mut camera_transform) = camera_query.get_single_mut() else {
-            return;
-        };
-        let Ok(target_transform) = target_query.get_single() else {
-            return;
-        };
+fn snap_camera_to_new_target(
+    mut camera_query: Query<&mut Transform, With<GameCamera>>,
+    target_query: Query<&GlobalTransform, Added<PlayerControl>>,
+) {
+    let Ok(mut camera_transform) = camera_query.get_single_mut() else {
+        return;
+    };
+    let Ok(target_transform) = target_query.get_single() else {
+        return;
+    };
 
-        let target_pos = target_transform.translation().xy();
-        camera_transform.translation.x = target_pos.x;
-        camera_transform.translation.y = target_pos.y;
-    }
+    let target_pos = target_transform.translation().xy();
+    camera_transform.translation.x = target_pos.x;
+    camera_transform.translation.y = target_pos.y;
+}
 
-    pub fn follow_target(
-        mut camera_query: Query<(&GameCamera, &mut Transform)>,
-        target_query: Query<&GlobalTransform, With<PlayerControl>>,
-        time: Res<Time>,
-    ) {
-        let Ok((camera, mut camera_transform)) = camera_query.get_single_mut() else {
-            return;
-        };
-        let Ok(target_transform) = target_query.get_single() else {
-            return;
-        };
+fn camera_follow_target(
+    mut camera_query: Query<(&GameCamera, &mut Transform)>,
+    target_query: Query<&GlobalTransform, With<PlayerControl>>,
+    time: Res<Time>,
+) {
+    let Ok((camera, mut camera_transform)) = camera_query.get_single_mut() else {
+        return;
+    };
+    let Ok(target_transform) = target_query.get_single() else {
+        return;
+    };
 
-        let dt = time.delta_seconds();
+    let dt = time.delta_seconds();
 
-        let camera_pos = camera_transform.translation.xy();
-        let target_pos = target_transform.translation().xy();
+    let camera_pos = camera_transform.translation.xy();
+    let target_pos = target_transform.translation().xy();
 
-        camera_transform.translation = camera_pos
-            .smooth_approach(target_pos, camera.rate, dt)
-            .extend(camera_transform.translation.z);
-    }
+    camera_transform.translation = camera_pos
+        .smooth_approach(target_pos, camera.rate, dt)
+        .extend(camera_transform.translation.z);
 }
 
 pub trait SmoothApproach {

@@ -7,7 +7,7 @@ pub struct FollowPlugin;
 impl Plugin for FollowPlugin {
     fn build(&self, app: &mut App) {
         app.register_type::<Follow>()
-            .add_systems(Update, Follow::apply.in_set(UpdateSet::Update));
+            .add_systems(Update, follow.in_set(UpdateSet::Update));
     }
 }
 
@@ -15,17 +15,12 @@ impl Plugin for FollowPlugin {
 #[derive(Component, Reflect)]
 pub struct Follow(pub Entity);
 
-impl Follow {
-    pub fn apply(
-        mut follow_query: Query<(&Follow, &mut Transform)>,
-        gt_query: Query<&GlobalTransform>,
-    ) {
-        for (follow, mut transform) in &mut follow_query {
-            let Ok(&follow_gt) = gt_query.get(follow.0) else {
-                continue;
-            };
+fn follow(mut follow_query: Query<(&Follow, &mut Transform)>, gt_query: Query<&GlobalTransform>) {
+    for (follow, mut transform) in &mut follow_query {
+        let Ok(&follow_gt) = gt_query.get(follow.0) else {
+            continue;
+        };
 
-            *transform = follow_gt.compute_transform();
-        }
+        *transform = follow_gt.compute_transform();
     }
 }

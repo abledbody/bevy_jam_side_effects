@@ -16,7 +16,7 @@ use crate::common::asset::AudioKey;
 use crate::common::asset::Handles;
 use crate::common::camera::GameCameraTemplate;
 use crate::game::actor::enemy::Alarm;
-use crate::game::actor::enemy::DetectEvent;
+use crate::game::actor::enemy::AlertEvent;
 use crate::game::actor::player::Playthrough;
 use crate::game::combat::DeathEvent;
 use crate::game::combat::HitEvent;
@@ -196,7 +196,7 @@ fn restart_game(
     mut collision_events: ResMut<Events<CollisionEvent>>,
     mut hit_events: ResMut<Events<HitEvent>>,
     mut death_events: ResMut<Events<DeathEvent>>,
-    mut detect_events: ResMut<Events<DetectEvent>>,
+    mut detect_events: ResMut<Events<AlertEvent>>,
     mut level_selection: ResMut<LevelSelection>,
     mut playthrough: ResMut<Playthrough>,
     mut victory: ResMut<Victory>,

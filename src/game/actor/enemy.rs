@@ -32,13 +32,15 @@ impl Plugin for EnemyPlugin {
         app.register_type::<Alarm>().init_resource::<Alarm>();
 
         app.register_type::<DifficultyCurve>()
-            .add_systems(Update, DifficultyCurve::apply.in_set(UpdateSet::Start));
+            .add_systems(Update, apply_difficulty_curve.in_set(UpdateSet::Start));
 
-        app.register_type::<EnemyAi>()
-            .add_systems(Update, EnemyAi::think.in_set(UpdateSet::RecordIntents));
+        app.register_type::<EnemyAi>().add_systems(
+            Update,
+            record_enemy_intents.in_set(UpdateSet::RecordIntents),
+        );
 
-        app.add_event::<DetectEvent>()
-            .add_systems(Update, DetectEvent::detect.in_set(UpdateSet::Start));
+        app.add_event::<AlertEvent>()
+            .add_systems(Update, detect_alert_events.in_set(UpdateSet::Start));
     }
 }
 
@@ -171,7 +173,7 @@ impl EnemyTemplate {
             offset: Transform::from_xyz(0.0, -6.0, 0.0),
         }
         .spawn(commands);
-        let detector = DetectorTemplate.spawn(commands);
+        let detector = AlertSensorTemplate.spawn(commands);
 
         // Parent
         let mut actor = Actor::enemy();
@@ -263,25 +265,23 @@ impl Default for DifficultyCurve {
     }
 }
 
-impl DifficultyCurve {
-    pub fn apply(
-        alarm: Res<Alarm>,
-        mut curve_query: Query<(&DifficultyCurve, &mut EnemyAi, &mut Actor, &Children)>,
-        mut detector_query: Query<&mut Transform, With<Detector>>,
-    ) {
-        for (curve, mut enemy, mut actor, children) in &mut curve_query {
-            actor.speed = curve.speed.at(alarm.0);
-            let detect_radius = curve.detect_radius.at(alarm.0);
-            enemy.follow_radius = curve.follow_radius.at(alarm.0);
-            enemy.attack_radius = curve.attack_radius.at(alarm.0);
-            enemy.attack_cooldown = curve.attack_cooldown.at(alarm.0);
+fn apply_difficulty_curve(
+    alarm: Res<Alarm>,
+    mut curve_query: Query<(&DifficultyCurve, &mut EnemyAi, &mut Actor, &Children)>,
+    mut detector_query: Query<&mut Transform, With<AlertSensor>>,
+) {
+    for (curve, mut enemy, mut actor, children) in &mut curve_query {
+        actor.speed = curve.speed.at(alarm.0);
+        let detect_radius = curve.detect_radius.at(alarm.0);
+        enemy.follow_radius = curve.follow_radius.at(alarm.0);
+        enemy.attack_radius = curve.attack_radius.at(alarm.0);
+        enemy.attack_cooldown = curve.attack_cooldown.at(alarm.0);
 
-            for &child in children {
-                let Ok(mut transform) = detector_query.get_mut(child) else {
-                    continue;
-                };
-                transform.scale = Vec2::splat(detect_radius).extend(1.0);
-            }
+        for &child in children {
+            let Ok(mut transform) = detector_query.get_mut(child) else {
+                continue;
+            };
+            transform.scale = Vec2::splat(detect_radius).extend(1.0);
         }
     }
 }
@@ -307,138 +307,134 @@ impl Default for EnemyAi {
     }
 }
 
-impl EnemyAi {
-    pub fn think(
-        mut commands: Commands,
-        mut enemy_query: Query<(&mut EnemyAi, &mut ActorIntent, &GlobalTransform)>,
-        mut detect_events: EventReader<DetectEvent>,
-        mut hit_events: EventReader<HitEvent>,
-        parent_query: Query<&Parent>,
-        player_query: Query<Entity, With<PlayerControl>>,
-        transform_query: Query<&GlobalTransform, Without<EnemyAi>>,
-        handle: Res<Handles>,
-        time: Res<Time>,
-        audio: Res<Audio>,
-    ) {
-        let Ok(player) = player_query.get_single() else {
-            let mut rng = thread_rng();
-            for (mut enemy, mut intent, _) in &mut enemy_query {
-                if enemy.target.is_none() {
-                    continue;
-                }
-
-                enemy.target = None;
-                intent.attack = None;
-                intent.movement =
-                    vec2(rng.gen_range(-1.0..1.0), rng.gen_range(-1.0..1.0)).normalize_or_zero();
-            }
-            return;
-        };
-
-        // Detect target
-        let mut handle_detection = |ai: &mut EnemyAi, enemy: Entity, target: Entity| {
-            if ai.target.is_some() {
-                return;
-            }
-
-            audio
-                .play(handle.audio[&AudioKey::GnollDetect].clone())
-                .with_volume(0.6);
-            ai.target = Some(target);
-            let popup = DetectPopupTemplate {
-                offset: Transform::from_xyz(0.0, 38.0, 0.0),
-            }
-            .spawn(&mut commands, &handle);
-            commands.entity(enemy).add_child(popup);
-        };
-
-        for &DetectEvent { sensor, target } in detect_events.read() {
-            let Ok(parent) = parent_query.get(sensor) else {
+fn record_enemy_intents(
+    mut commands: Commands,
+    mut enemy_query: Query<(&mut EnemyAi, &mut ActorIntent, &GlobalTransform)>,
+    mut detect_events: EventReader<AlertEvent>,
+    mut hit_events: EventReader<HitEvent>,
+    parent_query: Query<&Parent>,
+    player_query: Query<Entity, With<PlayerControl>>,
+    transform_query: Query<&GlobalTransform, Without<EnemyAi>>,
+    handle: Res<Handles>,
+    time: Res<Time>,
+    audio: Res<Audio>,
+) {
+    let Ok(player) = player_query.get_single() else {
+        let mut rng = thread_rng();
+        for (mut enemy, mut intent, _) in &mut enemy_query {
+            if enemy.target.is_none() {
                 continue;
-            };
-            if let Ok((mut enemy, ..)) = enemy_query.get_mut(parent.get()) {
-                handle_detection(&mut enemy, parent.get(), target);
             }
-        }
-        for &HitEvent { hurtbox, .. } in hit_events.read() {
-            if let Ok((mut enemy, ..)) = enemy_query.get_mut(hurtbox) {
-                // Assume the hitbox originated from the player
-                handle_detection(&mut enemy, hurtbox, player);
-            }
-        }
 
-        let dt = time.delta_seconds();
-        for (mut enemy, mut intent, actor_gt) in &mut enemy_query {
-            let Some(target) = enemy.target else { continue };
-            let Ok(target_gt) = transform_query.get(target) else {
-                continue;
-            };
-
+            enemy.target = None;
             intent.attack = None;
-            intent.movement = Vec2::ZERO;
+            intent.movement =
+                vec2(rng.gen_range(-1.0..1.0), rng.gen_range(-1.0..1.0)).normalize_or_zero();
+        }
+        return;
+    };
 
-            let target_delta = target_gt.translation().xy() - actor_gt.translation().xy();
-            let target_distance = target_delta.length();
+    // Detect target
+    let mut handle_detection = |ai: &mut EnemyAi, enemy: Entity, target: Entity| {
+        if ai.target.is_some() {
+            return;
+        }
 
-            // Give up on target
-            if target_distance > enemy.follow_radius {
-                enemy.target = None;
-                continue;
+        audio
+            .play(handle.audio[&AudioKey::GnollDetect].clone())
+            .with_volume(0.6);
+        ai.target = Some(target);
+        let popup = DetectPopupTemplate {
+            offset: Transform::from_xyz(0.0, 38.0, 0.0),
+        }
+        .spawn(&mut commands, &handle);
+        commands.entity(enemy).add_child(popup);
+    };
+
+    for &AlertEvent { sensor, target } in detect_events.read() {
+        let Ok(parent) = parent_query.get(sensor) else {
+            continue;
+        };
+        if let Ok((mut enemy, ..)) = enemy_query.get_mut(parent.get()) {
+            handle_detection(&mut enemy, parent.get(), target);
+        }
+    }
+    for &HitEvent { hurtbox, .. } in hit_events.read() {
+        if let Ok((mut enemy, ..)) = enemy_query.get_mut(hurtbox) {
+            // Assume the hitbox originated from the player
+            handle_detection(&mut enemy, hurtbox, player);
+        }
+    }
+
+    let dt = time.delta_seconds();
+    for (mut enemy, mut intent, actor_gt) in &mut enemy_query {
+        let Some(target) = enemy.target else { continue };
+        let Ok(target_gt) = transform_query.get(target) else {
+            continue;
+        };
+
+        intent.attack = None;
+        intent.movement = Vec2::ZERO;
+
+        let target_delta = target_gt.translation().xy() - actor_gt.translation().xy();
+        let target_distance = target_delta.length();
+
+        // Give up on target
+        if target_distance > enemy.follow_radius {
+            enemy.target = None;
+            continue;
+        }
+
+        // Move towards target
+        let target_direction = target_delta.normalize();
+        intent.movement = target_direction;
+
+        // Attack target
+        if target_distance <= enemy.attack_radius {
+            enemy.attack_cooldown_t -= dt;
+            if enemy.attack_cooldown_t <= 0.0 {
+                intent.attack = Some(target_direction);
+                enemy.attack_cooldown_t = enemy.attack_cooldown;
             }
-
-            // Move towards target
-            let target_direction = target_delta.normalize();
-            intent.movement = target_direction;
-
-            // Attack target
-            if target_distance <= enemy.attack_radius {
-                enemy.attack_cooldown_t -= dt;
-                if enemy.attack_cooldown_t <= 0.0 {
-                    intent.attack = Some(target_direction);
-                    enemy.attack_cooldown_t = enemy.attack_cooldown;
-                }
-            } else {
-                enemy.attack_cooldown_t = enemy.attack_cooldown / 4.0;
-            }
+        } else {
+            enemy.attack_cooldown_t = enemy.attack_cooldown / 4.0;
         }
     }
 }
 
 #[derive(Event)]
-pub struct DetectEvent {
+pub struct AlertEvent {
     pub sensor: Entity,
     pub target: Entity,
 }
 
-impl DetectEvent {
-    pub fn detect(
-        mut collision_events: EventReader<CollisionEvent>,
-        mut detect_events: EventWriter<DetectEvent>,
-        detector_query: Query<(), With<Detector>>,
-    ) {
-        for &event in collision_events.read() {
-            let CollisionEvent::Started(entity1, entity2, _) = event else {
-                continue;
-            };
+fn detect_alert_events(
+    mut collision_events: EventReader<CollisionEvent>,
+    mut detect_events: EventWriter<AlertEvent>,
+    detector_query: Query<(), With<AlertSensor>>,
+) {
+    for &event in collision_events.read() {
+        let CollisionEvent::Started(entity1, entity2, _) = event else {
+            continue;
+        };
 
-            let mut handle_collision = |sensor: Entity, target: Entity| {
-                if detector_query.contains(sensor) {
-                    detect_events.send(DetectEvent { sensor, target });
-                }
-            };
+        let mut handle_collision = |sensor: Entity, target: Entity| {
+            if detector_query.contains(sensor) {
+                detect_events.send(AlertEvent { sensor, target });
+            }
+        };
 
-            handle_collision(entity1, entity2);
-            handle_collision(entity2, entity1);
-        }
+        handle_collision(entity1, entity2);
+        handle_collision(entity2, entity1);
     }
 }
 
 #[derive(Component, Reflect)]
-pub struct Detector;
+pub struct AlertSensor;
 
-pub struct DetectorTemplate;
+pub struct AlertSensorTemplate;
 
-impl DetectorTemplate {
+impl AlertSensorTemplate {
     pub fn spawn(self, commands: &mut Commands) -> Entity {
         let mut detector = commands.spawn((
             TransformBundle::default(),
@@ -447,10 +443,10 @@ impl DetectorTemplate {
             Sensor,
             Faction::Enemy.hitbox_groups(),
             ActiveEvents::COLLISION_EVENTS,
-            Detector,
+            AlertSensor,
         ));
         #[cfg(feature = "dev")]
-        detector.insert(Name::new("Detector"));
+        detector.insert(Name::new("AlertSensor"));
 
         detector.id()
     }

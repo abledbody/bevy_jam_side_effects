@@ -18,42 +18,42 @@ impl Plugin for AnimationPlugin {
             .add_systems(
                 Update,
                 (
-                    WalkAnimation::update.in_set(UpdateSet::Start),
-                    WalkAnimation::trigger.in_set(UpdateSet::ApplyIntents),
-                    WalkAnimation::play_step_sound,
+                    update_walk_animation.in_set(UpdateSet::Start),
+                    trigger_walk_animation.in_set(UpdateSet::ApplyIntents),
+                    play_step_sound,
                 ),
             )
             .add_systems(
                 PostUpdate,
-                WalkAnimation::apply.in_set(PostTransformSet::Blend),
+                apply_walk_animation.in_set(PostTransformSet::Blend),
             );
 
         app.register_type::<AttackAnimation>()
             .add_systems(
                 Update,
                 (
-                    AttackAnimation::update.in_set(UpdateSet::Start),
-                    AttackAnimation::trigger.in_set(UpdateSet::ApplyIntents),
+                    update_attack_animation.in_set(UpdateSet::Start),
+                    trigger_attack_animation.in_set(UpdateSet::ApplyIntents),
                 )
                     .chain(),
             )
             .add_systems(
                 PostUpdate,
-                AttackAnimation::apply.in_set(PostTransformSet::Blend),
+                apply_attack_animation.in_set(PostTransformSet::Blend),
             );
 
         app.register_type::<FlinchAnimation>()
-            .add_systems(Update, FlinchAnimation::update.in_set(UpdateSet::Start))
+            .add_systems(Update, update_flinch_animation.in_set(UpdateSet::Start))
             .add_systems(
                 PostUpdate,
-                FlinchAnimation::apply.in_set(PostTransformSet::Blend),
+                apply_flinch_animation.in_set(PostTransformSet::Blend),
             );
 
         app.register_type::<DeathAnimation>()
-            .add_systems(Update, DeathAnimation::update.in_set(UpdateSet::Start))
+            .add_systems(Update, update_death_animation.in_set(UpdateSet::Start))
             .add_systems(
                 PostUpdate,
-                DeathAnimation::apply.in_set(PostTransformSet::Blend),
+                apply_death_animation.in_set(PostTransformSet::Blend),
             );
     }
 }
@@ -79,69 +79,67 @@ impl Default for WalkAnimation {
     }
 }
 
-impl WalkAnimation {
-    pub fn trigger(
-        mut animation_query: Query<(&mut WalkAnimation, &Parent)>,
-        intent_query: Query<&ActorIntent>,
-    ) {
-        for (mut anim, parent) in &mut animation_query {
-            if anim.t < 1.0 {
-                anim.start_frame = false;
-                continue;
-            }
-
-            let Ok(intent) = intent_query.get(parent.get()) else {
-                continue;
-            };
-            if intent.movement.length() == 0.0 {
-                anim.t = 1.0;
-                continue;
-            }
-
-            anim.start_frame = true;
-            anim.t = anim.t.fract();
+fn trigger_walk_animation(
+    mut animation_query: Query<(&mut WalkAnimation, &Parent)>,
+    intent_query: Query<&ActorIntent>,
+) {
+    for (mut anim, parent) in &mut animation_query {
+        if anim.t < 1.0 {
+            anim.start_frame = false;
+            continue;
         }
-    }
 
-    pub fn play_step_sound(
-        player_query: Query<&GlobalTransform, With<PlayerControl>>,
-        animation_query: Query<(&WalkAnimation, &GlobalTransform), Without<PlayerControl>>,
-        audio: Res<Audio>,
-    ) {
-        let Ok(player) = player_query.get_single() else {
-            return;
+        let Ok(intent) = intent_query.get(parent.get()) else {
+            continue;
         };
-        let player_pos = player.translation().xy();
-
-        for (anim, transform) in &animation_query {
-            if !anim.start_frame {
-                continue;
-            }
-            let Some(sound) = &anim.sound else { continue };
-
-            let pos = transform.translation().xy();
-            let dist_to_player = (player_pos - pos).length() as f64;
-            let max_volume = 0.3;
-
-            audio
-                .play(sound.clone())
-                .with_volume(max_volume / (0.2 * dist_to_player).max(1.0));
+        if intent.movement.length() == 0.0 {
+            anim.t = 1.0;
+            continue;
         }
+
+        anim.start_frame = true;
+        anim.t = anim.t.fract();
     }
+}
 
-    pub fn update(mut animation_query: Query<&mut WalkAnimation>, time: Res<Time>) {
-        let dt = time.delta_seconds();
+fn play_step_sound(
+    player_query: Query<&GlobalTransform, With<PlayerControl>>,
+    animation_query: Query<(&WalkAnimation, &GlobalTransform), Without<PlayerControl>>,
+    audio: Res<Audio>,
+) {
+    let Ok(player) = player_query.get_single() else {
+        return;
+    };
+    let player_pos = player.translation().xy();
 
-        for mut anim in &mut animation_query {
-            anim.t += dt / anim.air_time;
+    for (anim, transform) in &animation_query {
+        if !anim.start_frame {
+            continue;
         }
+        let Some(sound) = &anim.sound else { continue };
+
+        let pos = transform.translation().xy();
+        let dist_to_player = (player_pos - pos).length() as f64;
+        let max_volume = 0.3;
+
+        audio
+            .play(sound.clone())
+            .with_volume(max_volume / (0.2 * dist_to_player).max(1.0));
     }
+}
 
-    pub fn apply(mut animation_query: Query<(&WalkAnimation, &mut Transform)>) {
-        for (anim, mut transform) in &mut animation_query {
-            // PI is used here because we only want half a rotation.
-            transform.translation.y += anim.height * (anim.t.min(1.0) * PI).sin();
-        }
+fn update_walk_animation(mut animation_query: Query<&mut WalkAnimation>, time: Res<Time>) {
+    let dt = time.delta_seconds();
+
+    for mut anim in &mut animation_query {
+        anim.t += dt / anim.air_time;
+    }
+}
+
+fn apply_walk_animation(mut animation_query: Query<(&WalkAnimation, &mut Transform)>) {
+    for (anim, mut transform) in &mut animation_query {
+        // PI is used here because we only want half a rotation.
+        transform.translation.y += anim.height * (anim.t.min(1.0) * PI).sin();
     }
 }
 
@@ -154,40 +152,6 @@ pub struct AttackAnimation {
     pub t: f32,
 }
 
-impl AttackAnimation {
-    pub fn trigger(
-        mut animation_query: Query<(&mut AttackAnimation, &Parent)>,
-        intent_query: Query<&ActorIntent>,
-    ) {
-        for (mut anim, parent) in &mut animation_query {
-            let Ok(intent) = intent_query.get(parent.get()) else {
-                continue;
-            };
-            let Some(attack) = intent.attack else {
-                continue;
-            };
-
-            anim.t = 0.0;
-            anim.direction = vec2(attack.x.abs(), attack.y);
-            anim.x_sign = attack.x.signum();
-        }
-    }
-
-    pub fn update(mut animation_query: Query<&mut AttackAnimation>, time: Res<Time>) {
-        let dt = time.delta_seconds();
-
-        for mut anim in &mut animation_query {
-            anim.t = (anim.t + dt / anim.duration).min(1.0);
-        }
-    }
-
-    pub fn apply(mut animation_query: Query<(&AttackAnimation, &mut Transform)>) {
-        for (anim, mut transform) in &mut animation_query {
-            transform.translation += (anim.direction * anim.distance * (1.0 - anim.t)).extend(0.0);
-        }
-    }
-}
-
 impl Default for AttackAnimation {
     fn default() -> Self {
         Self {
@@ -197,6 +161,38 @@ impl Default for AttackAnimation {
             x_sign: 0.0,
             t: 1.0,
         }
+    }
+}
+
+fn trigger_attack_animation(
+    mut animation_query: Query<(&mut AttackAnimation, &Parent)>,
+    intent_query: Query<&ActorIntent>,
+) {
+    for (mut anim, parent) in &mut animation_query {
+        let Ok(intent) = intent_query.get(parent.get()) else {
+            continue;
+        };
+        let Some(attack) = intent.attack else {
+            continue;
+        };
+
+        anim.t = 0.0;
+        anim.direction = vec2(attack.x.abs(), attack.y);
+        anim.x_sign = attack.x.signum();
+    }
+}
+
+fn update_attack_animation(mut animation_query: Query<&mut AttackAnimation>, time: Res<Time>) {
+    let dt = time.delta_seconds();
+
+    for mut anim in &mut animation_query {
+        anim.t = (anim.t + dt / anim.duration).min(1.0);
+    }
+}
+
+fn apply_attack_animation(mut animation_query: Query<(&AttackAnimation, &mut Transform)>) {
+    for (anim, mut transform) in &mut animation_query {
+        transform.translation += (anim.direction * anim.distance * (1.0 - anim.t)).extend(0.0);
     }
 }
 
@@ -226,24 +222,22 @@ impl FlinchAnimation {
         self.t = 0.0;
         self.direction = direction;
     }
+}
 
-    pub fn update(mut animation_query: Query<&mut FlinchAnimation>, time: Res<Time>) {
-        let dt = time.delta_seconds();
+fn update_flinch_animation(mut animation_query: Query<&mut FlinchAnimation>, time: Res<Time>) {
+    let dt = time.delta_seconds();
 
-        for mut anim in &mut animation_query {
-            anim.t = (anim.t + dt / anim.duration).min(1.0);
-        }
+    for mut anim in &mut animation_query {
+        anim.t = (anim.t + dt / anim.duration).min(1.0);
     }
+}
 
-    pub fn apply(mut animation_query: Query<(&FlinchAnimation, &mut Transform)>) {
-        for (anim, mut transform) in &mut animation_query {
-            let agnostic_direction = vec2(-anim.direction.x.abs(), anim.direction.y);
-            transform.translation +=
-                (agnostic_direction * anim.distance * (1.0 - anim.t)).extend(0.0);
-            transform.rotation *= Quat::from_rotation_z(
-                -(anim.direction.x.signum()) * anim.rotation * (1.0 - anim.t),
-            );
-        }
+fn apply_flinch_animation(mut animation_query: Query<(&FlinchAnimation, &mut Transform)>) {
+    for (anim, mut transform) in &mut animation_query {
+        let agnostic_direction = vec2(-anim.direction.x.abs(), anim.direction.y);
+        transform.translation += (agnostic_direction * anim.distance * (1.0 - anim.t)).extend(0.0);
+        transform.rotation *=
+            Quat::from_rotation_z(-(anim.direction.x.signum()) * anim.rotation * (1.0 - anim.t));
     }
 }
 
@@ -270,21 +264,19 @@ impl Default for DeathAnimation {
     }
 }
 
-impl DeathAnimation {
-    pub fn update(mut animation_query: Query<&mut DeathAnimation>, time: Res<Time>) {
-        let dt = time.delta_seconds();
+fn update_death_animation(mut animation_query: Query<&mut DeathAnimation>, time: Res<Time>) {
+    let dt = time.delta_seconds();
 
-        for mut anim in &mut animation_query {
-            anim.air_t = (anim.air_t + dt / anim.air_time).min(1.0);
-            anim.rot_t = (anim.rot_t + dt / anim.rotate_time).min(1.0);
-        }
+    for mut anim in &mut animation_query {
+        anim.air_t = (anim.air_t + dt / anim.air_time).min(1.0);
+        anim.rot_t = (anim.rot_t + dt / anim.rotate_time).min(1.0);
     }
+}
 
-    pub fn apply(mut animation_query: Query<(&DeathAnimation, &mut Transform)>) {
-        for (anim, mut transform) in &mut animation_query {
-            transform.translation.y +=
-                anim.height * (anim.air_t * PI).sin() + anim.final_height * anim.air_t;
-            transform.rotation *= Quat::from_rotation_z((anim.rot_t * TAU / 4.0).sin() * TAU / 4.0);
-        }
+fn apply_death_animation(mut animation_query: Query<(&DeathAnimation, &mut Transform)>) {
+    for (anim, mut transform) in &mut animation_query {
+        transform.translation.y +=
+            anim.height * (anim.air_t * PI).sin() + anim.final_height * anim.air_t;
+        transform.rotation *= Quat::from_rotation_z((anim.rot_t * TAU / 4.0).sin() * TAU / 4.0);
     }
 }

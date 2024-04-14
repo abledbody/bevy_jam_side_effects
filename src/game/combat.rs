@@ -21,7 +21,7 @@ pub struct CombatPlugin;
 impl Plugin for CombatPlugin {
     fn build(&self, app: &mut App) {
         app.add_event::<HitEvent>()
-            .add_systems(Update, HitEvent::detect.in_set(UpdateSet::Start));
+            .add_systems(Update, detect_hit_events.in_set(UpdateSet::Start));
 
         app.add_event::<DeathEvent>();
 
@@ -29,7 +29,7 @@ impl Plugin for CombatPlugin {
             Update,
             (
                 spawn_hitbox_from_attack.in_set(UpdateSet::ApplyIntents),
-                (HitEffects::apply, HitEffects::clean_up)
+                (apply_hit_effects, clean_up_hitboxes)
                     .chain()
                     .in_set(UpdateSet::HandleEvents),
             )
@@ -37,10 +37,10 @@ impl Plugin for CombatPlugin {
         );
 
         app.register_type::<HurtEffects>()
-            .add_systems(Update, HurtEffects::apply.in_set(UpdateSet::HandleEvents));
+            .add_systems(Update, apply_hurt_effects.in_set(UpdateSet::HandleEvents));
 
         app.register_type::<DeathEffects>()
-            .add_systems(Update, DeathEffects::apply.in_set(UpdateSet::HandleEvents));
+            .add_systems(Update, apply_death_effects.in_set(UpdateSet::HandleEvents));
     }
 }
 
@@ -148,30 +148,28 @@ pub struct HitEvent {
     pub hurtbox: Entity,
 }
 
-impl HitEvent {
-    pub fn detect(
-        mut collision_events: EventReader<CollisionEvent>,
-        mut hit_events: EventWriter<HitEvent>,
-        hit_query: Query<&HitEffects>,
-    ) {
-        for &event in collision_events.read() {
-            let CollisionEvent::Started(entity1, entity2, _) = event else {
-                continue;
-            };
+fn detect_hit_events(
+    mut collision_events: EventReader<CollisionEvent>,
+    mut hit_events: EventWriter<HitEvent>,
+    hit_query: Query<&HitEffects>,
+) {
+    for &event in collision_events.read() {
+        let CollisionEvent::Started(entity1, entity2, _) = event else {
+            continue;
+        };
 
-            let mut handle_collision = |hitbox: Entity, target: Entity| {
-                if !hit_query.contains(hitbox) {
-                    return;
-                }
-                hit_events.send(HitEvent {
-                    hitbox,
-                    hurtbox: target,
-                });
-            };
+        let mut handle_collision = |hitbox: Entity, target: Entity| {
+            if !hit_query.contains(hitbox) {
+                return;
+            }
+            hit_events.send(HitEvent {
+                hitbox,
+                hurtbox: target,
+            });
+        };
 
-            handle_collision(entity1, entity2);
-            handle_collision(entity2, entity1);
-        }
+        handle_collision(entity1, entity2);
+        handle_collision(entity2, entity1);
     }
 }
 
@@ -184,70 +182,68 @@ pub struct HitEffects {
     pub failure_sound: Option<Handle<AudioSource>>,
 }
 
-impl HitEffects {
-    pub fn apply(
-        mut hit_events: EventReader<HitEvent>,
-        mut death_events: EventWriter<DeathEvent>,
-        mut hitbox_query: Query<&mut HitEffects>,
-        mut hurtbox_query: Query<(
-            Option<&mut Health>,
-            Option<&mut Velocity>,
-            Option<&Children>,
-        )>,
-        mut body_query: Query<&mut FlinchAnimation>,
-        audio: Res<Audio>,
-    ) {
-        for &HitEvent { hitbox, hurtbox } in hit_events.read() {
-            let Ok(mut hit) = hitbox_query.get_mut(hitbox) else {
-                continue;
-            };
+fn apply_hit_effects(
+    mut hit_events: EventReader<HitEvent>,
+    mut death_events: EventWriter<DeathEvent>,
+    mut hitbox_query: Query<&mut HitEffects>,
+    mut hurtbox_query: Query<(
+        Option<&mut Health>,
+        Option<&mut Velocity>,
+        Option<&Children>,
+    )>,
+    mut body_query: Query<&mut FlinchAnimation>,
+    audio: Res<Audio>,
+) {
+    for &HitEvent { hitbox, hurtbox } in hit_events.read() {
+        let Ok(mut hit) = hitbox_query.get_mut(hitbox) else {
+            continue;
+        };
 
-            if let Some(sound) = &hit.success_sound {
-                audio.play(sound.clone()).with_volume(0.4);
+        if let Some(sound) = &hit.success_sound {
+            audio.play(sound.clone()).with_volume(0.4);
+        }
+        hit.success = true;
+
+        let Ok((health, velocity, children)) = hurtbox_query.get_mut(hurtbox) else {
+            continue;
+        };
+
+        // Damage
+        if let Some(mut health) = health {
+            if 0.0 < health.current && health.current <= hit.damage {
+                death_events.send(DeathEvent(hurtbox));
             }
-            hit.success = true;
+            health.current -= hit.damage;
+        }
 
-            let Ok((health, velocity, children)) = hurtbox_query.get_mut(hurtbox) else {
-                continue;
-            };
+        // Knockback
+        if let Some(mut velocity) = velocity {
+            let scale = 40.0;
+            velocity.linvel = hit.knockback * scale;
+        }
 
-            // Damage
-            if let Some(mut health) = health {
-                if 0.0 < health.current && health.current <= hit.damage {
-                    death_events.send(DeathEvent(hurtbox));
-                }
-                health.current -= hit.damage;
-            }
-
-            // Knockback
-            if let Some(mut velocity) = velocity {
-                let scale = 40.0;
-                velocity.linvel = hit.knockback * scale;
-            }
-
-            // Flinch
-            for &child in children.into_iter().flatten() {
-                if let Ok(mut flinch) = body_query.get_mut(child) {
-                    flinch.trigger(hit.knockback.normalize_or_zero());
-                }
+        // Flinch
+        for &child in children.into_iter().flatten() {
+            if let Ok(mut flinch) = body_query.get_mut(child) {
+                flinch.trigger(hit.knockback.normalize_or_zero());
             }
         }
     }
+}
 
-    pub fn clean_up(
-        mut despawn: ResMut<DespawnSet>,
-        hitbox_query: Query<(Entity, &HitEffects)>,
-        audio: Res<Audio>,
-    ) {
-        for (entity, effects) in &hitbox_query {
-            if !effects.success {
-                if let Some(sound) = &effects.failure_sound {
-                    audio.play(sound.clone()).with_volume(0.4);
-                }
+fn clean_up_hitboxes(
+    mut despawn: ResMut<DespawnSet>,
+    hitbox_query: Query<(Entity, &HitEffects)>,
+    audio: Res<Audio>,
+) {
+    for (entity, effects) in &hitbox_query {
+        if !effects.success {
+            if let Some(sound) = &effects.failure_sound {
+                audio.play(sound.clone()).with_volume(0.4);
             }
-
-            despawn.recursive(entity);
         }
+
+        despawn.recursive(entity);
     }
 }
 
@@ -257,25 +253,23 @@ pub struct HurtEffects {
     pub sound: Option<Handle<AudioSource>>,
 }
 
-impl HurtEffects {
-    pub fn apply(
-        mut hit_events: EventReader<HitEvent>,
-        hurt_effects_query: Query<&HurtEffects>,
-        mut alarm: ResMut<Alarm>,
-        audio: Res<Audio>,
-    ) {
-        for &HitEvent { hurtbox, .. } in hit_events.read() {
-            let Ok(hurt) = hurt_effects_query.get(hurtbox) else {
-                continue;
-            };
+fn apply_hurt_effects(
+    mut hit_events: EventReader<HitEvent>,
+    hurt_effects_query: Query<&HurtEffects>,
+    mut alarm: ResMut<Alarm>,
+    audio: Res<Audio>,
+) {
+    for &HitEvent { hurtbox, .. } in hit_events.read() {
+        let Ok(hurt) = hurt_effects_query.get(hurtbox) else {
+            continue;
+        };
 
-            // Increase alarm
-            alarm.increase(hurt.increase_alarm);
+        // Increase alarm
+        alarm.increase(hurt.increase_alarm);
 
-            // Play sound
-            if let Some(sound) = &hurt.sound {
-                audio.play(sound.clone()).with_volume(0.4);
-            }
+        // Play sound
+        if let Some(sound) = &hurt.sound {
+            audio.play(sound.clone()).with_volume(0.4);
         }
     }
 }
@@ -288,45 +282,43 @@ pub struct DeathEffects {
     pub increase_alarm: f32,
 }
 
-impl DeathEffects {
-    pub fn apply(
-        mut commands: Commands,
-        mut death_events: EventReader<DeathEvent>,
-        death_effects_query: Query<&DeathEffects>,
-        mut hurt_effects_query: Query<&mut HurtEffects>,
-        mut actor_query: Query<&mut Actor>,
-        mut alarm: ResMut<Alarm>,
-        children_query: Query<&Children>,
-        animation_query: Query<(), With<WalkAnimation>>, // And you can use animation_query.contains(child)
-    ) {
-        for &DeathEvent(entity) in death_events.read() {
-            // Turn into a dead body
-            commands
-                .entity(entity)
-                .insert(ColliderMassProperties::Mass(25.0))
-                .remove::<ActorIntent>();
-            if let Ok(mut hurt_effects) = hurt_effects_query.get_mut(entity) {
-                hurt_effects.increase_alarm = 0.0;
-            }
-            if let Ok(mut actor) = actor_query.get_mut(entity) {
-                actor.brake_deceleration = 700.0;
-            }
+fn apply_death_effects(
+    mut commands: Commands,
+    mut death_events: EventReader<DeathEvent>,
+    death_effects_query: Query<&DeathEffects>,
+    mut hurt_effects_query: Query<&mut HurtEffects>,
+    mut actor_query: Query<&mut Actor>,
+    mut alarm: ResMut<Alarm>,
+    children_query: Query<&Children>,
+    animation_query: Query<(), With<WalkAnimation>>, // And you can use animation_query.contains(child)
+) {
+    for &DeathEvent(entity) in death_events.read() {
+        // Turn into a dead body
+        commands
+            .entity(entity)
+            .insert(ColliderMassProperties::Mass(25.0))
+            .remove::<ActorIntent>();
+        if let Ok(mut hurt_effects) = hurt_effects_query.get_mut(entity) {
+            hurt_effects.increase_alarm = 0.0;
+        }
+        if let Ok(mut actor) = actor_query.get_mut(entity) {
+            actor.brake_deceleration = 700.0;
+        }
 
-            // Play death animation
-            if let Ok(children) = children_query.get(entity) {
-                for &child in children {
-                    if animation_query.contains(child) {
-                        commands.entity(child).insert(DeathAnimation::default());
-                    }
+        // Play death animation
+        if let Ok(children) = children_query.get(entity) {
+            for &child in children {
+                if animation_query.contains(child) {
+                    commands.entity(child).insert(DeathAnimation::default());
                 }
             }
-
-            let Ok(death) = death_effects_query.get(entity) else {
-                continue;
-            };
-
-            // Increase alarm
-            alarm.increase(death.increase_alarm);
         }
+
+        let Ok(death) = death_effects_query.get(entity) else {
+            continue;
+        };
+
+        // Increase alarm
+        alarm.increase(death.increase_alarm);
     }
 }

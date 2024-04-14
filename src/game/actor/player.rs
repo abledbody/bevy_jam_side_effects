@@ -31,14 +31,11 @@ impl Plugin for PlayerPlugin {
 
         app.register_type::<Playthrough>()
             .init_resource::<Playthrough>()
-            .add_systems(
-                Update,
-                Playthrough::detect_defection.in_set(UpdateSet::Start),
-            );
+            .add_systems(Update, detect_defection.in_set(UpdateSet::Start));
 
         app.register_type::<PlayerControl>().add_systems(
             Update,
-            PlayerControl::record_intent.in_set(UpdateSet::RecordIntents),
+            record_player_intent.in_set(UpdateSet::RecordIntents),
         );
     }
 }
@@ -60,45 +57,43 @@ pub struct Playthrough {
     pub health: Option<f32>,
 }
 
-impl Playthrough {
-    pub fn detect_defection(
-        mut collision_events: EventReader<CollisionEvent>,
-        plate_query: Query<(), With<Plate>>,
-        player_query: Query<&Children, With<PlayerControl>>,
-        mut body_query: Query<&mut Handle<Image>, With<Body>>,
-        handle: Res<Handles>,
-        mut playthrough: ResMut<Playthrough>,
-        mut alarm: ResMut<Alarm>,
-        time: Res<Time>,
-    ) {
-        if playthrough.defected {
-            return;
-        }
-        let Ok(children) = player_query.get_single() else {
-            return;
+fn detect_defection(
+    mut collision_events: EventReader<CollisionEvent>,
+    plate_query: Query<(), With<Plate>>,
+    player_query: Query<&Children, With<PlayerControl>>,
+    mut body_query: Query<&mut Handle<Image>, With<Body>>,
+    handle: Res<Handles>,
+    mut playthrough: ResMut<Playthrough>,
+    mut alarm: ResMut<Alarm>,
+    time: Res<Time>,
+) {
+    if playthrough.defected {
+        return;
+    }
+    let Ok(children) = player_query.get_single() else {
+        return;
+    };
+
+    for &event in collision_events.read() {
+        let CollisionEvent::Started(entity1, entity2, _) = event else {
+            continue;
         };
 
-        for &event in collision_events.read() {
-            let CollisionEvent::Started(entity1, entity2, _) = event else {
+        if !plate_query.contains(entity1) && !plate_query.contains(entity2) {
+            continue;
+        }
+
+        playthrough.defected = true;
+        playthrough.start_time = time.elapsed_seconds();
+        alarm.increase(0.065);
+        for &child in children {
+            let Ok(mut body) = body_query.get_mut(child) else {
                 continue;
             };
-
-            if !plate_query.contains(entity1) && !plate_query.contains(entity2) {
-                continue;
-            }
-
-            playthrough.defected = true;
-            playthrough.start_time = time.elapsed_seconds();
-            alarm.increase(0.065);
-            for &child in children {
-                let Ok(mut body) = body_query.get_mut(child) else {
-                    continue;
-                };
-                *body = handle.image[&ImageKey::GnollBlue].clone();
-            }
-
-            return;
+            *body = handle.image[&ImageKey::GnollBlue].clone();
         }
+
+        return;
     }
 }
 
@@ -107,56 +102,54 @@ pub struct PlayerControl {
     pub deny_input: bool,
 }
 
-impl PlayerControl {
-    pub fn record_intent(
-        mut player_query: Query<(
-            &ActionState<PlayerAction>,
-            &mut ActorIntent,
-            &GlobalTransform,
-            &PlayerControl,
-        )>,
-        primary_window_query: Query<&Window, With<PrimaryWindow>>,
-        camera: Query<(&Camera, &GlobalTransform), With<GameCamera>>,
-    ) {
-        let Ok(window) = primary_window_query.get_single() else {
-            return;
-        };
-        let Ok((camera, cam_gt)) = camera.get_single() else {
-            return;
-        };
-        let Ok((action, mut intent, player_gt, player)) = player_query.get_single_mut() else {
-            return;
-        };
-        if player.deny_input {
-            return;
-        }
+fn record_player_intent(
+    mut player_query: Query<(
+        &ActionState<PlayerAction>,
+        &mut ActorIntent,
+        &GlobalTransform,
+        &PlayerControl,
+    )>,
+    primary_window_query: Query<&Window, With<PrimaryWindow>>,
+    camera: Query<(&Camera, &GlobalTransform), With<GameCamera>>,
+) {
+    let Ok(window) = primary_window_query.get_single() else {
+        return;
+    };
+    let Ok((camera, cam_gt)) = camera.get_single() else {
+        return;
+    };
+    let Ok((action, mut intent, player_gt, player)) = player_query.get_single_mut() else {
+        return;
+    };
+    if player.deny_input {
+        return;
+    }
 
-        intent.movement = Vec2::ZERO;
-        if action.pressed(PlayerAction::Move) {
-            if let Some(axis_pair) = action.clamped_axis_pair(PlayerAction::Move) {
-                intent.movement = axis_pair.xy();
-            }
+    intent.movement = Vec2::ZERO;
+    if action.pressed(PlayerAction::Move) {
+        if let Some(axis_pair) = action.clamped_axis_pair(PlayerAction::Move) {
+            intent.movement = axis_pair.xy();
         }
+    }
 
-        let mut aim = None;
-        if let Some(axis_pair) = action.clamped_axis_pair(PlayerAction::Aim) {
-            let axis_pair = axis_pair.xy();
-            if axis_pair != Vec2::ZERO {
-                aim = Some(axis_pair);
-            }
+    let mut aim = None;
+    if let Some(axis_pair) = action.clamped_axis_pair(PlayerAction::Aim) {
+        let axis_pair = axis_pair.xy();
+        if axis_pair != Vec2::ZERO {
+            aim = Some(axis_pair);
         }
+    }
 
-        intent.attack = None;
-        if action.just_pressed(PlayerAction::Attack) {
-            intent.attack = aim
-                .or_else(|| {
-                    window
-                        .cursor_position()
-                        .and_then(|p| camera.viewport_to_world_2d(cam_gt, p))
-                        .map(|p| p - player_gt.translation().xy())
-                })
-                .map(|d| d.normalize());
-        }
+    intent.attack = None;
+    if action.just_pressed(PlayerAction::Attack) {
+        intent.attack = aim
+            .or_else(|| {
+                window
+                    .cursor_position()
+                    .and_then(|p| camera.viewport_to_world_2d(cam_gt, p))
+                    .map(|p| p - player_gt.translation().xy())
+            })
+            .map(|d| d.normalize());
     }
 }
 

@@ -29,8 +29,8 @@ impl Plugin for ActorPlugin {
         app.register_type::<Actor>().add_systems(
             Update,
             (
-                Actor::set_facing.in_set(UpdateSet::ApplyIntents),
-                Actor::apply_movement.in_set(UpdateSet::ApplyIntents),
+                set_actor_facing.in_set(UpdateSet::ApplyIntents),
+                apply_actor_movement.in_set(UpdateSet::ApplyIntents),
             ),
         );
 
@@ -68,64 +68,6 @@ pub struct Actor {
 }
 
 impl Actor {
-    pub fn set_facing(
-        mut actor_query: Query<(&ActorIntent, Option<&Children>, &mut Facing)>,
-        attack_animation_query: Query<&AttackAnimation>,
-    ) {
-        for (intent, children, mut facing) in &mut actor_query {
-            if intent.movement.x == 0.0 && intent.attack.is_none() {
-                continue;
-            }
-
-            *facing = if intent.attack.map(|dir| dir.x < 0.0).unwrap_or_else(|| {
-                children
-                    .into_iter()
-                    .flatten()
-                    .filter_map(|&child| {
-                        attack_animation_query
-                            .get(child)
-                            .ok()
-                            .filter(|anim| anim.t < 1.0)
-                            .map(|anim| anim.x_sign < 0.0)
-                    })
-                    .next()
-                    .unwrap_or(intent.movement.x < 0.0)
-            }) {
-                Facing::Left
-            } else {
-                Facing::Right
-            };
-        }
-    }
-
-    pub fn apply_movement(
-        mut actor_query: Query<(&Actor, &mut Velocity, Option<&ActorIntent>)>,
-        time: Res<Time>,
-    ) {
-        let dt = time.delta_seconds();
-        for (actor, mut velocity, intent) in &mut actor_query {
-            let (intent_direction, intent_magnitude) = if let Some(intent) = intent {
-                (
-                    intent.movement.normalize_or_zero(),
-                    intent.movement.length().min(1.0),
-                )
-            } else {
-                (Vec2::ZERO, 0.0)
-            };
-
-            let acceleration = if intent_direction.dot(velocity.linvel) <= 0.0 {
-                actor.brake_deceleration
-            } else {
-                actor.acceleration
-            };
-
-            let target_velocity = intent_direction * intent_magnitude * actor.speed;
-            velocity.linvel = velocity
-                .linvel
-                .move_towards(target_velocity, acceleration * dt);
-        }
-    }
-
     pub fn player() -> Self {
         Self {
             speed: 110.0,
@@ -150,6 +92,64 @@ impl Actor {
 impl Default for Actor {
     fn default() -> Self {
         Actor::player()
+    }
+}
+
+fn set_actor_facing(
+    mut actor_query: Query<(&ActorIntent, Option<&Children>, &mut Facing)>,
+    attack_animation_query: Query<&AttackAnimation>,
+) {
+    for (intent, children, mut facing) in &mut actor_query {
+        if intent.movement.x == 0.0 && intent.attack.is_none() {
+            continue;
+        }
+
+        *facing = if intent.attack.map(|dir| dir.x < 0.0).unwrap_or_else(|| {
+            children
+                .into_iter()
+                .flatten()
+                .filter_map(|&child| {
+                    attack_animation_query
+                        .get(child)
+                        .ok()
+                        .filter(|anim| anim.t < 1.0)
+                        .map(|anim| anim.x_sign < 0.0)
+                })
+                .next()
+                .unwrap_or(intent.movement.x < 0.0)
+        }) {
+            Facing::Left
+        } else {
+            Facing::Right
+        };
+    }
+}
+
+fn apply_actor_movement(
+    mut actor_query: Query<(&Actor, &mut Velocity, Option<&ActorIntent>)>,
+    time: Res<Time>,
+) {
+    let dt = time.delta_seconds();
+    for (actor, mut velocity, intent) in &mut actor_query {
+        let (intent_direction, intent_magnitude) = if let Some(intent) = intent {
+            (
+                intent.movement.normalize_or_zero(),
+                intent.movement.length().min(1.0),
+            )
+        } else {
+            (Vec2::ZERO, 0.0)
+        };
+
+        let acceleration = if intent_direction.dot(velocity.linvel) <= 0.0 {
+            actor.brake_deceleration
+        } else {
+            actor.acceleration
+        };
+
+        let target_velocity = intent_direction * intent_magnitude * actor.speed;
+        velocity.linvel = velocity
+            .linvel
+            .move_towards(target_velocity, acceleration * dt);
     }
 }
 

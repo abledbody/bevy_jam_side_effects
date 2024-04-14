@@ -10,7 +10,7 @@ pub struct HealthBarPlugin;
 impl Plugin for HealthBarPlugin {
     fn build(&self, app: &mut App) {
         app.register_type::<HealthBar>()
-            .add_systems(Update, HealthBar::update.in_set(UpdateSet::UpdateUi));
+            .add_systems(Update, update_health_bars.in_set(UpdateSet::UpdateUi));
     }
 }
 
@@ -24,27 +24,27 @@ impl HealthBar {
         Color::rgba(0.7, 0.7, 0.3, 0.3),
         Color::rgba(0.2, 0.9, 0.3, 0.3),
     ];
+}
 
-    pub fn update(
-        mut health_bar_query: Query<(&mut Sprite, &Parent), With<HealthBar>>,
-        parent_query: Query<&Parent, Without<HealthBar>>,
-        health_query: Query<&Health>,
-    ) {
-        for (mut sprite, parent) in &mut health_bar_query {
-            let Ok(parent) = parent_query.get(parent.get()) else {
-                continue;
-            };
-            let Ok(health) = health_query.get(parent.get()) else {
-                continue;
-            };
+fn update_health_bars(
+    mut health_bar_query: Query<(&mut Sprite, &Parent), With<HealthBar>>,
+    parent_query: Query<&Parent, Without<HealthBar>>,
+    health_query: Query<&Health>,
+) {
+    for (mut sprite, parent) in &mut health_bar_query {
+        let Ok(parent) = parent_query.get(parent.get()) else {
+            continue;
+        };
+        let Ok(health) = health_query.get(parent.get()) else {
+            continue;
+        };
 
-            // Hack but it works
-            let t = (health.current / health.max).max(0.000001);
-            let color_idx = (t * Self::COLOR_RAMP.len() as f32).ceil() as usize - 1;
+        // Hack but it works
+        let t = (health.current / health.max).max(0.000001);
+        let color_idx = (t * HealthBar::COLOR_RAMP.len() as f32).ceil() as usize - 1;
 
-            sprite.color = Self::COLOR_RAMP[color_idx];
-            sprite.custom_size = Some(vec2(20.0 * t, 2.5));
-        }
+        sprite.color = HealthBar::COLOR_RAMP[color_idx];
+        sprite.custom_size = Some(vec2(20.0 * t, 2.5));
     }
 }
 

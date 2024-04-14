@@ -10,17 +10,15 @@ pub struct YSortPlugin;
 impl Plugin for YSortPlugin {
     fn build(&self, app: &mut App) {
         app.register_type::<YSort>()
-            .add_systems(PostUpdate, YSort::apply.in_set(PostTransformSet::Blend));
+            .add_systems(PostUpdate, y_sort.in_set(PostTransformSet::Blend));
     }
 }
 
 #[derive(Component, Reflect, Default, Clone, Debug)]
 pub struct YSort;
 
-impl YSort {
-    pub fn apply(mut transform_query: Query<(&mut Transform, &GlobalTransform), With<YSort>>) {
-        for (mut transform, gt) in &mut transform_query {
-            transform.translation.z = Z_MAX - Z_SCALE * gt.translation().y;
-        }
+fn y_sort(mut transform_query: Query<(&mut Transform, &GlobalTransform), With<YSort>>) {
+    for (mut transform, gt) in &mut transform_query {
+        transform.translation.z = Z_MAX - Z_SCALE * gt.translation().y;
     }
 }

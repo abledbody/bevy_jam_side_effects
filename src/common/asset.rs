@@ -9,7 +9,7 @@ impl Plugin for AssetPlugin {
     fn build(&self, app: &mut App) {
         app.register_type::<Handles>()
             .init_resource::<Handles>()
-            .add_systems(PreStartup, Handles::load);
+            .add_systems(PreStartup, load_handles);
     }
 }
 
@@ -106,26 +106,24 @@ pub struct Handles {
     pub map: HashMap<MapKey, Handle<LdtkProject>>,
 }
 
-impl Handles {
-    pub fn load(asset: Res<AssetServer>, mut handle: ResMut<Self>) {
-        handle.font = FONT_MAP
-            .into_iter()
-            .map(|(key, path)| (key, asset.load(path)))
-            .collect();
+fn load_handles(asset: Res<AssetServer>, mut handle: ResMut<Handles>) {
+    handle.font = FONT_MAP
+        .into_iter()
+        .map(|(key, path)| (key, asset.load(path)))
+        .collect();
 
-        handle.image = IMAGE_MAP
-            .into_iter()
-            .map(|(key, path)| (key, asset.load(path)))
-            .collect();
+    handle.image = IMAGE_MAP
+        .into_iter()
+        .map(|(key, path)| (key, asset.load(path)))
+        .collect();
 
-        handle.audio = AUDIO_MAP
-            .into_iter()
-            .map(|(key, path)| (key, asset.load(path)))
-            .collect();
+    handle.audio = AUDIO_MAP
+        .into_iter()
+        .map(|(key, path)| (key, asset.load(path)))
+        .collect();
 
-        handle.map = MAP_MAP
-            .into_iter()
-            .map(|(key, path)| (key, asset.load(path)))
-            .collect();
-    }
+    handle.map = MAP_MAP
+        .into_iter()
+        .map(|(key, path)| (key, asset.load(path)))
+        .collect();
 }

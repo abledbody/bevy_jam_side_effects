@@ -24,18 +24,13 @@ impl Plugin for DebugPlugin {
         }));
 
         // Systems
-        app.add_systems(
-            Update,
-            DebugPlugin::toggle.run_if(input_just_pressed(TOGGLE_KEY)),
-        );
+        app.add_systems(Update, toggle_debug.run_if(input_just_pressed(TOGGLE_KEY)));
 
         // Disable Rapier debug initially
         app.world.resource_mut::<DebugRenderContext>().enabled = false;
     }
 }
 
-impl DebugPlugin {
-    fn toggle(mut debug_render_context: ResMut<DebugRenderContext>) {
-        debug_render_context.enabled = !debug_render_context.enabled;
-    }
+fn toggle_debug(mut debug_render_context: ResMut<DebugRenderContext>) {
+    debug_render_context.enabled = !debug_render_context.enabled;
 }
