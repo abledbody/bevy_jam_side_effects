@@ -5,36 +5,45 @@
 
 [target.x86_64-unknown-linux-gnu]
 linker = "clang"
-rustflags = ["-Clink-arg=-fuse-ld=mold", "-Zshare-generics=y"]
+rustflags = ["-Clink-arg=-fuse-ld=mold", "-Zshare-generics=y", "-Zthreads=0"]
 
-# NOTE: you must manually install https://github.com/michaeleisel/zld on mac. you can easily do this with the "brew" package manager:
-# `brew install michaeleisel/zld/zld`
+# NOTE: you must install [Mach-O LLD Port](https://lld.llvm.org/MachO/index.html) on mac. you can easily do this by installing llvm which includes lld with the "brew" package manager:
+# `brew install llvm`
 [target.x86_64-apple-darwin]
-rustflags = ["-C", "link-arg=-fuse-ld=/usr/local/bin/zld", "-Zshare-generics=y"]
+rustflags = [
+    #"-Clink-arg=-fuse-ld=/usr/local/opt/llvm/bin/ld64.lld",
+    "-Zshare-generics=y",
+    "-Zthreads=0",
+]
 
-# [target.aarch64-apple-darwin]
-# rustflags = ["-C", "link-arg=-fuse-ld=/opt/homebrew/bin/zld", "-Zshare-generics=y"]
+[target.aarch64-apple-darwin]
+rustflags = [
+    #"-Clink-arg=-fuse-ld=/opt/homebrew/opt/llvm/bin/ld64.lld",
+    "-Zshare-generics=y",
+    "-Zthreads=0",
+]
 
 [target.x86_64-pc-windows-msvc]
 linker = "rust-lld.exe"
-rustflags = ["-Zshare-generics=n"]
-
-# See https://bevy-cheatbook.github.io/platforms/wasm.html and https://github.com/bevyengine/bevy/tree/main/examples#wasm
-# % rustup target install wasm32-unknown-unknown
-# % cargo build --release --target wasm32-unknown-unknown -F wee_alloc
-# % cargo run --target wasm32-unknown-unknown -F wee_alloc
-# ~~ or ~~
-# % cargo install wasm-bindgen-cli
-# % cargo install basic-http-server
-# % wasm-bindgen --out-dir wasm --target web target/wasm32-unknown-unknown/release/bevy_jam_side_effects.wasm
-# % basic-http-server .
-[target.wasm32-unknown-unknown]
-runner = "wasm-server-runner"
-
-# Optional: Uncommenting the following improves compile times, but reduces the amount of debug info to 'line number tables only'
-# In most cases the gains are negligible, but if you are on macos and have slow compile times you should see significant gains.
-#[profile.dev]
-#debug = 1
+rustflags = ["-Zshare-generics=n", "-Zthreads=0"]
 
 [registries.crates-io]
 protocol = "sparse"
+
+[profile.dev]
+#opt-level = 1
+# Optional: Uncommenting the following improves compile times, but reduces the amount of debug info to 'line number tables only'
+# In most cases the gains are negligible, but if you are on macos and have slow compile times you should see significant gains.
+#debug = 1
+
+[profile.dev.package."*"]
+opt-level = 3
+
+[profile.release]
+lto = "thin"
+codegen-units = 1
+
+[profile.wasm-release]
+inherits = "release"
+opt-level = "z"
+strip = "debuginfo"
