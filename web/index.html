@@ -1,23 +1,41 @@
 <!doctype html>
 <html lang="en">
+
 <head>
- <meta charset="utf-8"/>
- <title>Sai Defects</title>
- <link rel="stylesheet" href="style.css"/>
+    <meta charset="utf-8" />
+    <title>Sai Defects</title>
+    <link rel="stylesheet" href="style.css" />
 </head>
 
 <body>
-<script type="module">
-    import './restart-audio-context.js'
-    import init from './sai_defects.js'
-    init()
-</script>
+    <div class="game-container">
+        <canvas id="bevy">
+            Javascript and canvas support is required
+        </canvas>
+        <div id="loading">
+            <span class="loader"></span>
+        </div>
+    </div>
 
-<div class="game-container">
-    <canvas id="bevy">
-        Javascript and canvas support is required
-    </canvas>
-</div>
+    <script type="module">
+        import './restart-audio-context.js'
+        import init from './run.js'
+        init().catch((error) => {
+            if (!error.message.startsWith("Using exceptions for control flow, don't mind me. This isn't actually an error!")) {
+                throw error;
+            }
+        });
+
+        // Hide loading screen when the game starts
+        const bevy = document.getElementById('bevy');
+        const loading = document.getElementById('loading');
+        const observer = new MutationObserver(() => {
+            if (bevy.height > 1) {
+                loading.style.display = 'none';
+            }
+        });
+        observer.observe(bevy, { attributes: true });
+    </script>
 </body>
 
 </html>

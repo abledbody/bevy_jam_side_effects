@@ -2,43 +2,55 @@ use bevy::prelude::*;
 use bevy::render::camera::ScalingMode;
 
 use crate::common::PostTransformSet;
+use crate::common::UpdateSet;
 use crate::game::actor::player::PlayerControl;
 
 pub struct CameraPlugin;
 
 impl Plugin for CameraPlugin {
     fn build(&self, app: &mut App) {
+        app.insert_resource(Msaa::Off);
+
+        app.register_type::<CameraRoot>()
+            .init_resource::<CameraRoot>();
+
         app.register_type::<GameCamera>().add_systems(
             PostUpdate,
             (snap_camera_to_new_target, camera_follow_target).in_set(PostTransformSet::Blend),
         );
+
+        app.register_type::<AbsoluteScale>()
+            .add_systems(Update, apply_absolute_scale.in_set(UpdateSet::End));
     }
 }
 
-pub struct GameCameraTemplate;
+#[derive(Resource, Reflect)]
+#[reflect(Resource)]
+pub struct CameraRoot {
+    pub primary: Entity,
+}
 
-impl GameCameraTemplate {
-    pub fn spawn(self, commands: &mut Commands) -> Entity {
-        let projection = OrthographicProjection {
-            near: -1000.0,
-            scaling_mode: ScalingMode::AutoMax {
-                max_width: 480.0,
-                max_height: 270.0,
-            },
-            ..default()
-        };
-
-        let mut camera = commands.spawn((
-            Camera2dBundle {
-                projection,
-                ..default()
-            },
-            GameCamera { rate: 5.0 },
-        ));
-        #[cfg(feature = "dev")]
-        camera.insert(Name::new("GameCamera"));
-
-        camera.id()
+impl FromWorld for CameraRoot {
+    fn from_world(world: &mut World) -> Self {
+        Self {
+            primary: world
+                .spawn((
+                    Name::new("PrimaryCamera"),
+                    Camera2dBundle {
+                        projection: OrthographicProjection {
+                            near: -1000.0,
+                            scaling_mode: ScalingMode::AutoMax {
+                                max_width: 480.0,
+                                max_height: 270.0,
+                            },
+                            ..default()
+                        },
+                        ..default()
+                    },
+                    GameCamera { rate: 5.0 },
+                ))
+                .id(),
+        }
     }
 }
 
@@ -101,5 +113,35 @@ impl SmoothApproach for Vec2 {
             self.x.smooth_approach(target.x, rate, dt),
             self.y.smooth_approach(target.y, rate, dt),
         )
+    }
+}
+
+// Camera zoom-independent scale
+// (workaround for https://github.com/bevyengine/bevy/issues/1890)
+#[derive(Component, Reflect)]
+pub struct AbsoluteScale(pub Vec3);
+
+impl Default for AbsoluteScale {
+    fn default() -> Self {
+        Self(Vec3::ONE)
+    }
+}
+
+fn apply_absolute_scale(
+    camera_root: Res<CameraRoot>,
+    camera_query: Query<(&OrthographicProjection, &Camera)>,
+    mut scale_query: Query<(&mut Transform, &AbsoluteScale)>,
+) {
+    let Ok((camera_proj, camera)) = camera_query.get(camera_root.primary) else {
+        return;
+    };
+    let Some(viewport_size) = camera.logical_viewport_size() else {
+        return;
+    };
+
+    let units_per_pixel = camera_proj.area.width() / viewport_size.x;
+    let camera_scale_inverse = Vec2::splat(units_per_pixel).extend(1.0);
+    for (mut transform, scale) in &mut scale_query {
+        transform.scale = camera_scale_inverse * scale.0;
     }
 }

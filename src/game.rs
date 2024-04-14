@@ -7,7 +7,6 @@ use leafwing_input_manager::prelude::*;
 
 use crate::common::asset::AudioKey;
 use crate::common::asset::Handles;
-use crate::common::camera::GameCameraTemplate;
 use crate::game::actor::enemy::Alarm;
 use crate::game::actor::enemy::AlertEvent;
 use crate::game::actor::player::Playthrough;
@@ -19,6 +18,7 @@ use crate::game::map::MapTemplate;
 use crate::game::map::Victory;
 use crate::util::ui::alarm_meter::AlarmMeter;
 use crate::util::ui::alarm_meter::AlarmMeterTemplate;
+use crate::util::DespawnSet;
 
 pub mod actor;
 mod combat;
@@ -55,6 +55,7 @@ impl Plugin for GamePlugin {
     }
 }
 
+// TODO: This should be handled in the respective plugins on game state exit / enter
 fn spawn_game(mut commands: Commands, handle: Res<Handles>) {
     // Spawn map
     MapTemplate.spawn(&mut commands, &handle);
@@ -62,9 +63,6 @@ fn spawn_game(mut commands: Commands, handle: Res<Handles>) {
     // Spawn HUD
     AlarmMeterTemplate.spawn(&mut commands, &handle);
     CutsceneTemplate.spawn(&mut commands, &handle);
-
-    // Spawn camera
-    GameCameraTemplate.spawn(&mut commands);
 }
 
 #[derive(Actionlike, Reflect, Clone, Hash, PartialEq, Eq)]
@@ -73,8 +71,10 @@ enum GameAction {
     Confirm,
 }
 
+// TODO: This should be handled in the respective plugins on game state exit / enter
 fn restart_game(
     mut commands: Commands,
+    mut despawn: ResMut<DespawnSet>,
     handle: Res<Handles>,
     entity_query: Query<
         Entity,
@@ -96,7 +96,7 @@ fn restart_game(
 ) {
     // Despawn entities
     for entity in &entity_query {
-        commands.entity(entity).despawn_recursive();
+        despawn.recursive(entity);
     }
 
     // Respawn map

@@ -597,6 +597,19 @@ dependencies = [
 ]
 
 [[package]]
+name = "bevy_common_assets"
+version = "0.9.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "966fc90b0126ee62bb7b93e4273da38a4fce7d1c48a1f6e94a8f558798be2543"
+dependencies = [
+ "anyhow",
+ "bevy",
+ "ron",
+ "serde",
+ "thiserror",
+]
+
+[[package]]
 name = "bevy_core"
 version = "0.12.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1198,6 +1211,7 @@ dependencies = [
  "bevy_picking_ui",
  "bevy_reflect 0.12.1",
  "bevy_render 0.12.1",
+ "bevy_text",
  "bevy_ui",
  "bevy_utils 0.12.1",
  "bevy_window 0.12.1",
@@ -4701,6 +4715,7 @@ name = "sai_defects"
 version = "0.1.0"
 dependencies = [
  "bevy",
+ "bevy_common_assets",
  "bevy_ecs_ldtk",
  "bevy_editor_pls",
  "bevy_kira_audio",
@@ -4709,6 +4724,8 @@ dependencies = [
  "bevy_rapier2d",
  "leafwing-input-manager",
  "rand",
+ "serde",
+ "strum",
  "wasm-bindgen",
 ]
 
@@ -4882,6 +4899,28 @@ name = "static_assertions"
 version = "1.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "a2eb9349b6444b326872e140eb1cf5e7c522154d69e7a0ffb0fb81c06b37543f"
+
+[[package]]
+name = "strum"
+version = "0.26.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "5d8cec3501a5194c432b2b7976db6b7d10ec95c253208b45f83f7136aa985e29"
+dependencies = [
+ "strum_macros",
+]
+
+[[package]]
+name = "strum_macros"
+version = "0.26.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "c6cf59daf282c0a494ba14fd21610a0325f9f90ec9d1231dea26bcb1d696c946"
+dependencies = [
+ "heck",
+ "proc-macro2",
+ "quote",
+ "rustversion",
+ "syn 2.0.58",
+]
 
 [[package]]
 name = "svg_fmt"

@@ -1,11 +1,13 @@
 pub mod asset;
 mod audio;
 pub mod camera;
+mod config;
 mod debug;
 mod level;
 mod music;
 mod physics;
-mod window;
+mod theme;
+pub mod window;
 
 use bevy::prelude::*;
 use bevy::transform::TransformSystem;
@@ -58,6 +60,10 @@ impl Plugin for CommonPlugin {
                 .chain(),
         );
 
+        // TODO: Workaround for https://github.com/bevyengine/bevy/issues/10157
+        #[cfg(feature = "web")]
+        app.insert_resource(bevy::asset::AssetMetaCheck::Never);
+
         // Bevy plugins
         app.add_plugins(
             DefaultPlugins
@@ -72,14 +78,21 @@ impl Plugin for CommonPlugin {
             asset::AssetPlugin,
             audio::AudioPlugin,
             camera::CameraPlugin,
+            config::ConfigPlugin,
             level::LevelPlugin,
             music::MusicPlugin,
             physics::PhysicsPlugin,
+            theme::ThemePlugin,
         ));
 
         // Debugging tools for dev builds
         #[cfg(feature = "dev")]
-        app.add_plugins(crate::common::debug::DebugPlugin);
+        app.add_plugins(debug::DebugPlugin {
+            log_diagnostics: false,
+            log_ambiguity_detection: false,
+            //editor: false,
+            ..default()
+        });
     }
 }
 

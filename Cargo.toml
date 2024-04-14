@@ -6,6 +6,7 @@ default-run = "run"
 
 [dependencies]
 bevy = { version = "0.12", default-features = false }
+bevy_common_assets = { version = "0.9", features = ["ron"] }
 bevy_ecs_ldtk = { version = "0.9", features = ["atlas"] }
 bevy_editor_pls = { version = "0.6", optional = true }
 bevy_kira_audio = "0.18"
@@ -16,6 +17,8 @@ bevy_mod_picking = { version = "0.17", default-features = false, features = [
 bevy_rapier2d = "0.23"
 leafwing-input-manager = "0.11"
 rand = { version = "0.8", features = ["small_rng"] }
+serde = "1"
+strum = { version = "0.26", features = ["derive"] }
 wasm-bindgen = { version = "0.2", optional = true }
 
 [features]
@@ -34,7 +37,10 @@ core = [
     "bevy/webgl2",
 
     # Extra functionality
+    #"bevy/bevy_gilrs",
+    #"bevy/serialize",
     "bevy/subpixel_glyph_atlas",
+    #"bevy/tonemapping_luts",
 
     # File formats
     "bevy/png",
@@ -44,6 +50,7 @@ dev = [
     "core",
     "dep:bevy_editor_pls",
     "bevy/dynamic_linking",
+    "bevy_mod_picking/debug",
     "bevy_rapier2d/debug-render-2d",
 ]
 native = ["core", "bevy_rapier2d/parallel"]

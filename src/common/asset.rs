@@ -1,3 +1,5 @@
+// TODO: Use bevy_asset_loader instead
+
 use bevy::prelude::*;
 use bevy::utils::HashMap;
 use bevy_ecs_ldtk::assets::LdtkProject;
@@ -12,19 +14,6 @@ impl Plugin for AssetPlugin {
             .add_systems(PreStartup, load_handles);
     }
 }
-
-#[derive(Reflect, Copy, Clone, Eq, PartialEq, Hash)]
-pub enum FontKey {
-    Regular,
-    Bold,
-    Pixel,
-}
-
-const FONT_MAP: [(FontKey, &str); 3] = [
-    (FontKey::Regular, "font/OpenSans-Regular.ttf"),
-    (FontKey::Bold, "font/OpenSans-Bold.ttf"),
-    (FontKey::Pixel, "font/Jaywalk.ttf"),
-];
 
 #[derive(Reflect, Copy, Clone, Eq, PartialEq, Hash)]
 pub enum ImageKey {
@@ -100,18 +89,12 @@ const MAP_MAP: [(MapKey, &str); 1] = [(MapKey::Game, "map/game_map.ldtk")];
 #[derive(Resource, Reflect, Default)]
 #[reflect(Resource)]
 pub struct Handles {
-    pub font: HashMap<FontKey, Handle<Font>>,
     pub image: HashMap<ImageKey, Handle<Image>>,
     pub audio: HashMap<AudioKey, Handle<AudioSource>>,
     pub map: HashMap<MapKey, Handle<LdtkProject>>,
 }
 
 fn load_handles(asset: Res<AssetServer>, mut handle: ResMut<Handles>) {
-    handle.font = FONT_MAP
-        .into_iter()
-        .map(|(key, path)| (key, asset.load(path)))
-        .collect();
-
     handle.image = IMAGE_MAP
         .into_iter()
         .map(|(key, path)| (key, asset.load(path)))

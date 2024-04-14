@@ -1,6 +1,6 @@
 pub mod alarm_meter;
 mod backdrop;
-pub mod font_size_hack;
+pub mod font;
 pub mod health_bar;
 pub mod nametag;
 
@@ -12,7 +12,7 @@ impl Plugin for UiPlugin {
     fn build(&self, app: &mut App) {
         app.add_plugins((
             alarm_meter::AlarmMeterPlugin,
-            font_size_hack::FontSizeHackPlugin,
+            font::FontPlugin,
             health_bar::HealthBarPlugin,
         ));
     }

@@ -168,7 +168,7 @@ impl EnemyTemplate {
             offset: Transform::from_xyz(0.0, 26.0, 0.0),
             name: self.name,
         }
-        .spawn(commands, handle);
+        .spawn(commands);
         let health_bar = HealthBarTemplate {
             offset: Transform::from_xyz(0.0, -6.0, 0.0),
         }

@@ -1,4 +1,5 @@
 use bevy::prelude::*;
+use bevy::ui::Val::*;
 use rand::thread_rng;
 use rand::Rng;
 
@@ -51,7 +52,7 @@ fn update_alarm_meter(
 
         // Update color and size
         color.0 = AlarmMeter::COLOR_RAMP[color_idx];
-        style.width = Val::Percent(100.0 * x);
+        style.width = Percent(100.0 * x);
 
         // Calculate shake
         let shake_decay = 0.05f32;
@@ -72,8 +73,8 @@ fn update_alarm_meter(
             let mut rng = thread_rng();
             let dx = rng.gen_range(-1.0..1.0) * meter.shake;
             let dy = rng.gen_range(-1.0..1.0) * meter.shake;
-            container.left = Val::Percent(dx);
-            container.top = Val::Percent(dy);
+            container.left = Percent(dx);
+            container.top = Percent(dy);
         }
 
         // Apply alarm flashing
@@ -106,10 +107,10 @@ impl AlarmMeterTemplate {
 
         let mut backdrop = commands.spawn(NodeBundle {
             style: Style {
-                //margin: UiRect::all(Val::Percent(1.0)),
-                padding: UiRect::all(Val::Percent(0.35)),
-                width: Val::Percent(100.0),
-                height: Val::Percent(70.0),
+                //margin: UiRect::all(Percent(1.0)),
+                padding: UiRect::all(Percent(0.35)),
+                width: Percent(100.0),
+                height: Percent(70.0),
                 ..default()
             },
             background_color: BackgroundColor(BackdropTemplate::COLOR),
@@ -122,9 +123,9 @@ impl AlarmMeterTemplate {
 
         let mut icon = commands.spawn(ImageBundle {
             style: Style {
-                margin: UiRect::left(Val::Percent(1.0)),
-                width: Val::Auto,
-                height: Val::Percent(100.0),
+                margin: UiRect::left(Percent(1.0)),
+                width: Auto,
+                height: Percent(100.0),
                 ..default()
             },
             image: UiImage::new(handle.image[&ImageKey::AlarmMeterIcon].clone()),
@@ -136,9 +137,9 @@ impl AlarmMeterTemplate {
 
         let mut container = commands.spawn(NodeBundle {
             style: Style {
-                margin: UiRect::all(Val::Percent(1.0)),
-                width: Val::Percent(100.0),
-                height: Val::Percent(12.0),
+                margin: UiRect::all(Percent(1.0)),
+                width: Percent(100.0),
+                height: Percent(12.0),
                 align_items: AlignItems::Center,
                 ..default()
             },
