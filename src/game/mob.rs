@@ -1,3 +1,4 @@
+pub mod animation;
 pub mod enemy;
 pub mod player;
 
@@ -5,18 +6,18 @@ use bevy::prelude::*;
 use bevy_kira_audio::prelude::*;
 use bevy_rapier2d::prelude::*;
 
-use crate::animation::AttackAnimation;
-use crate::animation::DeathAnimation;
-use crate::animation::Facing;
-use crate::animation::FlinchAnimation;
-use crate::animation::Offset;
-use crate::animation::WalkAnimation;
-use crate::asset::Handles;
-use crate::asset::ImageKey;
-use crate::combat::Faction;
-use crate::combat::COLLISION_GROUP;
-use crate::math::MoveTowards;
-use crate::util::ZRampByY;
+use crate::common::asset::Handles;
+use crate::common::asset::ImageKey;
+use crate::game::combat::Faction;
+use crate::game::combat::COLLISION_GROUP;
+use crate::game::mob::animation::AttackAnimation;
+use crate::game::mob::animation::DeathAnimation;
+use crate::game::mob::animation::FlinchAnimation;
+use crate::game::mob::animation::WalkAnimation;
+use crate::util::animation::facing::Facing;
+use crate::util::animation::offset::Offset;
+use crate::util::math::MoveTowards;
+use crate::util::y_sort::YSort;
 
 #[derive(Component, Reflect, Debug)]
 pub struct Health {
@@ -133,7 +134,7 @@ pub struct MobBundle {
     pub facing: Facing,
     pub health: Health,
     pub velocity: Velocity,
-    pub z_ramp_by_y: ZRampByY,
+    pub z_ramp_by_y: YSort,
     pub rigid_body: RigidBody,
     pub locked_axes: LockedAxes,
     pub friction: Friction,
@@ -150,7 +151,7 @@ impl Default for MobBundle {
             mob_inputs: default(),
             facing: default(),
             health: Health::full(100.0),
-            z_ramp_by_y: ZRampByY,
+            z_ramp_by_y: YSort,
             velocity: default(),
             rigid_body: default(),
             locked_axes: LockedAxes::ROTATION_LOCKED,

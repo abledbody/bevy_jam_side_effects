@@ -1,7 +1,7 @@
 use bevy::prelude::*;
 use bevy::render::camera::ScalingMode;
 
-use crate::mob::player::PlayerControl;
+use crate::game::mob::player::PlayerControl;
 
 pub struct GameCameraTemplate;
 

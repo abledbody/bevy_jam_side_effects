@@ -2,12 +2,17 @@
 name = "sai_defects"
 version = "0.1.0"
 edition = "2021"
+default-run = "run"
 
 [dependencies]
 bevy = { version = "0.12", default-features = false }
 bevy_ecs_ldtk = { version = "0.9", features = ["atlas"] }
 bevy_editor_pls = { version = "0.6", optional = true }
 bevy_kira_audio = "0.18"
+bevy_mod_debugdump = { version = "0.10", optional = true }
+bevy_mod_picking = { version = "0.17", default-features = false, features = [
+    "backend_bevy_ui",
+] }
 bevy_rapier2d = "0.23"
 leafwing-input-manager = "0.11"
 rand = { version = "0.8", features = ["small_rng"] }
@@ -45,3 +50,9 @@ native = ["core", "bevy_rapier2d/parallel"]
 native_dev = ["native", "dev", "bevy/file_watcher", "bevy/embedded_watcher"]
 web = ["core", "dep:wasm-bindgen", "bevy_rapier2d/wasm-bindgen"]
 web_dev = ["web", "dev"]
+trace = ["bevy/trace", "bevy/wgpu_trace", "bevy/trace_tracy"]
+debug_dump = ["dep:bevy_mod_debugdump"]
+
+[[bin]]
+name = "debug"
+required-features = ["debug_dump"]

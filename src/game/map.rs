@@ -4,17 +4,17 @@ use bevy_ecs_ldtk::prelude::*;
 use bevy_kira_audio::prelude::*;
 use bevy_rapier2d::prelude::*;
 
-use crate::asset::AudioKey;
-use crate::asset::Handles;
-use crate::asset::ImageKey;
-use crate::asset::MapKey;
-use crate::combat::COLLISION_GROUP;
-use crate::combat::PLAYER_HURTBOX_GROUP;
-use crate::mob::enemy::EnemyTemplate;
-use crate::mob::player::PlayerControl;
-use crate::mob::player::PlayerTemplate;
-use crate::mob::player::Playthrough;
-use crate::mob::Health;
+use crate::common::asset::AudioKey;
+use crate::common::asset::Handles;
+use crate::common::asset::ImageKey;
+use crate::common::asset::MapKey;
+use crate::game::combat::COLLISION_GROUP;
+use crate::game::combat::PLAYER_HURTBOX_GROUP;
+use crate::game::mob::enemy::EnemyTemplate;
+use crate::game::mob::player::PlayerControl;
+use crate::game::mob::player::PlayerTemplate;
+use crate::game::mob::player::Playthrough;
+use crate::game::mob::Health;
 
 pub struct MapTemplate;
 

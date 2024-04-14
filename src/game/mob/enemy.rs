@@ -7,22 +7,22 @@ use rand::thread_rng;
 use rand::Rng;
 
 use super::MobInputs;
-use crate::asset::AudioKey;
-use crate::asset::Handles;
-use crate::asset::ImageKey;
-use crate::combat::DeathEffects;
-use crate::combat::Faction;
-use crate::combat::HitEvent;
-use crate::combat::HurtEffects;
-use crate::hud::HealthBarTemplate;
-use crate::hud::NametagTemplate;
-use crate::mob::player::PlayerControl;
-use crate::mob::BodyTemplate;
-use crate::mob::Health;
-use crate::mob::Mob;
-use crate::mob::MobBundle;
-use crate::vfx::DetectPopupTemplate;
-use crate::vfx::DropShadowTemplate;
+use crate::common::asset::AudioKey;
+use crate::common::asset::Handles;
+use crate::common::asset::ImageKey;
+use crate::game::combat::DeathEffects;
+use crate::game::combat::Faction;
+use crate::game::combat::HitEvent;
+use crate::game::combat::HurtEffects;
+use crate::game::mob::player::PlayerControl;
+use crate::game::mob::BodyTemplate;
+use crate::game::mob::Health;
+use crate::game::mob::Mob;
+use crate::game::mob::MobBundle;
+use crate::util::ui::health_bar::HealthBarTemplate;
+use crate::util::ui::nametag::NametagTemplate;
+use crate::util::vfx::DetectPopupTemplate;
+use crate::util::vfx::DropShadowTemplate;
 
 const CASUAL_NAMES: [&str; 52] = [
     "Alex", "Amy", "Abby", "Ashley", "Becca", "Ben", "Cindy", "Chloe", "Chris", "Danny", "Diane",

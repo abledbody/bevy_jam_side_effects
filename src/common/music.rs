@@ -1,10 +1,10 @@
 use bevy::prelude::*;
 use bevy_kira_audio::prelude::*;
 
-use crate::asset::AudioKey;
-use crate::asset::Handles;
-use crate::map::Victory;
-use crate::mob::player::Playthrough;
+use crate::common::asset::AudioKey;
+use crate::common::asset::Handles;
+use crate::game::map::Victory;
+use crate::game::mob::player::Playthrough;
 
 #[derive(Resource, Reflect, Default)]
 #[reflect(Resource)]

@@ -1,9 +1,9 @@
 use bevy::prelude::*;
 
-use crate::animation::Lifetime;
-use crate::animation::Offset;
-use crate::asset::Handles;
-use crate::asset::ImageKey;
+use crate::common::asset::Handles;
+use crate::common::asset::ImageKey;
+use crate::util::animation::lifetime::Lifetime;
+use crate::util::animation::offset::Offset;
 
 pub struct DropShadowTemplate {
     pub offset: Transform,

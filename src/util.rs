@@ -1,28 +1,23 @@
+//! Re-usable utilities that could be used in other games
+
+#![allow(dead_code)]
+#![allow(unused_imports)]
+
+pub use crate::util::despawn::DespawnSet;
+
+pub mod animation;
+mod despawn;
+pub mod math;
+pub mod ui;
+pub mod vfx;
+pub mod y_sort;
+
 use bevy::prelude::*;
-use bevy::utils::HashSet;
 
-pub const Z_MAX: f32 = 10.0;
-pub const Z_SCALE: f32 = 0.001;
+pub struct UtilPlugin;
 
-#[derive(Component, Reflect, Default, Clone, Debug)]
-pub struct ZRampByY;
-
-impl ZRampByY {
-    pub fn apply(mut transform_query: Query<(&mut Transform, &GlobalTransform), With<ZRampByY>>) {
-        for (mut transform, gt) in &mut transform_query {
-            transform.translation.z = Z_MAX - Z_SCALE * gt.translation().y;
-        }
-    }
-}
-
-#[derive(Resource, Reflect, Default)]
-#[reflect(Resource)]
-pub struct DespawnSet(pub HashSet<Entity>);
-
-impl DespawnSet {
-    pub fn apply(mut commands: Commands, mut despawn: ResMut<Self>) {
-        for entity in despawn.0.drain() {
-            commands.entity(entity).despawn_recursive();
-        }
+impl Plugin for UtilPlugin {
+    fn build(&self, app: &mut App) {
+        app.add_plugins(despawn::DespawnPlugin);
     }
 }
