@@ -49,7 +49,7 @@ impl Plugin for DebugPlugin {
         // Plugins
         app.add_plugins((
             RapierDebugRenderPlugin::default(),
-            FrameTimeDiagnosticsPlugin::default(),
+            FrameTimeDiagnosticsPlugin,
             LogDiagnosticsPlugin::default(),
         ));
         app.add_plugins(bevy_editor_pls::EditorPlugin::new().in_new_window(Window {

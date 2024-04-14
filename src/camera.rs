@@ -1,6 +1,4 @@
-use bevy::math::Vec3Swizzles;
 use bevy::prelude::*;
-use bevy::render::camera::OrthographicProjection;
 use bevy::render::camera::ScalingMode;
 
 use crate::mob::player::PlayerControl;
@@ -23,10 +21,7 @@ impl GameCameraTemplate {
                 projection,
                 ..default()
             },
-            GameCamera {
-                rate: 5.0,
-                ..default()
-            },
+            GameCamera { rate: 5.0 },
         ));
         #[cfg(feature = "dev")]
         camera.insert(Name::new("GameCamera"));

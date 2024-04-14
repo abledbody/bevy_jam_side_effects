@@ -97,7 +97,7 @@ impl HitEvent {
         mut hit_events: EventWriter<HitEvent>,
         hit_query: Query<&HitEffects>,
     ) {
-        for &event in collision_events.iter() {
+        for &event in collision_events.read() {
             let CollisionEvent::Started(entity1, entity2, _) = event else {
                 continue;
             };
@@ -138,7 +138,7 @@ impl HitEffects {
         mut flinch_query: Query<&mut FlinchAnimation>,
         audio: Res<Audio>,
     ) {
-        for &HitEvent { hitbox, hurtbox } in hit_events.iter() {
+        for &HitEvent { hitbox, hurtbox } in hit_events.read() {
             let Ok(mut hit) = hit_effects.get_mut(hitbox) else {
                 return;
             };
@@ -230,7 +230,7 @@ impl HurtEffects {
         mut alarm: ResMut<Alarm>,
         audio: Res<Audio>,
     ) {
-        for &HitEvent { hurtbox, .. } in hit_events.iter() {
+        for &HitEvent { hurtbox, .. } in hit_events.read() {
             let Ok(hurt) = hurt_effects_query.get(hurtbox) else {
                 continue;
             };
@@ -265,7 +265,7 @@ impl DeathEffects {
         children_query: Query<&Children>,
         animation_query: Query<(), With<WalkAnimation>>, // And you can use animation_query.contains(child)
     ) {
-        for &DeathEvent(entity) in death_events.iter() {
+        for &DeathEvent(entity) in death_events.read() {
             // Turn into a dead body
             commands
                 .entity(entity)

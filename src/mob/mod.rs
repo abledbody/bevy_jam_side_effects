@@ -1,3 +1,6 @@
+pub mod enemy;
+pub mod player;
+
 use bevy::prelude::*;
 use bevy_kira_audio::prelude::*;
 use bevy_rapier2d::prelude::*;
@@ -14,9 +17,6 @@ use crate::combat::Faction;
 use crate::combat::COLLISION_GROUP;
 use crate::math::MoveTowards;
 use crate::util::ZRampByY;
-
-pub mod enemy;
-pub mod player;
 
 #[derive(Component, Reflect, Debug)]
 pub struct Health {
@@ -50,7 +50,7 @@ impl Mob {
             }
 
             *facing = if children
-                .map(|children| {
+                .and_then(|children| {
                     children
                         .iter()
                         .filter_map(|&child| {
@@ -62,8 +62,7 @@ impl Mob {
                         })
                         .next()
                 })
-                .flatten()
-                .unwrap_or_else(|| inputs.movement.x < 0.0)
+                .unwrap_or(inputs.movement.x < 0.0)
             {
                 Facing::Left
             } else {

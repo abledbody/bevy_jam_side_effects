@@ -1,5 +1,4 @@
 use bevy::math::vec2;
-use bevy::math::Vec3Swizzles;
 use bevy::prelude::*;
 use bevy_kira_audio::prelude::*;
 use bevy_rapier2d::prelude::*;
@@ -100,7 +99,6 @@ fn random_name(mut rng: impl Rng) -> String {
 pub struct EnemyTemplate {
     pub transform: Transform,
     pub name: String,
-    pub variant: ImageKey,
     pub health: f32,
     pub is_corpse: bool,
     pub hurt_increase_alarm: f32,
@@ -112,7 +110,6 @@ impl Default for EnemyTemplate {
         Self {
             transform: default(),
             name: "Unnamed".to_string(),
-            variant: ImageKey::GnollRed,
             health: 20.0,
             is_corpse: false,
             hurt_increase_alarm: 0.0025,
@@ -122,16 +119,6 @@ impl Default for EnemyTemplate {
 }
 
 impl EnemyTemplate {
-    pub fn with_random_casual_name(mut self) -> Self {
-        self.name = random_casual_name(thread_rng());
-        self
-    }
-
-    pub fn with_random_fantasy_name(mut self) -> Self {
-        self.name = random_fantasy_name(thread_rng());
-        self
-    }
-
     pub fn with_random_name(mut self) -> Self {
         self.name = random_name(thread_rng());
         self
@@ -347,7 +334,7 @@ impl EnemyAi {
             commands.entity(enemy).add_child(popup);
         };
 
-        for &DetectEvent { sensor, target } in detect_events.iter() {
+        for &DetectEvent { sensor, target } in detect_events.read() {
             let Ok(parent) = parent_query.get(sensor) else {
                 continue;
             };
@@ -355,7 +342,7 @@ impl EnemyAi {
                 handle_detection(&mut enemy, parent.get(), target);
             }
         }
-        for &HitEvent { hurtbox, .. } in hit_events.iter() {
+        for &HitEvent { hurtbox, .. } in hit_events.read() {
             if let Ok((mut enemy, ..)) = enemy_query.get_mut(hurtbox) {
                 // Assume the hitbox originated from the player
                 handle_detection(&mut enemy, hurtbox, player);
@@ -411,7 +398,7 @@ impl DetectEvent {
         mut detect_events: EventWriter<DetectEvent>,
         detector_query: Query<(), With<Detector>>,
     ) {
-        for &event in collision_events.iter() {
+        for &event in collision_events.read() {
             let CollisionEvent::Started(entity1, entity2, _) = event else {
                 continue;
             };

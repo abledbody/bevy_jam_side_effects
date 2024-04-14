@@ -1,4 +1,3 @@
-use bevy::math::Vec3Swizzles;
 use bevy::prelude::*;
 use bevy::window::PrimaryWindow;
 use bevy_rapier2d::prelude::*;
@@ -57,7 +56,7 @@ impl Playthrough {
             return;
         };
 
-        for &event in collision_events.iter() {
+        for &event in collision_events.read() {
             let CollisionEvent::Started(entity1, entity2, _) = event else {
                 continue;
             };
@@ -221,8 +220,7 @@ impl PlayerTemplate {
         player.add_child(drop_shadow);
         player.add_child(nametag);
         player.add_child(health_bar);
-        let player = player.id();
 
-        player
+        player.id()
     }
 }

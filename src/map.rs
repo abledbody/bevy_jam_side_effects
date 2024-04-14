@@ -76,7 +76,7 @@ impl Exit {
             return;
         };
 
-        for &event in collision_events.iter() {
+        for &event in collision_events.read() {
             let CollisionEvent::Started(entity1, entity2, _) = event else {
                 continue;
             };
@@ -126,7 +126,7 @@ impl VictorySquare {
         victory_query: Query<(), With<VictorySquare>>,
         mut victory: ResMut<Victory>,
     ) {
-        for &event in collision_events.iter() {
+        for &event in collision_events.read() {
             let CollisionEvent::Started(entity1, entity2, _) = event else {
                 continue;
             };
@@ -179,7 +179,7 @@ impl Plate {
         handle: Res<Handles>,
         audio: Res<Audio>,
     ) {
-        for &event in collision_events.iter() {
+        for &event in collision_events.read() {
             let CollisionEvent::Started(entity1, entity2, _) = event else {
                 continue;
             };
@@ -372,7 +372,7 @@ pub fn spawn_level_entities(
 
                     gates.extend(
                         entity_refs
-                            .into_iter()
+                            .iter()
                             .filter_map(|x| x.as_ref())
                             .filter_map(|entity_ref| gate_map.get(&entity_ref.entity_iid)),
                     );
@@ -387,7 +387,7 @@ pub fn spawn_level_entities(
     }
 
     for (parent, &transform, tile) in &tile_query {
-        if tile.tags.iter().find(|s| s.as_str() == "wall").is_none() {
+        if !tile.tags.iter().any(|s| s.as_str() == "wall") {
             continue;
         }
 

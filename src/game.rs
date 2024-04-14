@@ -129,7 +129,7 @@ impl Plugin for GamePlugin {
             LdtkPlugin,
         ));
         #[cfg(feature = "dev")]
-        app.add_plugins(crate::debug::DebugPlugin::default());
+        app.add_plugins(crate::debug::DebugPlugin);
 
         // Startup systems
         app.add_systems(Startup, (Handles::load, spawn_game).chain());

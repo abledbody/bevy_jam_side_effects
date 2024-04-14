@@ -2,7 +2,6 @@ use std::f32::consts::PI;
 use std::f32::consts::TAU;
 
 use bevy::math::vec2;
-use bevy::math::Vec3Swizzles;
 use bevy::prelude::*;
 use bevy_kira_audio::prelude::*;
 
@@ -120,27 +119,12 @@ impl Facing {
         }
     }
 
-    pub fn sign(&self) -> f32 {
-        match self {
-            Facing::Left => -1.0,
-            Facing::Right => 1.0,
-        }
-    }
-
     pub fn left(&self) -> bool {
-        if let Facing::Left = self {
-            true
-        } else {
-            false
-        }
+        matches!(self, Facing::Left)
     }
 
     pub fn right(&self) -> bool {
-        if let Facing::Right = self {
-            true
-        } else {
-            false
-        }
+        matches!(self, Facing::Right)
     }
 }
 
