@@ -29,7 +29,7 @@ impl BackdropTemplate {
             },
             Offset(self.offset),
         ));
-        #[cfg(feature = "debug_mode")]
+        #[cfg(feature = "dev")]
         backdrop.insert(Name::new("Backdrop"));
 
         backdrop.id()
@@ -100,7 +100,7 @@ impl NametagTemplate {
             },
             FontSizeHack(style.font_size),
         ));
-        #[cfg(feature = "debug_mode")]
+        #[cfg(feature = "dev")]
         nametag.insert(Name::new("Nametag"));
         let nametag = nametag.id();
 
@@ -165,7 +165,7 @@ impl HealthBarTemplate {
             },
             HealthBar,
         ));
-        #[cfg(feature = "debug_mode")]
+        #[cfg(feature = "dev")]
         health_bar.insert(Name::new("HealthBar"));
         let health_bar = health_bar.id();
 
@@ -215,7 +215,7 @@ impl AlarmMeter {
 
             // Update color and size
             color.0 = Self::COLOR_RAMP[color_idx];
-            style.size.width = Val::Percent(100.0 * x);
+            style.width = Val::Percent(100.0 * x);
 
             // Calculate shake
             let shake_decay = 0.05f32;
@@ -236,8 +236,8 @@ impl AlarmMeter {
                 let mut rng = thread_rng();
                 let dx = rng.gen_range(-1.0..1.0) * meter.shake;
                 let dy = rng.gen_range(-1.0..1.0) * meter.shake;
-                container.position.left = Val::Percent(dx);
-                container.position.top = Val::Percent(dy);
+                container.left = Val::Percent(dx);
+                container.top = Val::Percent(dy);
             }
 
             // Apply alarm flashing
@@ -265,7 +265,7 @@ pub struct AlarmMeterTemplate;
 impl AlarmMeterTemplate {
     pub fn spawn(self, commands: &mut Commands, handle: &Handles) -> Entity {
         let mut alarm_meter = commands.spawn((NodeBundle::default(), AlarmMeter::default()));
-        #[cfg(feature = "debug_mode")]
+        #[cfg(feature = "dev")]
         alarm_meter.insert(Name::new("AlarmMeter"));
         let alarm_meter = alarm_meter.id();
 
@@ -273,13 +273,14 @@ impl AlarmMeterTemplate {
             style: Style {
                 //margin: UiRect::all(Val::Percent(1.0)),
                 padding: UiRect::all(Val::Percent(0.35)),
-                size: Size::new(Val::Percent(100.0), Val::Percent(70.0)),
+                width: Val::Percent(100.0),
+                height: Val::Percent(70.0),
                 ..default()
             },
             background_color: BackgroundColor(BackdropTemplate::COLOR),
             ..default()
         });
-        #[cfg(feature = "debug_mode")]
+        #[cfg(feature = "dev")]
         backdrop.insert(Name::new("AlarmMeterBackdrop"));
         backdrop.add_child(alarm_meter);
         let backdrop = backdrop.id();
@@ -287,27 +288,29 @@ impl AlarmMeterTemplate {
         let mut icon = commands.spawn(ImageBundle {
             style: Style {
                 margin: UiRect::left(Val::Percent(1.0)),
-                size: Size::new(Val::Auto, Val::Percent(100.0)),
+                width: Val::Auto,
+                height: Val::Percent(100.0),
                 ..default()
             },
             image: UiImage::new(handle.image[&ImageKey::AlarmMeterIcon].clone()),
             ..default()
         });
-        #[cfg(feature = "debug_mode")]
+        #[cfg(feature = "dev")]
         icon.insert(Name::new("AlarmMeterIcon"));
         let icon = icon.id();
 
         let mut container = commands.spawn(NodeBundle {
             style: Style {
                 margin: UiRect::all(Val::Percent(1.0)),
-                size: Size::new(Val::Percent(100.0), Val::Percent(12.0)),
+                width: Val::Percent(100.0),
+                height: Val::Percent(12.0),
                 align_items: AlignItems::Center,
                 ..default()
             },
             z_index: ZIndex::Global(100),
             ..default()
         });
-        #[cfg(feature = "debug_mode")]
+        #[cfg(feature = "dev")]
         container.insert(Name::new("AlarmMeterContainer"));
 
         container.add_child(backdrop);

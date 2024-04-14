@@ -186,7 +186,7 @@ impl WalkAnimation {
             }
 
             anim.start_frame = true;
-            anim.t -= anim.t.floor();
+            anim.t = anim.t.fract();
         }
     }
 

@@ -21,7 +21,7 @@ impl MapTemplate {
             ldtk_handle: handle.map[&MapKey::Game].clone(),
             ..default()
         });
-        #[cfg(feature = "debug_mode")]
+        #[cfg(feature = "dev")]
         map.insert(Name::new("Map"));
 
         map.id()
@@ -48,7 +48,7 @@ impl WallTemplate {
             RigidBody::Fixed,
             Wall,
         ));
-        #[cfg(feature = "debug_mode")]
+        #[cfg(feature = "dev")]
         wall.insert(Name::new("Wall"));
 
         wall.id()
@@ -66,7 +66,7 @@ impl Exit {
         mut playthrough: ResMut<Playthrough>,
         exit_query: Query<(), With<Exit>>,
     ) {
-        let LevelSelection::Index(idx) = *level_selection else {
+        let LevelSelection::Uid(idx) = *level_selection else {
             return;
         };
         let Ok(player_health) = player_query.get_single() else {
@@ -78,7 +78,7 @@ impl Exit {
                 continue;
             };
             if exit_query.contains(entity1) || exit_query.contains(entity2) {
-                *level_selection = LevelSelection::Index(idx + 1);
+                *level_selection = LevelSelection::Uid(idx + 1);
                 playthrough.health = Some(player_health.current);
                 break;
             }
@@ -103,7 +103,7 @@ impl ExitTemplate {
             ActiveEvents::COLLISION_EVENTS,
             Exit,
         ));
-        #[cfg(feature = "debug_mode")]
+        #[cfg(feature = "dev")]
         exit.insert(Name::new("Exit"));
 
         exit.id()
@@ -152,7 +152,7 @@ impl VictorySquareTemplate {
             ActiveEvents::COLLISION_EVENTS,
             VictorySquare,
         ));
-        #[cfg(feature = "debug_mode")]
+        #[cfg(feature = "dev")]
         victory_square.insert(Name::new("VictorySquare"));
 
         victory_square.id()
@@ -242,7 +242,7 @@ impl PlateTemplate {
                 ..default()
             },
         ));
-        #[cfg(feature = "debug_mode")]
+        #[cfg(feature = "dev")]
         plate.insert(Name::new("Plate"));
 
         plate.id()
@@ -282,7 +282,7 @@ impl GateTemplate {
             RigidBody::Fixed,
             Gate { open: self.open },
         ));
-        #[cfg(feature = "debug_mode")]
+        #[cfg(feature = "dev")]
         gate.insert(Name::new("Gate"));
 
         gate.id()

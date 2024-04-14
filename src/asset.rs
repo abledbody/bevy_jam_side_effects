@@ -1,8 +1,8 @@
 use bevy::{prelude::*, utils::HashMap};
-use bevy_ecs_ldtk::LdtkAsset;
+use bevy_ecs_ldtk::assets::LdtkProject;
 use bevy_kira_audio::prelude::*;
 
-#[derive(Reflect, FromReflect, Copy, Clone, Eq, PartialEq, Hash)]
+#[derive(Reflect, Copy, Clone, Eq, PartialEq, Hash)]
 pub enum FontKey {
     Regular,
     Bold,
@@ -15,7 +15,7 @@ const FONT_MAP: [(FontKey, &str); 3] = [
     (FontKey::Pixel, "font/Jaywalk.ttf"),
 ];
 
-#[derive(Reflect, FromReflect, Copy, Clone, Eq, PartialEq, Hash)]
+#[derive(Reflect, Copy, Clone, Eq, PartialEq, Hash)]
 pub enum ImageKey {
     GnollRed,
     GnollGreen,
@@ -50,7 +50,7 @@ const IMAGE_MAP: [(ImageKey, &str); 11] = [
     (ImageKey::AlarmMeterIconFlash, "image/ui/alarm_flash.png"),
 ];
 
-#[derive(Reflect, FromReflect, Copy, Clone, Eq, PartialEq, Hash)]
+#[derive(Reflect, Copy, Clone, Eq, PartialEq, Hash)]
 pub enum AudioKey {
     GnollWalk,
     GnollAttackHit,
@@ -79,7 +79,7 @@ const AUDIO_MAP: [(AudioKey, &str); 11] = [
     (AudioKey::VictoryTrack, "sound/music/victory.wav"),
 ];
 
-#[derive(Reflect, FromReflect, Copy, Clone, Eq, PartialEq, Hash)]
+#[derive(Reflect, Copy, Clone, Eq, PartialEq, Hash)]
 pub enum MapKey {
     Game,
 }
@@ -92,7 +92,7 @@ pub struct Handles {
     pub font: HashMap<FontKey, Handle<Font>>,
     pub image: HashMap<ImageKey, Handle<Image>>,
     pub audio: HashMap<AudioKey, Handle<AudioSource>>,
-    pub map: HashMap<MapKey, Handle<LdtkAsset>>,
+    pub map: HashMap<MapKey, Handle<LdtkProject>>,
 }
 
 impl Handles {

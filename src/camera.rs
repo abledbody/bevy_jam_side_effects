@@ -11,6 +11,7 @@ pub struct GameCameraTemplate;
 impl GameCameraTemplate {
     pub fn spawn(self, commands: &mut Commands) -> Entity {
         let projection = OrthographicProjection {
+            near: -1000.0,
             scaling_mode: ScalingMode::AutoMax {
                 max_width: 480.0,
                 max_height: 270.0,
@@ -28,7 +29,7 @@ impl GameCameraTemplate {
                 ..default()
             },
         ));
-        #[cfg(feature = "debug_mode")]
+        #[cfg(feature = "dev")]
         camera.insert(Name::new("GameCamera"));
 
         camera.id()

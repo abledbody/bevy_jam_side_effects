@@ -41,22 +41,23 @@ pub struct DebugPlugin;
 
 impl Plugin for DebugPlugin {
     fn build(&self, app: &mut App) {
-        // Hot-reload assets
-        app.world
-            .resource::<AssetServer>()
-            .asset_io()
-            .watch_for_changes()
-            .unwrap();
-
         // Plugins
-        app.add_plugin(RapierDebugRenderPlugin::default())
-            .add_plugin(FrameTimeDiagnosticsPlugin::default())
-            .add_plugin(LogDiagnosticsPlugin::default());
-        #[cfg(feature = "editor")]
-        app.add_plugin(bevy_editor_pls::EditorPlugin::default());
+        app.add_plugins((
+            RapierDebugRenderPlugin::default(),
+            FrameTimeDiagnosticsPlugin::default(),
+            LogDiagnosticsPlugin::default(),
+        ));
+        app.add_plugins(bevy_editor_pls::EditorPlugin::new().in_new_window(Window {
+            title: "bevy_editor_pls".to_string(),
+            focused: false,
+            ..default()
+        }));
 
         // Systems
-        app.add_system(DebugPlugin::toggle.run_if(input_just_pressed(TOGGLE_KEY)));
+        app.add_systems(
+            Update,
+            DebugPlugin::toggle.run_if(input_just_pressed(TOGGLE_KEY)),
+        );
 
         // Types
         app.register_type::<Handles>()

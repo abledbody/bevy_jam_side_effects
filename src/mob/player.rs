@@ -15,7 +15,7 @@ use crate::{
 
 const PLAYER_NAME: &str = "Sai";
 
-#[derive(Actionlike, Debug, Copy, Clone, PartialEq)]
+#[derive(Actionlike, Reflect, Clone, Hash, PartialEq, Eq)]
 pub enum PlayerAction {
     Move,
     Aim,
@@ -205,7 +205,7 @@ impl PlayerTemplate {
             },
             PlayerControl::default(),
         ));
-        #[cfg(feature = "debug_mode")]
+        #[cfg(feature = "dev")]
         player.insert(Name::new("Player"));
 
         player.add_child(body);

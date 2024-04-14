@@ -35,7 +35,7 @@ use crate::{
 
 const TITLE: &str = "Sai Defects";
 
-#[derive(Actionlike, Clone)]
+#[derive(Actionlike, Reflect, Clone, Hash, PartialEq, Eq)]
 pub enum GameAction {
     Restart,
     Confirm,
@@ -93,7 +93,7 @@ impl Plugin for GamePlugin {
             .add_event::<DetectEvent>();
 
         // Plugins
-        app.add_plugins(
+        app.add_plugins((
             DefaultPlugins
                 .set(WindowPlugin {
                     primary_window: Some(Window {
@@ -106,37 +106,33 @@ impl Plugin for GamePlugin {
                     ..default()
                 })
                 .set(ImagePlugin::default_nearest()),
-        )
-        .add_plugin(AudioPlugin)
-        .add_plugin(RapierPhysicsPlugin::<NoUserData>::default())
-        .add_plugin(InputManagerPlugin::<GameAction>::default())
-        .add_plugin(InputManagerPlugin::<PlayerAction>::default())
-        .add_plugin(LdtkPlugin);
-        #[cfg(feature = "debug_mode")]
-        app.add_plugin(crate::debug::DebugPlugin::default());
+            AudioPlugin,
+            RapierPhysicsPlugin::<NoUserData>::default(),
+            InputManagerPlugin::<GameAction>::default(),
+            InputManagerPlugin::<PlayerAction>::default(),
+            LdtkPlugin,
+        ));
+        #[cfg(feature = "dev")]
+        app.add_plugins(crate::debug::DebugPlugin::default());
 
         // Startup systems
-        app.add_startup_system(Handles::load.in_base_set(StartupSet::PreStartup));
-        app.add_startup_system(spawn_game);
+        app.add_systems(Startup, (Handles::load, spawn_game).chain());
 
         // First systems
         app.add_systems(
+            First,
             (
                 restart_game.run_if(action_just_pressed(GameAction::Restart)),
                 Cutscene::advance.run_if(action_just_pressed(GameAction::Confirm)),
-            )
-                .in_base_set(CoreSet::First),
+            ),
         );
 
         // Pre-update systems
-        app.add_systems(
-            (Exit::detect, spawn_level_entities)
-                .chain()
-                .in_base_set(CoreSet::PreUpdate),
-        );
+        app.add_systems(PreUpdate, (Exit::detect, spawn_level_entities).chain());
 
         // Game logic system sets
         app.configure_sets(
+            Update,
             (
                 UpdateSet::Synchronize,
                 UpdateSet::Animate,
@@ -149,18 +145,27 @@ impl Plugin for GamePlugin {
 
         // Synchronization systems
         app.add_systems(
+            Update,
             (
-                sync_simple_transforms,
-                propagate_transforms,
-                ZRampByY::apply,
-                VirtualParent::copy_transform.after(ZRampByY::apply),
-                Offset::apply.after(VirtualParent::copy_transform),
+                (
+                    sync_simple_transforms,
+                    propagate_transforms,
+                    ZRampByY::apply,
+                    VirtualParent::copy_transform,
+                    Offset::apply,
+                )
+                    .chain(),
                 Plate::detect,
                 VictorySquare::detect,
-                HitEvent::detect.before(EnemyAi::think),
-                DetectEvent::detect.before(EnemyAi::think),
-                DifficultyCurve::apply.before(EnemyAi::think),
-                EnemyAi::think,
+                (
+                    (
+                        HitEvent::detect,
+                        DetectEvent::detect,
+                        DifficultyCurve::apply,
+                    ),
+                    EnemyAi::think,
+                )
+                    .chain(),
                 PlayerControl::record_inputs,
             )
                 .in_set(UpdateSet::Synchronize),
@@ -168,60 +173,75 @@ impl Plugin for GamePlugin {
 
         // Animation systems
         app.add_systems(
+            Update,
             (
                 Playthrough::detect_defection,
                 GameCamera::cut_to_new_target,
                 GameCamera::follow_target,
                 FontSizeHack::scale,
-                WalkAnimation::trigger,
-                WalkAnimation::play_step_sound.after(WalkAnimation::trigger),
-                WalkAnimation::update.after(WalkAnimation::play_step_sound),
-                WalkAnimation::apply.after(WalkAnimation::update),
-                DeathAnimation::update,
-                DeathAnimation::apply.after(DeathAnimation::update),
-                AttackAnimation::trigger,
-                AttackAnimation::update.after(AttackAnimation::trigger),
-                AttackAnimation::apply.after(AttackAnimation::update),
-                FlinchAnimation::update,
-                FlinchAnimation::apply.after(FlinchAnimation::update),
+                (
+                    WalkAnimation::trigger,
+                    WalkAnimation::play_step_sound,
+                    WalkAnimation::update,
+                    WalkAnimation::apply,
+                )
+                    .chain(),
+                (DeathAnimation::update, DeathAnimation::apply).chain(),
+                (
+                    AttackAnimation::trigger,
+                    AttackAnimation::update,
+                    AttackAnimation::apply,
+                )
+                    .chain(),
+                (FlinchAnimation::update, FlinchAnimation::apply).chain(),
             )
                 .in_set(UpdateSet::Animate),
         );
 
         // Post-animation systems
         app.add_systems(
-            (Mob::set_facing, Facing::apply.after(Mob::set_facing)).in_set(UpdateSet::PostAnimate),
+            Update,
+            (Mob::set_facing, Facing::apply)
+                .chain()
+                .in_set(UpdateSet::PostAnimate),
         );
 
         // Combat systems
         app.add_systems(
+            Update,
             (
                 Mob::apply_movement,
-                HitEffects::apply,
                 HurtEffects::apply,
-                DeathEffects::apply.after(HitEffects::apply),
-                HitEffects::cleanup.after(DeathEffects::apply),
-                HitEffects::spawn_from_inputs.after(HitEffects::cleanup),
+                (
+                    HitEffects::apply,
+                    DeathEffects::apply,
+                    HitEffects::cleanup,
+                    HitEffects::spawn_from_inputs,
+                )
+                    .chain(),
                 Lifetime::apply,
             )
                 .in_set(UpdateSet::Combat),
         );
-        app.add_system(apply_system_buffers.in_set(UpdateSet::CombatFlush));
+        app.add_systems(Update, apply_deferred.in_set(UpdateSet::CombatFlush));
 
         // Spawn / despawn systems
-        app.add_system(DespawnSet::apply.in_base_set(CoreSet::Last));
+        app.add_systems(Last, DespawnSet::apply);
 
         // UI systems
-        #[cfg(not(feature = "wasm"))]
-        app.add_system(bevy::window::close_on_esc);
-        app.add_systems((
-            HealthBar::update,
-            AlarmMeter::update,
-            Cutscene::update,
-            Music::update,
-            Message::show_death_message,
-            Message::show_victory_message,
-        ));
+        #[cfg(not(feature = "web"))]
+        app.add_systems(Update, bevy::window::close_on_esc);
+        app.add_systems(
+            Update,
+            (
+                HealthBar::update,
+                AlarmMeter::update,
+                Cutscene::update,
+                Music::update,
+                Message::show_death_message,
+                Message::show_victory_message,
+            ),
+        );
     }
 }
 
@@ -231,7 +251,7 @@ fn restart_game(
     entity_query: Query<
         Entity,
         (
-            Or<(With<Handle<LdtkAsset>>, With<Message>)>,
+            Or<(With<Handle<LdtkProject>>, With<Message>)>,
             Without<Parent>,
         ),
     >,

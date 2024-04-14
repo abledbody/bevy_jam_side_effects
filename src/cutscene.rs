@@ -120,7 +120,7 @@ impl CutsceneTemplate {
                 ],
             },
         ));
-        #[cfg(feature = "debug_mode")]
+        #[cfg(feature = "dev")]
         entity.insert(Name::new("Cutscene"));
 
         entity.id()
@@ -164,7 +164,7 @@ impl MessageTemplate {
             },
             Message,
         ));
-        #[cfg(feature = "debug_mode")]
+        #[cfg(feature = "dev")]
         message.insert(Name::new("Message"));
 
         message.id()

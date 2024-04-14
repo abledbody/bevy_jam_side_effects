@@ -122,7 +122,7 @@ impl Default for Mob {
     }
 }
 
-#[derive(Bundle, Reflect, Debug)]
+#[derive(Bundle, Reflect)]
 pub struct MobBundle {
     pub mob: Mob,
     pub mob_inputs: MobInputs,
@@ -209,7 +209,7 @@ impl BodyTemplate {
         if self.is_corpse {
             body.insert(DeathAnimation::default());
         }
-        #[cfg(feature = "debug_mode")]
+        #[cfg(feature = "dev")]
         body.insert(Name::new("Body"));
 
         body.id()

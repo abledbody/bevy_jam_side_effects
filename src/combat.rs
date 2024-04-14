@@ -74,13 +74,14 @@ impl HitboxTemplate {
                 ..default()
             },
         ));
-        #[cfg(feature = "debug_mode")]
+        #[cfg(feature = "dev")]
         hitbox.insert(Name::new("Hitbox"));
 
         hitbox.id()
     }
 }
 
+#[derive(Event)]
 pub struct HitEvent {
     pub hitbox: Entity,
     pub hurtbox: Entity,
@@ -241,6 +242,7 @@ impl HurtEffects {
     }
 }
 
+#[derive(Event)]
 pub struct DeathEvent(pub Entity);
 
 #[derive(Component, Reflect, Default)]

@@ -188,7 +188,7 @@ impl EnemyTemplate {
         if self.is_corpse {
             enemy.remove::<MobInputs>();
         }
-        #[cfg(feature = "debug_mode")]
+        #[cfg(feature = "dev")]
         enemy.insert(Name::new("Enemy"));
 
         enemy.add_child(body);
@@ -211,7 +211,7 @@ impl Alarm {
     }
 }
 
-#[derive(Reflect, FromReflect)]
+#[derive(Reflect)]
 pub struct Curve {
     pub y0: f32,
     pub y1: f32,
@@ -389,6 +389,7 @@ impl EnemyAi {
     }
 }
 
+#[derive(Event)]
 pub struct DetectEvent {
     pub sensor: Entity,
     pub target: Entity,
@@ -433,7 +434,7 @@ impl DetectorTemplate {
             ActiveEvents::COLLISION_EVENTS,
             Detector,
         ));
-        #[cfg(feature = "debug_mode")]
+        #[cfg(feature = "dev")]
         detector.insert(Name::new("Detector"));
 
         detector.id()

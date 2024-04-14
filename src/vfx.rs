@@ -26,7 +26,7 @@ impl DropShadowTemplate {
             },
             Offset(self.offset),
         ));
-        #[cfg(feature = "debug_mode")]
+        #[cfg(feature = "dev")]
         drop_shadow.insert(Name::new("DropShadow"));
 
         drop_shadow.id()
@@ -55,7 +55,7 @@ impl DetectPopupTemplate {
             Lifetime(1.0),
             Offset(self.offset),
         ));
-        #[cfg(feature = "debug_mode")]
+        #[cfg(feature = "dev")]
         detect_popup.insert(Name::new("DetectPopup"));
 
         detect_popup.id()

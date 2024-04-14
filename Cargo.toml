@@ -4,52 +4,44 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-bevy = { version = "0.10", default-features = false }
-bevy_ecs_ldtk = { version = "0.6", features = ["atlas"] }
-bevy_editor_pls = { version = "0.4", optional = true }
-bevy_kira_audio = "0.15"
-bevy_rapier2d = "0.21"
-leafwing-input-manager = "0.9"
+bevy = { version = "0.12", default-features = false }
+bevy_ecs_ldtk = { version = "0.9", features = ["atlas"] }
+bevy_editor_pls = { version = "0.6", optional = true }
+bevy_kira_audio = "0.18"
+bevy_rapier2d = "0.23"
+leafwing-input-manager = "0.11"
 rand = { version = "0.8", features = ["small_rng"] }
 wasm-bindgen = { version = "0.2", optional = true }
 
 [features]
-default = [
+default = ["native_dev"]
+core = [
+    # Core functionality
     "bevy/bevy_core_pipeline",
-    "bevy/bevy_asset",
     "bevy/bevy_winit",
+    "bevy/x11",
     "bevy/bevy_render",
+    "bevy/bevy_asset",
     "bevy/bevy_sprite",
     "bevy/bevy_text",
     "bevy/bevy_ui",
+    "bevy/multi-threaded",
+    "bevy/webgl2",
+
+    # Extra functionality
     "bevy/subpixel_glyph_atlas",
+
+    # File formats
     "bevy/png",
     "bevy_kira_audio/wav",
 ]
-debug_mode = [
+dev = [
+    "core",
+    "dep:bevy_editor_pls",
     "bevy/dynamic_linking",
-    "bevy/filesystem_watcher",
     "bevy_rapier2d/debug-render-2d",
 ]
-editor = ["dep:bevy_editor_pls", "debug_mode"]
-wasm = ["dep:wasm-bindgen", "bevy_rapier2d/wasm-bindgen"]
-
-[profile.dev]
-opt-level = 1
-
-[profile.dev.package."*"]
-opt-level = 3
-
-[profile.wasm-release]
-# Use release profile as default values
-inherits = "release"
-strip = "debuginfo"
-# Optimize with size in mind, also try "s", sometimes it is better.
-# This doesn't increase compilation times compared to -O3, great improvements
-opt-level = "z"
-# Do a second optimization pass removing duplicate or unused code from dependencies.
-# Slows compile times, marginal improvements
-lto = "thin"
-# When building crates, optimize larger chunks at a time
-# Slows compile times, marginal improvements
-codegen-units = 1
+native = ["core", "bevy_rapier2d/parallel"]
+native_dev = ["native", "dev", "bevy/file_watcher", "bevy/embedded_watcher"]
+web = ["core", "dep:wasm-bindgen", "bevy_rapier2d/wasm-bindgen"]
+web_dev = ["web", "dev"]
