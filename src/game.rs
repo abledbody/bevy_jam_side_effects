@@ -21,8 +21,8 @@ use crate::util::ui::alarm_meter::AlarmMeter;
 use crate::util::ui::alarm_meter::AlarmMeterTemplate;
 
 pub mod actor;
-pub mod combat;
-pub mod cutscene;
+mod combat;
+mod cutscene;
 pub mod map;
 
 pub struct GamePlugin;
