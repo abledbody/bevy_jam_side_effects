@@ -1,38 +1,43 @@
-use bevy::{
-    diagnostic::{FrameTimeDiagnosticsPlugin, LogDiagnosticsPlugin},
-    input::common_conditions::input_just_pressed,
-    prelude::*,
-};
+use bevy::diagnostic::FrameTimeDiagnosticsPlugin;
+use bevy::diagnostic::LogDiagnosticsPlugin;
+use bevy::input::common_conditions::input_just_pressed;
+use bevy::prelude::*;
 use bevy_rapier2d::prelude::*;
 
-use crate::{
-    animation::{
-        AttackAnimation,
-        DeathAnimation,
-        Facing,
-        FlinchAnimation,
-        Lifetime,
-        Offset,
-        VirtualParent,
-        WalkAnimation,
-    },
-    asset::Handles,
-    camera::GameCamera,
-    combat::{DeathEffects, HitEffects, HurtEffects},
-    cutscene::{Cutscene, Message},
-    hud::{AlarmMeter, FontSizeHack, HealthBar},
-    map::{Exit, Gate, Plate, Wall},
-    mob::{
-        enemy::{Alarm, DifficultyCurve, EnemyAi},
-        player::{PlayerControl, Playthrough},
-        Body,
-        Health,
-        Mob,
-        MobInputs,
-    },
-    music::Music,
-    util::{DespawnSet, ZRampByY},
-};
+use crate::animation::AttackAnimation;
+use crate::animation::DeathAnimation;
+use crate::animation::Facing;
+use crate::animation::FlinchAnimation;
+use crate::animation::Lifetime;
+use crate::animation::Offset;
+use crate::animation::VirtualParent;
+use crate::animation::WalkAnimation;
+use crate::asset::Handles;
+use crate::camera::GameCamera;
+use crate::combat::DeathEffects;
+use crate::combat::HitEffects;
+use crate::combat::HurtEffects;
+use crate::cutscene::Cutscene;
+use crate::cutscene::Message;
+use crate::hud::AlarmMeter;
+use crate::hud::FontSizeHack;
+use crate::hud::HealthBar;
+use crate::map::Exit;
+use crate::map::Gate;
+use crate::map::Plate;
+use crate::map::Wall;
+use crate::mob::enemy::Alarm;
+use crate::mob::enemy::DifficultyCurve;
+use crate::mob::enemy::EnemyAi;
+use crate::mob::player::PlayerControl;
+use crate::mob::player::Playthrough;
+use crate::mob::Body;
+use crate::mob::Health;
+use crate::mob::Mob;
+use crate::mob::MobInputs;
+use crate::music::Music;
+use crate::util::DespawnSet;
+use crate::util::ZRampByY;
 
 const TOGGLE_KEY: KeyCode = KeyCode::F3;
 

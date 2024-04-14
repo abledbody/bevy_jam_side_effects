@@ -1,8 +1,7 @@
-use bevy::{
-    math::Vec3Swizzles,
-    prelude::*,
-    render::camera::{OrthographicProjection, ScalingMode},
-};
+use bevy::math::Vec3Swizzles;
+use bevy::prelude::*;
+use bevy::render::camera::OrthographicProjection;
+use bevy::render::camera::ScalingMode;
 
 use crate::mob::player::PlayerControl;
 

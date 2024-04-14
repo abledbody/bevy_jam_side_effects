@@ -1,37 +1,53 @@
-use bevy::{
-    prelude::*,
-    transform::systems::{propagate_transforms, sync_simple_transforms},
-};
+use bevy::prelude::*;
+use bevy::transform::systems::propagate_transforms;
+use bevy::transform::systems::sync_simple_transforms;
 use bevy_ecs_ldtk::prelude::*;
 use bevy_kira_audio::prelude::*;
 use bevy_rapier2d::prelude::*;
-use leafwing_input_manager::{common_conditions::action_just_pressed, prelude::*};
+use leafwing_input_manager::common_conditions::action_just_pressed;
+use leafwing_input_manager::prelude::*;
 
-use crate::{
-    animation::{
-        AttackAnimation,
-        DeathAnimation,
-        Facing,
-        FlinchAnimation,
-        Lifetime,
-        Offset,
-        VirtualParent,
-        WalkAnimation,
-    },
-    asset::{AudioKey, Handles},
-    camera::{GameCamera, GameCameraTemplate},
-    combat::{DeathEffects, DeathEvent, HitEffects, HitEvent, HurtEffects},
-    cutscene::{Cutscene, CutsceneTemplate, Message},
-    hud::{AlarmMeter, AlarmMeterTemplate, FontSizeHack, HealthBar},
-    map::{spawn_level_entities, Exit, MapTemplate, Plate, Victory, VictorySquare},
-    mob::{
-        enemy::{Alarm, DetectEvent, DifficultyCurve, EnemyAi},
-        player::{PlayerAction, PlayerControl, Playthrough},
-        Mob,
-    },
-    music::Music,
-    util::{DespawnSet, ZRampByY},
-};
+use crate::animation::AttackAnimation;
+use crate::animation::DeathAnimation;
+use crate::animation::Facing;
+use crate::animation::FlinchAnimation;
+use crate::animation::Lifetime;
+use crate::animation::Offset;
+use crate::animation::VirtualParent;
+use crate::animation::WalkAnimation;
+use crate::asset::AudioKey;
+use crate::asset::Handles;
+use crate::camera::GameCamera;
+use crate::camera::GameCameraTemplate;
+use crate::combat::DeathEffects;
+use crate::combat::DeathEvent;
+use crate::combat::HitEffects;
+use crate::combat::HitEvent;
+use crate::combat::HurtEffects;
+use crate::cutscene::Cutscene;
+use crate::cutscene::CutsceneTemplate;
+use crate::cutscene::Message;
+use crate::hud::AlarmMeter;
+use crate::hud::AlarmMeterTemplate;
+use crate::hud::FontSizeHack;
+use crate::hud::HealthBar;
+use crate::map::spawn_level_entities;
+use crate::map::Exit;
+use crate::map::MapTemplate;
+use crate::map::Plate;
+use crate::map::Victory;
+use crate::map::VictorySquare;
+use crate::mob::enemy::Alarm;
+use crate::mob::enemy::DetectEvent;
+use crate::mob::enemy::DifficultyCurve;
+use crate::mob::enemy::EnemyAi;
+use crate::mob::player::PlayerAction;
+use crate::mob::player::PlayerControl;
+use crate::mob::player::Playthrough;
+use crate::mob::Mob;
+use crate::music::Music;
+use crate::util::DespawnSet;
+use crate::util::ZRampByY;
 
 const TITLE: &str = "Sai Defects";
 

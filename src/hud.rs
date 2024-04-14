@@ -1,12 +1,15 @@
-use bevy::{math::vec2, prelude::*};
-use rand::{thread_rng, Rng};
+use bevy::math::vec2;
+use bevy::prelude::*;
+use rand::thread_rng;
+use rand::Rng;
 
-use crate::{
-    animation::Offset,
-    asset::{FontKey, Handles, ImageKey},
-    camera::GameCamera,
-    mob::{enemy::Alarm, Health},
-};
+use crate::animation::Offset;
+use crate::asset::FontKey;
+use crate::asset::Handles;
+use crate::asset::ImageKey;
+use crate::camera::GameCamera;
+use crate::mob::enemy::Alarm;
+use crate::mob::Health;
 
 struct BackdropTemplate {
     offset: Transform,

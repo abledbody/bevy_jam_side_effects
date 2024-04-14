@@ -1,19 +1,29 @@
-use bevy::{
-    math::{vec2, Vec3Swizzles},
-    prelude::*,
-};
+use bevy::math::vec2;
+use bevy::math::Vec3Swizzles;
+use bevy::prelude::*;
 use bevy_kira_audio::prelude::*;
 use bevy_rapier2d::prelude::*;
-use rand::{seq::SliceRandom, thread_rng, Rng};
+use rand::seq::SliceRandom;
+use rand::thread_rng;
+use rand::Rng;
 
 use super::MobInputs;
-use crate::{
-    asset::{AudioKey, Handles, ImageKey},
-    combat::{DeathEffects, Faction, HitEvent, HurtEffects},
-    hud::{HealthBarTemplate, NametagTemplate},
-    mob::{player::PlayerControl, BodyTemplate, Health, Mob, MobBundle},
-    vfx::{DetectPopupTemplate, DropShadowTemplate},
-};
+use crate::asset::AudioKey;
+use crate::asset::Handles;
+use crate::asset::ImageKey;
+use crate::combat::DeathEffects;
+use crate::combat::Faction;
+use crate::combat::HitEvent;
+use crate::combat::HurtEffects;
+use crate::hud::HealthBarTemplate;
+use crate::hud::NametagTemplate;
+use crate::mob::player::PlayerControl;
+use crate::mob::BodyTemplate;
+use crate::mob::Health;
+use crate::mob::Mob;
+use crate::mob::MobBundle;
+use crate::vfx::DetectPopupTemplate;
+use crate::vfx::DropShadowTemplate;
 
 const CASUAL_NAMES: [&str; 52] = [
     "Alex", "Amy", "Abby", "Ashley", "Becca", "Ben", "Cindy", "Chloe", "Chris", "Danny", "Diane",

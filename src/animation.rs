@@ -1,15 +1,14 @@
-use std::f32::consts::{PI, TAU};
+use std::f32::consts::PI;
+use std::f32::consts::TAU;
 
-use bevy::{
-    math::{vec2, Vec3Swizzles},
-    prelude::*,
-};
+use bevy::math::vec2;
+use bevy::math::Vec3Swizzles;
+use bevy::prelude::*;
 use bevy_kira_audio::prelude::*;
 
-use crate::{
-    mob::{player::PlayerControl, MobInputs},
-    util::DespawnSet,
-};
+use crate::mob::player::PlayerControl;
+use crate::mob::MobInputs;
+use crate::util::DespawnSet;
 
 #[derive(Component, Reflect)]
 pub struct Lifetime(pub f32);

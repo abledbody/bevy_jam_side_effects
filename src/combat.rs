@@ -4,11 +4,15 @@ use bevy::prelude::*;
 use bevy_kira_audio::prelude::*;
 use bevy_rapier2d::prelude::*;
 
-use crate::{
-    animation::{DeathAnimation, FlinchAnimation, WalkAnimation},
-    asset::{AudioKey, Handles},
-    mob::{enemy::Alarm, Health, Mob, MobInputs},
-};
+use crate::animation::DeathAnimation;
+use crate::animation::FlinchAnimation;
+use crate::animation::WalkAnimation;
+use crate::asset::AudioKey;
+use crate::asset::Handles;
+use crate::mob::enemy::Alarm;
+use crate::mob::Health;
+use crate::mob::Mob;
+use crate::mob::MobInputs;
 
 pub const COLLISION_GROUP: Group = Group::GROUP_1;
 pub const HITBOX_GROUP: Group = Group::GROUP_2;

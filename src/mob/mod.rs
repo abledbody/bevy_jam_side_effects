@@ -2,13 +2,18 @@ use bevy::prelude::*;
 use bevy_kira_audio::prelude::*;
 use bevy_rapier2d::prelude::*;
 
-use crate::{
-    animation::{AttackAnimation, DeathAnimation, Facing, FlinchAnimation, Offset, WalkAnimation},
-    asset::{Handles, ImageKey},
-    combat::{Faction, COLLISION_GROUP},
-    math::MoveTowards,
-    util::ZRampByY,
-};
+use crate::animation::AttackAnimation;
+use crate::animation::DeathAnimation;
+use crate::animation::Facing;
+use crate::animation::FlinchAnimation;
+use crate::animation::Offset;
+use crate::animation::WalkAnimation;
+use crate::asset::Handles;
+use crate::asset::ImageKey;
+use crate::combat::Faction;
+use crate::combat::COLLISION_GROUP;
+use crate::math::MoveTowards;
+use crate::util::ZRampByY;
 
 pub mod enemy;
 pub mod player;

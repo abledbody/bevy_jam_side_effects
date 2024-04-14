@@ -1,17 +1,26 @@
-use bevy::{math::Vec3Swizzles, prelude::*, window::PrimaryWindow};
+use bevy::math::Vec3Swizzles;
+use bevy::prelude::*;
+use bevy::window::PrimaryWindow;
 use bevy_rapier2d::prelude::*;
 use leafwing_input_manager::prelude::*;
 
-use super::{Health, Mob, MobBundle, MobInputs};
-use crate::{
-    asset::{AudioKey, Handles, ImageKey},
-    camera::GameCamera,
-    combat::{Faction, HurtEffects},
-    hud::{HealthBarTemplate, NametagTemplate},
-    map::Plate,
-    mob::{enemy::Alarm, Body, BodyTemplate},
-    vfx::DropShadowTemplate,
-};
+use super::Health;
+use super::Mob;
+use super::MobBundle;
+use super::MobInputs;
+use crate::asset::AudioKey;
+use crate::asset::Handles;
+use crate::asset::ImageKey;
+use crate::camera::GameCamera;
+use crate::combat::Faction;
+use crate::combat::HurtEffects;
+use crate::hud::HealthBarTemplate;
+use crate::hud::NametagTemplate;
+use crate::map::Plate;
+use crate::mob::enemy::Alarm;
+use crate::mob::Body;
+use crate::mob::BodyTemplate;
+use crate::vfx::DropShadowTemplate;
 
 const PLAYER_NAME: &str = "Sai";
 

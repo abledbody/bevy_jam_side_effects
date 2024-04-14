@@ -1,16 +1,15 @@
 use bevy::prelude::*;
 use bevy_kira_audio::prelude::*;
 
-use crate::{
-    asset::{AudioKey, FontKey, Handles},
-    map::Victory,
-    mob::{
-        enemy::Alarm,
-        player::{PlayerControl, Playthrough},
-        Health,
-        MobInputs,
-    },
-};
+use crate::asset::AudioKey;
+use crate::asset::FontKey;
+use crate::asset::Handles;
+use crate::map::Victory;
+use crate::mob::enemy::Alarm;
+use crate::mob::player::PlayerControl;
+use crate::mob::player::Playthrough;
+use crate::mob::Health;
+use crate::mob::MobInputs;
 
 const NUM_LINES: usize = 3;
 const TEXT_LINES: [&str; NUM_LINES] = ["You are Sai.", "You have chosen to Defect.", "GOOD LUCK!"];

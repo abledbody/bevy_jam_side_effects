@@ -1,4 +1,5 @@
-use bevy::{prelude::*, utils::HashSet};
+use bevy::prelude::*;
+use bevy::utils::HashSet;
 
 pub const Z_MAX: f32 = 10.0;
 pub const Z_SCALE: f32 = 0.001;
