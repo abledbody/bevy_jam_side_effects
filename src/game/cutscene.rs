@@ -5,7 +5,6 @@ use leafwing_input_manager::common_conditions::action_just_pressed;
 use crate::common::asset::AudioKey;
 use crate::common::asset::FontKey;
 use crate::common::asset::Handles;
-use crate::common::GameAction;
 use crate::common::UpdateSet;
 use crate::game::actor::enemy::Alarm;
 use crate::game::actor::player::PlayerControl;
@@ -13,6 +12,7 @@ use crate::game::actor::player::Playthrough;
 use crate::game::actor::ActorIntent;
 use crate::game::actor::Health;
 use crate::game::map::Victory;
+use crate::game::GameAction;
 use crate::util::DespawnSet;
 
 pub struct CutscenePlugin;
