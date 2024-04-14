@@ -222,26 +222,28 @@ pub struct BodyTemplate {
 
 impl BodyTemplate {
     pub fn spawn(self, commands: &mut Commands, handle: &Handles) -> Entity {
-        let mut body = commands.spawn((
-            SpriteBundle {
-                texture: handle.image[&self.texture].clone(),
-                ..default()
-            },
-            Offset(self.offset),
-            WalkAnimation {
-                sound: self.walk_sound,
-                ..default()
-            },
-            AttackAnimation::default(),
-            FlinchAnimation::default(),
-            Body,
-        ));
-        if self.is_corpse {
-            body.insert(DeathAnimation::default());
-        }
-        #[cfg(feature = "dev")]
-        body.insert(Name::new("Body"));
+        let body = commands
+            .spawn((
+                Name::new("Body"),
+                SpriteBundle {
+                    texture: handle.image[&self.texture].clone(),
+                    ..default()
+                },
+                Offset(self.offset),
+                WalkAnimation {
+                    sound: self.walk_sound,
+                    ..default()
+                },
+                AttackAnimation::default(),
+                FlinchAnimation::default(),
+                Body,
+            ))
+            .id();
 
-        body.id()
+        if self.is_corpse {
+            commands.entity(body).insert(DeathAnimation::default());
+        }
+
+        body
     }
 }

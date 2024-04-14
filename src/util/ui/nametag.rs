@@ -31,15 +31,17 @@ impl NametagTemplate {
         };
 
         // Children
-        let mut nametag = commands.spawn(Text2dBundle {
-            text: Text::from_section(self.name, style.clone()),
-            transform: Transform::from_xyz(0.0, 0.0, 0.001)
-                .with_scale(Vec2::splat(0.25).extend(1.0)),
-            ..default()
-        });
-        #[cfg(feature = "dev")]
-        nametag.insert(Name::new("Nametag"));
-        let nametag = nametag.id();
+        let nametag = commands
+            .spawn((
+                Name::new("Nametag"),
+                Text2dBundle {
+                    text: Text::from_section(self.name, style.clone()),
+                    transform: Transform::from_xyz(0.0, 0.0, 0.001)
+                        .with_scale(Vec2::splat(0.25).extend(1.0)),
+                    ..default()
+                },
+            ))
+            .id();
 
         // Parent
         let backdrop = BackdropTemplate {
@@ -47,7 +49,6 @@ impl NametagTemplate {
             offset: self.offset,
         }
         .spawn(commands);
-
         commands.entity(backdrop).add_child(nametag);
 
         backdrop

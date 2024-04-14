@@ -195,46 +195,44 @@ impl PlayerTemplate {
         .spawn(commands);
 
         // Parent
-        let mut player = commands.spawn((
-            SpatialBundle {
-                transform: self.transform,
-                ..default()
-            },
-            ActorBundle {
-                actor: Actor::player(),
-                health: Health {
-                    current: self.current_health,
-                    max: self.max_health,
+        commands
+            .spawn((
+                Name::new("Player"),
+                SpatialBundle {
+                    transform: self.transform,
+                    ..default()
                 },
-                ..default()
-            }
-            .with_faction(FACTION),
-            ColliderMassProperties::Mass(5.0),
-            HurtEffects {
-                sound: Some(handle.audio[&AudioKey::GnollHurt].clone()),
-                ..default()
-            },
-            InputManagerBundle::<PlayerAction> {
-                input_map: InputMap::default()
-                    .insert(PlayerAction::Move, VirtualDPad::wasd())
-                    .insert(PlayerAction::Move, VirtualDPad::arrow_keys())
-                    .insert(PlayerAction::Move, DualAxis::left_stick())
-                    .insert(PlayerAction::Aim, DualAxis::right_stick())
-                    .insert(PlayerAction::Attack, GamepadButtonType::RightTrigger)
-                    .insert(PlayerAction::Attack, MouseButton::Left)
-                    .build(),
-                ..default()
-            },
-            PlayerControl::default(),
-        ));
-        #[cfg(feature = "dev")]
-        player.insert(Name::new("Player"));
-
-        player.add_child(body);
-        player.add_child(drop_shadow);
-        player.add_child(nametag);
-        player.add_child(health_bar);
-
-        player.id()
+                ActorBundle {
+                    actor: Actor::player(),
+                    health: Health {
+                        current: self.current_health,
+                        max: self.max_health,
+                    },
+                    ..default()
+                }
+                .with_faction(FACTION),
+                ColliderMassProperties::Mass(5.0),
+                HurtEffects {
+                    sound: Some(handle.audio[&AudioKey::GnollHurt].clone()),
+                    ..default()
+                },
+                InputManagerBundle::<PlayerAction> {
+                    input_map: InputMap::default()
+                        .insert(PlayerAction::Move, VirtualDPad::wasd())
+                        .insert(PlayerAction::Move, VirtualDPad::arrow_keys())
+                        .insert(PlayerAction::Move, DualAxis::left_stick())
+                        .insert(PlayerAction::Aim, DualAxis::right_stick())
+                        .insert(PlayerAction::Attack, GamepadButtonType::RightTrigger)
+                        .insert(PlayerAction::Attack, MouseButton::Left)
+                        .build(),
+                    ..default()
+                },
+                PlayerControl::default(),
+            ))
+            .add_child(body)
+            .add_child(drop_shadow)
+            .add_child(nametag)
+            .add_child(health_bar)
+            .id()
     }
 }

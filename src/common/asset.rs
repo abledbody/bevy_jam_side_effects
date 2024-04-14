@@ -25,7 +25,7 @@ pub enum ImageKey {
     GateOpen,
     GateClosed,
     DropShadow,
-    DetectPopup,
+    AlertPopup,
     AlarmMeterIcon,
     AlarmMeterIconFlash,
 }
@@ -45,7 +45,7 @@ const IMAGE_MAP: [(ImageKey, &str); 11] = [
     (ImageKey::GateOpen, "image/interactive/gate_open.png"),
     (ImageKey::GateClosed, "image/interactive/gate_closed.png"),
     (ImageKey::DropShadow, "image/vfx/drop_shadow.png"),
-    (ImageKey::DetectPopup, "image/vfx/detect_popup.png"),
+    (ImageKey::AlertPopup, "image/vfx/detect_popup.png"),
     (ImageKey::AlarmMeterIcon, "image/ui/alarm.png"),
     (ImageKey::AlarmMeterIconFlash, "image/ui/alarm_flash.png"),
 ];

@@ -55,16 +55,16 @@ pub struct HealthBarTemplate {
 impl HealthBarTemplate {
     pub fn spawn(self, commands: &mut Commands) -> Entity {
         // Children
-        let mut health_bar = commands.spawn((
-            SpriteBundle {
-                transform: Transform::from_xyz(0.0, 0.0, 0.001),
-                ..default()
-            },
-            HealthBar,
-        ));
-        #[cfg(feature = "dev")]
-        health_bar.insert(Name::new("HealthBar"));
-        let health_bar = health_bar.id();
+        let health_bar = commands
+            .spawn((
+                Name::new("HealthBar"),
+                SpriteBundle {
+                    transform: Transform::from_xyz(0.0, 0.0, 0.001),
+                    ..default()
+                },
+                HealthBar,
+            ))
+            .id();
 
         // Parent
         let backdrop = BackdropTemplate {
@@ -72,7 +72,6 @@ impl HealthBarTemplate {
             size: vec2(21.5, 4.0),
         }
         .spawn(commands);
-
         commands.entity(backdrop).add_child(health_bar);
 
         backdrop

@@ -88,30 +88,29 @@ pub struct HitboxTemplate {
 
 impl HitboxTemplate {
     pub fn spawn(self, commands: &mut Commands, handle: &Handles) -> Entity {
-        let mut hitbox = commands.spawn((
-            TransformBundle {
-                local: Transform {
-                    translation: self.position,
+        commands
+            .spawn((
+                Name::new("Hitbox"),
+                TransformBundle {
+                    local: Transform {
+                        translation: self.position,
+                        ..default()
+                    },
                     ..default()
                 },
-                ..default()
-            },
-            Collider::ball(self.radius),
-            Sensor,
-            self.faction.hitbox_groups(),
-            ActiveEvents::COLLISION_EVENTS,
-            HitEffects {
-                damage: self.damage,
-                knockback: self.knockback * self.direction,
-                success_sound: Some(handle.audio[&AudioKey::GnollAttackHit].clone()),
-                failure_sound: Some(handle.audio[&AudioKey::GnollAttackMiss].clone()),
-                ..default()
-            },
-        ));
-        #[cfg(feature = "dev")]
-        hitbox.insert(Name::new("Hitbox"));
-
-        hitbox.id()
+                Collider::ball(self.radius),
+                Sensor,
+                self.faction.hitbox_groups(),
+                ActiveEvents::COLLISION_EVENTS,
+                HitEffects {
+                    damage: self.damage,
+                    knockback: self.knockback * self.direction,
+                    success_sound: Some(handle.audio[&AudioKey::GnollAttackHit].clone()),
+                    failure_sound: Some(handle.audio[&AudioKey::GnollAttackMiss].clone()),
+                    ..default()
+                },
+            ))
+            .id()
     }
 }
 

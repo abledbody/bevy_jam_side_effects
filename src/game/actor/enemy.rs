@@ -22,7 +22,7 @@ use crate::game::combat::HitEvent;
 use crate::game::combat::HurtEffects;
 use crate::util::ui::health_bar::HealthBarTemplate;
 use crate::util::ui::nametag::NametagTemplate;
-use crate::util::vfx::DetectPopupTemplate;
+use crate::util::vfx::AlertPopupTemplate;
 use crate::util::vfx::DropShadowTemplate;
 
 pub struct EnemyPlugin;
@@ -173,48 +173,48 @@ impl EnemyTemplate {
             offset: Transform::from_xyz(0.0, -6.0, 0.0),
         }
         .spawn(commands);
-        let detector = AlertSensorTemplate.spawn(commands);
+        let alert_sensor = AlertSensorTemplate.spawn(commands);
 
         // Parent
         let mut actor = Actor::enemy();
         if self.is_corpse {
             actor.brake_deceleration = 700.0;
         }
-        let mut enemy = commands.spawn((
-            SpatialBundle {
-                transform: self.transform,
-                ..default()
-            },
-            ActorBundle {
-                health: Health::full(self.health),
-                actor,
-                ..default()
-            }
-            .with_faction(FACTION),
-            ColliderMassProperties::Mass(if self.is_corpse { 25.0 } else { 1.0 }),
-            EnemyAi::default(),
-            DifficultyCurve::default(),
-            HurtEffects {
-                increase_alarm: self.hurt_increase_alarm,
-                ..default()
-            },
-            DeathEffects {
-                increase_alarm: self.death_increase_alarm,
-            },
-        ));
+        let enemy = commands
+            .spawn((
+                SpatialBundle {
+                    transform: self.transform,
+                    ..default()
+                },
+                ActorBundle {
+                    health: Health::full(self.health),
+                    actor,
+                    ..default()
+                }
+                .with_faction(FACTION),
+                ColliderMassProperties::Mass(if self.is_corpse { 25.0 } else { 1.0 }),
+                EnemyAi::default(),
+                DifficultyCurve::default(),
+                HurtEffects {
+                    increase_alarm: self.hurt_increase_alarm,
+                    ..default()
+                },
+                DeathEffects {
+                    increase_alarm: self.death_increase_alarm,
+                },
+            ))
+            .add_child(body)
+            .add_child(drop_shadow)
+            .add_child(nametag)
+            .add_child(health_bar)
+            .add_child(alert_sensor)
+            .id();
+
         if self.is_corpse {
-            enemy.remove::<ActorIntent>();
+            commands.entity(enemy).remove::<ActorIntent>();
         }
-        #[cfg(feature = "dev")]
-        enemy.insert(Name::new("Enemy"));
 
-        enemy.add_child(body);
-        enemy.add_child(drop_shadow);
-        enemy.add_child(nametag);
-        enemy.add_child(health_bar);
-        enemy.add_child(detector);
-
-        enemy.id()
+        enemy
     }
 }
 
@@ -344,7 +344,7 @@ fn record_enemy_intents(
             .play(handle.audio[&AudioKey::GnollDetect].clone())
             .with_volume(0.6);
         ai.target = Some(target);
-        let popup = DetectPopupTemplate {
+        let popup = AlertPopupTemplate {
             offset: Transform::from_xyz(0.0, 38.0, 0.0),
         }
         .spawn(&mut commands, &handle);
@@ -436,18 +436,17 @@ pub struct AlertSensorTemplate;
 
 impl AlertSensorTemplate {
     pub fn spawn(self, commands: &mut Commands) -> Entity {
-        let mut detector = commands.spawn((
-            TransformBundle::default(),
-            Collider::ball(1.0),
-            ColliderMassProperties::Mass(0.0),
-            Sensor,
-            Faction::Enemy.hitbox_groups(),
-            ActiveEvents::COLLISION_EVENTS,
-            AlertSensor,
-        ));
-        #[cfg(feature = "dev")]
-        detector.insert(Name::new("AlertSensor"));
-
-        detector.id()
+        commands
+            .spawn((
+                Name::new("AlertSensor"),
+                TransformBundle::default(),
+                Collider::ball(1.0),
+                ColliderMassProperties::Mass(0.0),
+                Sensor,
+                Faction::Enemy.hitbox_groups(),
+                ActiveEvents::COLLISION_EVENTS,
+                AlertSensor,
+            ))
+            .id()
     }
 }

@@ -103,40 +103,39 @@ impl CutsceneTemplate {
             ..default()
         };
 
-        let mut entity = commands.spawn((
-            TextBundle {
-                text: Text::from_sections(vec![
-                    TextSection::new("", text_style.clone()),
-                    TextSection::new("", text_style),
-                ])
-                .with_justify(JustifyText::Center),
-                style: Style {
-                    margin: UiRect {
-                        left: Auto,
-                        right: Auto,
-                        top: Percent(10.0),
-                        bottom: Percent(60.0),
+        commands
+            .spawn((
+                Name::new("Cutscene"),
+                TextBundle {
+                    text: Text::from_sections(vec![
+                        TextSection::new("", text_style.clone()),
+                        TextSection::new("", text_style),
+                    ])
+                    .with_justify(JustifyText::Center),
+                    style: Style {
+                        margin: UiRect {
+                            left: Auto,
+                            right: Auto,
+                            top: Percent(10.0),
+                            bottom: Percent(60.0),
+                        },
+                        position_type: PositionType::Absolute,
+                        ..default()
                     },
-                    position_type: PositionType::Absolute,
                     ..default()
                 },
-                ..default()
-            },
-            Cutscene {
-                phase: 0,
-                section: 0,
-                hue: 0.0,
-                sounds: [
-                    handle.audio[&AudioKey::Pop2].clone(),
-                    handle.audio[&AudioKey::Pop1].clone(),
-                    handle.audio[&AudioKey::Jackpot].clone(),
-                ],
-            },
-        ));
-        #[cfg(feature = "dev")]
-        entity.insert(Name::new("Cutscene"));
-
-        entity.id()
+                Cutscene {
+                    phase: 0,
+                    section: 0,
+                    hue: 0.0,
+                    sounds: [
+                        handle.audio[&AudioKey::Pop2].clone(),
+                        handle.audio[&AudioKey::Pop1].clone(),
+                        handle.audio[&AudioKey::Jackpot].clone(),
+                    ],
+                },
+            ))
+            .id()
     }
 }
 
@@ -161,26 +160,25 @@ impl MessageTemplate {
             color: Color::WHITE,
         };
 
-        let mut message = commands.spawn((
-            TextBundle {
-                style: Style {
-                    margin: UiRect::all(Auto),
-                    position_type: PositionType::Absolute,
+        commands
+            .spawn((
+                Name::new("Message"),
+                TextBundle {
+                    style: Style {
+                        margin: UiRect::all(Auto),
+                        position_type: PositionType::Absolute,
+                        ..default()
+                    },
+                    text: Text::from_sections([
+                        TextSection::new(self.title + "\n\n\n\n\n", title_style),
+                        TextSection::new(self.body, body_style),
+                    ])
+                    .with_justify(JustifyText::Center),
                     ..default()
                 },
-                text: Text::from_sections([
-                    TextSection::new(self.title + "\n\n\n\n\n", title_style),
-                    TextSection::new(self.body, body_style),
-                ])
-                .with_justify(JustifyText::Center),
-                ..default()
-            },
-            Message,
-        ));
-        #[cfg(feature = "dev")]
-        message.insert(Name::new("Message"));
-
-        message.id()
+                Message,
+            ))
+            .id()
     }
 }
 

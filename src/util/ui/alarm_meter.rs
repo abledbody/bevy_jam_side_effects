@@ -100,58 +100,65 @@ pub struct AlarmMeterTemplate;
 
 impl AlarmMeterTemplate {
     pub fn spawn(self, commands: &mut Commands, handle: &Handles) -> Entity {
-        let mut alarm_meter = commands.spawn((NodeBundle::default(), AlarmMeter::default()));
-        #[cfg(feature = "dev")]
-        alarm_meter.insert(Name::new("AlarmMeter"));
-        let alarm_meter = alarm_meter.id();
+        let alarm_meter = commands
+            .spawn((
+                Name::new("AlarmMeter"),
+                NodeBundle::default(),
+                AlarmMeter::default(),
+            ))
+            .id();
 
-        let mut backdrop = commands.spawn(NodeBundle {
-            style: Style {
-                //margin: UiRect::all(Percent(1.0)),
-                padding: UiRect::all(Percent(0.35)),
-                width: Percent(100.0),
-                height: Percent(70.0),
-                ..default()
-            },
-            background_color: BackgroundColor(BackdropTemplate::COLOR),
-            ..default()
-        });
-        #[cfg(feature = "dev")]
-        backdrop.insert(Name::new("AlarmMeterBackdrop"));
-        backdrop.add_child(alarm_meter);
-        let backdrop = backdrop.id();
+        let backdrop = commands
+            .spawn((
+                Name::new("AlarmMeterBackdrop"),
+                NodeBundle {
+                    style: Style {
+                        //margin: UiRect::all(Percent(1.0)),
+                        padding: UiRect::all(Percent(0.35)),
+                        width: Percent(100.0),
+                        height: Percent(70.0),
+                        ..default()
+                    },
+                    background_color: BackgroundColor(BackdropTemplate::COLOR),
+                    ..default()
+                },
+            ))
+            .add_child(alarm_meter)
+            .id();
 
-        let mut icon = commands.spawn(ImageBundle {
-            style: Style {
-                margin: UiRect::left(Percent(1.0)),
-                width: Auto,
-                height: Percent(100.0),
-                ..default()
-            },
-            image: UiImage::new(handle.image[&ImageKey::AlarmMeterIcon].clone()),
-            ..default()
-        });
-        #[cfg(feature = "dev")]
-        icon.insert(Name::new("AlarmMeterIcon"));
-        let icon = icon.id();
+        let icon = commands
+            .spawn((
+                Name::new("AlarmMeterIcon"),
+                ImageBundle {
+                    style: Style {
+                        margin: UiRect::left(Percent(1.0)),
+                        width: Auto,
+                        height: Percent(100.0),
+                        ..default()
+                    },
+                    image: UiImage::new(handle.image[&ImageKey::AlarmMeterIcon].clone()),
+                    ..default()
+                },
+            ))
+            .id();
 
-        let mut container = commands.spawn(NodeBundle {
-            style: Style {
-                margin: UiRect::all(Percent(1.0)),
-                width: Percent(100.0),
-                height: Percent(12.0),
-                align_items: AlignItems::Center,
-                ..default()
-            },
-            z_index: ZIndex::Global(100),
-            ..default()
-        });
-        #[cfg(feature = "dev")]
-        container.insert(Name::new("AlarmMeterContainer"));
-
-        container.add_child(backdrop);
-        container.add_child(icon);
-
-        container.id()
+        commands
+            .spawn((
+                Name::new("AlarmMeterContainer"),
+                NodeBundle {
+                    style: Style {
+                        margin: UiRect::all(Percent(1.0)),
+                        width: Percent(100.0),
+                        height: Percent(12.0),
+                        align_items: AlignItems::Center,
+                        ..default()
+                    },
+                    z_index: ZIndex::Global(100),
+                    ..default()
+                },
+            ))
+            .add_child(backdrop)
+            .add_child(icon)
+            .id()
     }
 }

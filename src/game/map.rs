@@ -44,14 +44,15 @@ pub struct MapTemplate;
 
 impl MapTemplate {
     pub fn spawn(self, commands: &mut Commands, handle: &Handles) -> Entity {
-        let mut map = commands.spawn(LdtkWorldBundle {
-            ldtk_handle: handle.map[&MapKey::Game].clone(),
-            ..default()
-        });
-        #[cfg(feature = "dev")]
-        map.insert(Name::new("Map"));
-
-        map.id()
+        commands
+            .spawn((
+                Name::new("Map"),
+                LdtkWorldBundle {
+                    ldtk_handle: handle.map[&MapKey::Game].clone(),
+                    ..default()
+                },
+            ))
+            .id()
     }
 }
 
@@ -64,21 +65,20 @@ struct WallTemplate {
 
 impl WallTemplate {
     fn spawn(self, commands: &mut Commands) -> Entity {
-        let mut wall = commands.spawn((
-            TransformBundle::from_transform(self.transform),
-            Collider::cuboid(8.0, 8.0),
-            CollisionGroups {
-                memberships: COLLISION_GROUP,
-                filters: COLLISION_GROUP,
-            },
-            Friction::new(0.0),
-            RigidBody::Fixed,
-            Wall,
-        ));
-        #[cfg(feature = "dev")]
-        wall.insert(Name::new("Wall"));
-
-        wall.id()
+        commands
+            .spawn((
+                Name::new("Wall"),
+                TransformBundle::from_transform(self.transform),
+                Collider::cuboid(8.0, 8.0),
+                CollisionGroups {
+                    memberships: COLLISION_GROUP,
+                    filters: COLLISION_GROUP,
+                },
+                Friction::new(0.0),
+                RigidBody::Fixed,
+                Wall,
+            ))
+            .id()
     }
 }
 
@@ -117,21 +117,20 @@ struct ExitTemplate {
 
 impl ExitTemplate {
     pub fn spawn(self, commands: &mut Commands) -> Entity {
-        let mut exit = commands.spawn((
-            TransformBundle::from_transform(self.transform),
-            Collider::ball(4.0),
-            CollisionGroups {
-                memberships: COLLISION_GROUP,
-                filters: PLAYER_HURTBOX_GROUP,
-            },
-            Sensor,
-            ActiveEvents::COLLISION_EVENTS,
-            Exit,
-        ));
-        #[cfg(feature = "dev")]
-        exit.insert(Name::new("Exit"));
-
-        exit.id()
+        commands
+            .spawn((
+                Name::new("Exit"),
+                TransformBundle::from_transform(self.transform),
+                Collider::ball(4.0),
+                CollisionGroups {
+                    memberships: COLLISION_GROUP,
+                    filters: PLAYER_HURTBOX_GROUP,
+                },
+                Sensor,
+                ActiveEvents::COLLISION_EVENTS,
+                Exit,
+            ))
+            .id()
     }
 }
 
@@ -164,21 +163,20 @@ struct VictorySquareTemplate {
 
 impl VictorySquareTemplate {
     pub fn spawn(self, commands: &mut Commands) -> Entity {
-        let mut victory_square = commands.spawn((
-            TransformBundle::from_transform(self.transform),
-            Collider::ball(4.0),
-            CollisionGroups {
-                memberships: COLLISION_GROUP,
-                filters: PLAYER_HURTBOX_GROUP,
-            },
-            Sensor,
-            ActiveEvents::COLLISION_EVENTS,
-            VictorySquare,
-        ));
-        #[cfg(feature = "dev")]
-        victory_square.insert(Name::new("VictorySquare"));
-
-        victory_square.id()
+        commands
+            .spawn((
+                Name::new("VictorySquare"),
+                TransformBundle::from_transform(self.transform),
+                Collider::ball(4.0),
+                CollisionGroups {
+                    memberships: COLLISION_GROUP,
+                    filters: PLAYER_HURTBOX_GROUP,
+                },
+                Sensor,
+                ActiveEvents::COLLISION_EVENTS,
+                VictorySquare,
+            ))
+            .id()
     }
 }
 
@@ -241,28 +239,27 @@ struct PlateTemplate {
 
 impl PlateTemplate {
     pub fn spawn(self, commands: &mut Commands, handle: &Handles) -> Entity {
-        let mut plate = commands.spawn((
-            SpriteBundle {
-                transform: self.transform,
-                texture: handle.image[&ImageKey::PlateUnpressed].clone(),
-                ..default()
-            },
-            Collider::ball(2.0),
-            CollisionGroups {
-                memberships: COLLISION_GROUP,
-                filters: PLAYER_HURTBOX_GROUP,
-            },
-            Sensor,
-            ActiveEvents::COLLISION_EVENTS,
-            Plate {
-                gates: self.gates,
-                ..default()
-            },
-        ));
-        #[cfg(feature = "dev")]
-        plate.insert(Name::new("Plate"));
-
-        plate.id()
+        commands
+            .spawn((
+                Name::new("Plate"),
+                SpriteBundle {
+                    transform: self.transform,
+                    texture: handle.image[&ImageKey::PlateUnpressed].clone(),
+                    ..default()
+                },
+                Collider::ball(2.0),
+                CollisionGroups {
+                    memberships: COLLISION_GROUP,
+                    filters: PLAYER_HURTBOX_GROUP,
+                },
+                Sensor,
+                ActiveEvents::COLLISION_EVENTS,
+                Plate {
+                    gates: self.gates,
+                    ..default()
+                },
+            ))
+            .id()
     }
 }
 
@@ -284,25 +281,24 @@ impl GateTemplate {
             (COLLISION_GROUP, handle.image[&ImageKey::GateClosed].clone())
         };
 
-        let mut gate = commands.spawn((
-            SpriteBundle {
-                transform: self.transform,
-                texture,
-                ..default()
-            },
-            Collider::ball(8.0),
-            CollisionGroups {
-                memberships: COLLISION_GROUP,
-                filters,
-            },
-            Friction::new(0.0),
-            RigidBody::Fixed,
-            Gate { open: self.open },
-        ));
-        #[cfg(feature = "dev")]
-        gate.insert(Name::new("Gate"));
-
-        gate.id()
+        commands
+            .spawn((
+                Name::new("Gate"),
+                SpriteBundle {
+                    transform: self.transform,
+                    texture,
+                    ..default()
+                },
+                Collider::ball(8.0),
+                CollisionGroups {
+                    memberships: COLLISION_GROUP,
+                    filters,
+                },
+                Friction::new(0.0),
+                RigidBody::Fixed,
+                Gate { open: self.open },
+            ))
+            .id()
     }
 }
 
