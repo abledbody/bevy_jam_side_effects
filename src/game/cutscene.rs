@@ -1,17 +1,16 @@
 use bevy::prelude::*;
 use bevy::ui::Val::*;
+use bevy_asset_loader::prelude::*;
 use bevy_kira_audio::prelude::*;
 use leafwing_input_manager::common_conditions::action_just_pressed;
 
-use crate::common::asset::AudioKey;
-use crate::common::asset::Handles;
 use crate::common::UpdateSet;
 use crate::game::actor::health::Health;
 use crate::game::actor::intent::ActorIntent;
 use crate::game::actor::player::PlayerControl;
 use crate::game::actor::player::Playthrough;
 use crate::game::alarm::Alarm;
-use crate::game::map::Victory;
+use crate::game::level::victory::Victory;
 use crate::game::GameAction;
 use crate::util::ui::font::PIXEL_FONT_HANDLE;
 use crate::util::DespawnSet;
@@ -20,6 +19,9 @@ pub struct CutscenePlugin;
 
 impl Plugin for CutscenePlugin {
     fn build(&self, app: &mut App) {
+        app.register_type::<CutsceneAssets>()
+            .init_collection::<CutsceneAssets>();
+
         app.register_type::<Cutscene>().add_systems(
             Update,
             (
@@ -33,6 +35,17 @@ impl Plugin for CutscenePlugin {
         app.register_type::<Message>()
             .add_systems(Update, (show_death_message, show_victory_message));
     }
+}
+
+#[derive(AssetCollection, Resource, Reflect, Default)]
+#[reflect(Resource)]
+pub struct CutsceneAssets {
+    #[asset(path = "sound/sfx/pop_2.wav")]
+    sfx_confirm1: Handle<AudioSource>,
+    #[asset(path = "sound/sfx/pop_1.wav")]
+    sfx_confirm2: Handle<AudioSource>,
+    #[asset(path = "sound/sfx/jackpot.wav")]
+    sfx_confirm3: Handle<AudioSource>,
 }
 
 const NUM_LINES: usize = 3;
@@ -96,7 +109,7 @@ fn advance_cutscene(
 pub struct CutsceneTemplate;
 
 impl CutsceneTemplate {
-    pub fn spawn(self, commands: &mut Commands, handle: &Handles) -> Entity {
+    pub fn spawn(self, commands: &mut Commands, cutscene_assets: &CutsceneAssets) -> Entity {
         let text_style = TextStyle {
             font_size: 18.0,
             font: PIXEL_FONT_HANDLE,
@@ -129,9 +142,9 @@ impl CutsceneTemplate {
                     section: 0,
                     hue: 0.0,
                     sounds: [
-                        handle.audio[&AudioKey::Pop2].clone(),
-                        handle.audio[&AudioKey::Pop1].clone(),
-                        handle.audio[&AudioKey::Jackpot].clone(),
+                        cutscene_assets.sfx_confirm1.clone(),
+                        cutscene_assets.sfx_confirm2.clone(),
+                        cutscene_assets.sfx_confirm3.clone(),
                     ],
                 },
             ))

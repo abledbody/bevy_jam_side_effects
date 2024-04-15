@@ -6,15 +6,13 @@ use rand::seq::SliceRandom;
 use rand::thread_rng;
 use rand::Rng;
 
-use crate::common::asset::AudioKey;
-use crate::common::asset::Handles;
-use crate::common::asset::ImageKey;
 use crate::common::UpdateSet;
 use crate::game::actor::body::BodyTemplate;
 use crate::game::actor::health::Health;
 use crate::game::actor::intent::ActorIntent;
 use crate::game::actor::player::PlayerControl;
 use crate::game::actor::Actor;
+use crate::game::actor::ActorAssets;
 use crate::game::actor::ActorBundle;
 use crate::game::alarm::Alarm;
 use crate::game::combat::DeathEffects;
@@ -25,6 +23,7 @@ use crate::util::ui::health_bar::HealthBarTemplate;
 use crate::util::ui::nametag::NametagTemplate;
 use crate::util::vfx::AlertPopupTemplate;
 use crate::util::vfx::DropShadowTemplate;
+use crate::util::vfx::VfxAssets;
 
 pub struct EnemyPlugin;
 
@@ -151,18 +150,23 @@ impl EnemyTemplate {
         self
     }
 
-    pub fn spawn(self, commands: &mut Commands, handle: &Handles) -> Entity {
+    pub fn spawn(
+        self,
+        commands: &mut Commands,
+        actor_assets: &ActorAssets,
+        vfx_assets: &VfxAssets,
+    ) -> Entity {
         const FACTION: Faction = Faction::Enemy;
 
         // Children
         let body = BodyTemplate {
-            texture: ImageKey::GnollRed,
+            texture: actor_assets.gnoll_red.clone(),
             offset: Transform::from_xyz(2.0, 11.0, 0.0),
-            walk_sound: None,
+            step_sound: None,
             is_corpse: self.is_corpse,
         }
-        .spawn(commands, handle);
-        let drop_shadow = DropShadowTemplate::default().spawn(commands, handle);
+        .spawn(commands);
+        let drop_shadow = DropShadowTemplate::default().spawn(commands, vfx_assets);
         let nametag = NametagTemplate {
             offset: Transform::from_xyz(0.0, 26.0, 0.0),
             name: self.name,
@@ -304,7 +308,8 @@ fn record_enemy_intents(
     parent_query: Query<&Parent>,
     player_query: Query<Entity, With<PlayerControl>>,
     transform_query: Query<&GlobalTransform, Without<EnemyAi>>,
-    handle: Res<Handles>,
+    actor_assets: Res<ActorAssets>,
+    vfx_assets: Res<VfxAssets>,
     time: Res<Time>,
     audio: Res<Audio>,
 ) {
@@ -329,14 +334,12 @@ fn record_enemy_intents(
             return;
         }
 
-        audio
-            .play(handle.audio[&AudioKey::GnollDetect].clone())
-            .with_volume(0.6);
+        audio.play(actor_assets.alert.clone()).with_volume(0.6);
         ai.target = Some(target);
         let popup = AlertPopupTemplate {
             offset: Transform::from_xyz(0.0, 38.0, 0.0),
         }
-        .spawn(&mut commands, &handle);
+        .spawn(&mut commands, &vfx_assets);
         commands.entity(enemy).add_child(popup);
     };
 

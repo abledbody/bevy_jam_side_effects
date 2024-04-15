@@ -1,9 +1,7 @@
-pub mod asset;
 mod audio;
 pub mod camera;
 mod config;
 mod debug;
-mod level;
 mod music;
 mod physics;
 pub mod theme;
@@ -75,11 +73,9 @@ impl Plugin for CommonPlugin {
 
         // Other plugins
         app.add_plugins((
-            asset::AssetPlugin,
             audio::AudioPlugin,
             camera::CameraPlugin,
             config::ConfigPlugin,
-            level::LevelPlugin,
             music::MusicPlugin,
             physics::PhysicsPlugin,
             theme::ThemePlugin,

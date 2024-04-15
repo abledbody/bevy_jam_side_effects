@@ -3,9 +3,6 @@ use bevy::window::PrimaryWindow;
 use bevy_rapier2d::prelude::*;
 use leafwing_input_manager::prelude::*;
 
-use crate::common::asset::AudioKey;
-use crate::common::asset::Handles;
-use crate::common::asset::ImageKey;
 use crate::common::camera::GameCamera;
 use crate::common::UpdateSet;
 use crate::game::actor::body::Body;
@@ -13,14 +10,16 @@ use crate::game::actor::body::BodyTemplate;
 use crate::game::actor::health::Health;
 use crate::game::actor::intent::ActorIntent;
 use crate::game::actor::Actor;
+use crate::game::actor::ActorAssets;
 use crate::game::actor::ActorBundle;
 use crate::game::alarm::Alarm;
 use crate::game::combat::Faction;
 use crate::game::combat::HurtEffects;
-use crate::game::map::Plate;
+use crate::game::level::plate::Plate;
 use crate::util::ui::health_bar::HealthBarTemplate;
 use crate::util::ui::nametag::NametagTemplate;
 use crate::util::vfx::DropShadowTemplate;
+use crate::util::vfx::VfxAssets;
 
 pub struct PlayerPlugin;
 
@@ -62,9 +61,9 @@ fn detect_defection(
     plate_query: Query<(), With<Plate>>,
     player_query: Query<&Children, With<PlayerControl>>,
     mut body_query: Query<&mut Handle<Image>, With<Body>>,
-    handle: Res<Handles>,
     mut playthrough: ResMut<Playthrough>,
     mut alarm: ResMut<Alarm>,
+    actor_assets: Res<ActorAssets>,
     time: Res<Time>,
 ) {
     if playthrough.defected {
@@ -90,7 +89,7 @@ fn detect_defection(
             let Ok(mut body) = body_query.get_mut(child) else {
                 continue;
             };
-            *body = handle.image[&ImageKey::GnollBlue].clone();
+            *body = actor_assets.gnoll_blue.clone();
         }
 
         return;
@@ -155,7 +154,7 @@ fn record_player_intent(
 
 pub struct PlayerTemplate {
     pub transform: Transform,
-    pub texture: ImageKey,
+    pub texture: Handle<Image>,
     pub current_health: f32,
     pub max_health: f32,
 }
@@ -164,7 +163,7 @@ impl Default for PlayerTemplate {
     fn default() -> Self {
         Self {
             transform: default(),
-            texture: ImageKey::GnollRed,
+            texture: default(),
             current_health: 200.0,
             max_health: 200.0,
         }
@@ -172,18 +171,23 @@ impl Default for PlayerTemplate {
 }
 
 impl PlayerTemplate {
-    pub fn spawn(self, commands: &mut Commands, handle: &Handles) -> Entity {
+    pub fn spawn(
+        self,
+        commands: &mut Commands,
+        actor_assets: &ActorAssets,
+        vfx_assets: &VfxAssets,
+    ) -> Entity {
         const FACTION: Faction = Faction::Player;
 
         // Children
         let body = BodyTemplate {
             texture: self.texture,
             offset: Transform::from_xyz(2.0, 11.0, 0.0),
-            walk_sound: Some(handle.audio[&AudioKey::GnollWalk].clone()),
+            step_sound: Some(actor_assets.step.clone()),
             is_corpse: false,
         }
-        .spawn(commands, handle);
-        let drop_shadow = DropShadowTemplate::default().spawn(commands, handle);
+        .spawn(commands);
+        let drop_shadow = DropShadowTemplate::default().spawn(commands, vfx_assets);
         let nametag = NametagTemplate {
             offset: Transform::from_xyz(0.0, 26.0, 0.0),
             name: PLAYER_NAME.to_string(),
@@ -213,7 +217,7 @@ impl PlayerTemplate {
                 .with_faction(FACTION),
                 ColliderMassProperties::Mass(5.0),
                 HurtEffects {
-                    sound: Some(handle.audio[&AudioKey::GnollHurt].clone()),
+                    sound: Some(actor_assets.hurt.clone()),
                     ..default()
                 },
                 InputManagerBundle::<PlayerAction> {

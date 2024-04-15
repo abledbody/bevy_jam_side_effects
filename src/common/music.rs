@@ -1,48 +1,59 @@
 use bevy::prelude::*;
+use bevy_asset_loader::prelude::*;
 use bevy_kira_audio::prelude::*;
 
-use crate::common::asset::AudioKey;
-use crate::common::asset::Handles;
 use crate::game::actor::player::Playthrough;
-use crate::game::map::Victory;
+use crate::game::level::victory::Victory;
 
 pub struct MusicPlugin;
 
 impl Plugin for MusicPlugin {
     fn build(&self, app: &mut App) {
+        app.register_type::<MusicAssets>()
+            .init_collection::<MusicAssets>();
+
         app.register_type::<Music>()
             .init_resource::<Music>()
             .add_systems(Update, update_music);
     }
 }
 
+#[derive(AssetCollection, Resource, Reflect, Default)]
+#[reflect(Resource)]
+pub struct MusicAssets {
+    #[asset(path = "sound/music/game.wav")]
+    main: Handle<AudioSource>,
+    #[asset(path = "sound/music/victory.wav")]
+    victory: Handle<AudioSource>,
+}
+
 #[derive(Resource, Reflect, Default)]
 #[reflect(Resource)]
 pub struct Music {
-    pub key: Option<AudioKey>,
+    pub current: Option<Handle<AudioSource>>,
     pub track: Option<Handle<AudioInstance>>,
 }
 
 fn update_music(
     mut music: ResMut<Music>,
     mut audio_instances: ResMut<Assets<AudioInstance>>,
-    handle: Res<Handles>,
+    music_assets: Res<MusicAssets>,
     playthrough: Res<Playthrough>,
     victory: Res<Victory>,
     audio: Res<Audio>,
 ) {
-    let key = if victory.0 {
-        Some(AudioKey::VictoryTrack)
+    let next = if victory.0 {
+        Some(music_assets.victory.clone())
     } else if playthrough.defected {
-        Some(AudioKey::MainTrack)
+        Some(music_assets.main.clone())
     } else {
         None
     };
-    if music.key == key {
+    if music.current == next {
         return;
     }
 
-    music.key = key;
+    music.current = next;
 
     // Stop current track
     if let Some(track) = &music.track {
@@ -51,12 +62,9 @@ fn update_music(
         }
     }
 
-    // Start new track
-    music.track = key.map(|key| {
-        audio
-            .play(handle.audio[&key].clone())
-            .with_volume(0.4)
-            .looped()
-            .handle()
-    });
+    // Start next track
+    music.track = music
+        .current
+        .clone()
+        .map(|source| audio.play(source).with_volume(0.4).looped().handle());
 }

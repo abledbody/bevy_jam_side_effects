@@ -5,8 +5,6 @@ use bevy::math::vec2;
 use bevy::prelude::*;
 use bevy_kira_audio::prelude::*;
 
-use crate::common::asset::Handles;
-use crate::common::asset::ImageKey;
 use crate::common::PostTransformSet;
 use crate::common::UpdateSet;
 use crate::game::actor::intent::ActorIntent;
@@ -67,24 +65,24 @@ impl Plugin for BodyPlugin {
 pub struct Body;
 
 pub struct BodyTemplate {
-    pub texture: ImageKey,
+    pub texture: Handle<Image>,
     pub offset: Transform,
-    pub walk_sound: Option<Handle<AudioSource>>,
+    pub step_sound: Option<Handle<AudioSource>>,
     pub is_corpse: bool,
 }
 
 impl BodyTemplate {
-    pub fn spawn(self, commands: &mut Commands, handle: &Handles) -> Entity {
+    pub fn spawn(self, commands: &mut Commands) -> Entity {
         let body = commands
             .spawn((
                 Name::new("Body"),
                 SpriteBundle {
-                    texture: handle.image[&self.texture].clone(),
+                    texture: self.texture,
                     ..default()
                 },
                 Offset(self.offset),
                 WalkAnimation {
-                    sound: self.walk_sound,
+                    sound: self.step_sound,
                     ..default()
                 },
                 AttackAnimation::default(),

@@ -1,9 +1,26 @@
 use bevy::prelude::*;
+use bevy_asset_loader::prelude::*;
 
-use crate::common::asset::Handles;
-use crate::common::asset::ImageKey;
 use crate::util::animation::lifetime::Lifetime;
 use crate::util::animation::offset::Offset;
+
+pub struct VfxPlugin;
+
+impl Plugin for VfxPlugin {
+    fn build(&self, app: &mut App) {
+        app.register_type::<VfxAssets>()
+            .init_collection::<VfxAssets>();
+    }
+}
+
+#[derive(AssetCollection, Resource, Reflect, Default)]
+#[reflect(Resource)]
+pub struct VfxAssets {
+    #[asset(path = "image/vfx/drop_shadow.png")]
+    drop_shadow: Handle<Image>,
+    #[asset(path = "image/vfx/alert_popup.png")]
+    alert_popup: Handle<Image>,
+}
 
 pub struct DropShadowTemplate {
     pub offset: Transform,
@@ -18,12 +35,12 @@ impl Default for DropShadowTemplate {
 }
 
 impl DropShadowTemplate {
-    pub fn spawn(self, commands: &mut Commands, handle: &Handles) -> Entity {
+    pub fn spawn(self, commands: &mut Commands, vfx_assets: &VfxAssets) -> Entity {
         commands
             .spawn((
                 Name::new("DropShadow"),
                 SpriteBundle {
-                    texture: handle.image[&ImageKey::DropShadow].clone(),
+                    texture: vfx_assets.drop_shadow.clone(),
                     ..default()
                 },
                 Offset(self.offset),
@@ -45,12 +62,12 @@ impl Default for AlertPopupTemplate {
 }
 
 impl AlertPopupTemplate {
-    pub fn spawn(self, commands: &mut Commands, handle: &Handles) -> Entity {
+    pub fn spawn(self, commands: &mut Commands, vfx_assets: &VfxAssets) -> Entity {
         commands
             .spawn((
                 Name::new("AlertPopup"),
                 SpriteBundle {
-                    texture: handle.image[&ImageKey::AlertPopup].clone(),
+                    texture: vfx_assets.alert_popup.clone(),
                     ..default()
                 },
                 Lifetime(1.0),

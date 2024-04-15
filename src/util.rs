@@ -22,6 +22,7 @@ impl Plugin for UtilPlugin {
             animation::AnimationPlugin,
             despawn::DespawnPlugin,
             ui::UiPlugin,
+            vfx::VfxPlugin,
             y_sort::YSortPlugin,
         ));
     }

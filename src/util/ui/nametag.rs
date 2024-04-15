@@ -1,7 +1,6 @@
 use bevy::math::vec2;
 use bevy::prelude::*;
 
-use crate::common::asset::Handles;
 use crate::util::ui::backdrop::BackdropTemplate;
 use crate::util::ui::font::FontSize;
 use crate::util::ui::font::BOLD_FONT_HANDLE;

@@ -1,11 +1,10 @@
 use std::f32::consts::PI;
 
 use bevy::prelude::*;
+use bevy_asset_loader::prelude::*;
 use bevy_kira_audio::prelude::*;
 use bevy_rapier2d::prelude::*;
 
-use crate::common::asset::AudioKey;
-use crate::common::asset::Handles;
 use crate::common::UpdateSet;
 use crate::game::actor::body::DeathAnimation;
 use crate::game::actor::body::FlinchAnimation;
@@ -20,6 +19,9 @@ pub struct CombatPlugin;
 
 impl Plugin for CombatPlugin {
     fn build(&self, app: &mut App) {
+        app.register_type::<CombatAssets>()
+            .init_collection::<CombatAssets>();
+
         app.add_systems(
             Update,
             (
@@ -42,6 +44,15 @@ impl Plugin for CombatPlugin {
         app.register_type::<DeathEffects>()
             .add_systems(Update, apply_death_effects.in_set(UpdateSet::HandleEvents));
     }
+}
+
+#[derive(AssetCollection, Resource, Reflect, Default)]
+#[reflect(Resource)]
+pub struct CombatAssets {
+    #[asset(path = "sound/sfx/gnoll_attack_miss.wav")]
+    attack_miss: Handle<AudioSource>,
+    #[asset(path = "sound/sfx/gnoll_attack_hit.wav")]
+    attack_hit: Handle<AudioSource>,
 }
 
 pub const COLLISION_GROUP: Group = Group::GROUP_1;
@@ -87,7 +98,7 @@ pub struct HitboxTemplate {
 }
 
 impl HitboxTemplate {
-    pub fn spawn(self, commands: &mut Commands, handle: &Handles) -> Entity {
+    pub fn spawn(self, commands: &mut Commands, combat_assets: &CombatAssets) -> Entity {
         commands
             .spawn((
                 Name::new("Hitbox"),
@@ -105,8 +116,8 @@ impl HitboxTemplate {
                 HitEffects {
                     damage: self.damage,
                     knockback: self.knockback * self.direction,
-                    success_sound: Some(handle.audio[&AudioKey::GnollAttackHit].clone()),
-                    failure_sound: Some(handle.audio[&AudioKey::GnollAttackMiss].clone()),
+                    success_sound: Some(combat_assets.attack_hit.clone()),
+                    failure_sound: Some(combat_assets.attack_miss.clone()),
                     ..default()
                 },
             ))
@@ -116,8 +127,8 @@ impl HitboxTemplate {
 
 pub fn spawn_attack_hitboxes(
     mut commands: Commands,
+    combat_assets: Res<CombatAssets>,
     actor_query: Query<(&Actor, &GlobalTransform, &ActorIntent)>,
-    handle: Res<Handles>,
 ) {
     for (actor, gt, intent) in &actor_query {
         let Some(direction) = intent.attack else {
@@ -137,7 +148,7 @@ pub fn spawn_attack_hitboxes(
             knockback: 6.0,
             faction: actor.faction,
         }
-        .spawn(&mut commands, &handle);
+        .spawn(&mut commands, &combat_assets);
     }
 }
 

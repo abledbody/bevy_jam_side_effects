@@ -1,23 +1,25 @@
 use bevy::prelude::*;
+use bevy_asset_loader::prelude::*;
 use bevy_ecs_ldtk::prelude::*;
 use bevy_kira_audio::prelude::*;
 use bevy_rapier2d::prelude::*;
 use leafwing_input_manager::common_conditions::action_just_pressed;
 use leafwing_input_manager::prelude::*;
 
-use crate::common::asset::AudioKey;
-use crate::common::asset::Handles;
 use crate::game::actor::enemy::AlertEvent;
 use crate::game::actor::player::Playthrough;
 use crate::game::alarm::Alarm;
+use crate::game::alarm::AlarmAssets;
 use crate::game::alarm::AlarmMeter;
 use crate::game::alarm::AlarmMeterTemplate;
 use crate::game::combat::DeathEvent;
 use crate::game::combat::HitEvent;
+use crate::game::cutscene::CutsceneAssets;
 use crate::game::cutscene::CutsceneTemplate;
 use crate::game::cutscene::Message;
-use crate::game::map::MapTemplate;
-use crate::game::map::Victory;
+use crate::game::level::victory::Victory;
+use crate::game::level::LevelAssets;
+use crate::game::level::LevelTemplate;
 use crate::util::ui::UiRoot;
 use crate::util::DespawnSet;
 
@@ -25,12 +27,15 @@ pub mod actor;
 pub mod alarm;
 mod combat;
 mod cutscene;
-pub mod map;
+pub mod level;
 
 pub struct GamePlugin;
 
 impl Plugin for GamePlugin {
     fn build(&self, app: &mut App) {
+        app.register_type::<GameAssets>()
+            .init_collection::<GameAssets>();
+
         app.add_systems(Startup, spawn_game);
 
         app.init_resource::<ActionState<GameAction>>()
@@ -53,21 +58,34 @@ impl Plugin for GamePlugin {
             alarm::AlarmPlugin,
             combat::CombatPlugin,
             cutscene::CutscenePlugin,
-            map::MapPlugin,
+            level::LevelPlugin,
         ));
     }
 }
 
+#[derive(AssetCollection, Resource, Reflect, Default)]
+#[reflect(Resource)]
+struct GameAssets {
+    #[asset(path = "sound/sfx/pop_1.wav")]
+    sfx_restart: Handle<AudioSource>,
+}
+
 // TODO: This should be handled in the respective plugins on game state exit / enter
-fn spawn_game(mut commands: Commands, ui_root: Res<UiRoot>, handle: Res<Handles>) {
-    // Spawn map
-    MapTemplate.spawn(&mut commands, &handle);
+fn spawn_game(
+    mut commands: Commands,
+    ui_root: Res<UiRoot>,
+    alarm_assets: Res<AlarmAssets>,
+    cutscene_assets: Res<CutsceneAssets>,
+    level_assets: Res<LevelAssets>,
+) {
+    // Spawn level
+    LevelTemplate.spawn(&mut commands, &level_assets);
 
     // Spawn HUD
-    let alarm_meter = AlarmMeterTemplate.spawn(&mut commands, &handle);
+    let alarm_meter = AlarmMeterTemplate.spawn(&mut commands, &alarm_assets);
     commands.entity(alarm_meter).set_parent(ui_root.body);
 
-    let cutscene = CutsceneTemplate.spawn(&mut commands, &handle);
+    let cutscene = CutsceneTemplate.spawn(&mut commands, &cutscene_assets);
     commands.entity(cutscene).set_parent(ui_root.body);
 }
 
@@ -81,7 +99,8 @@ enum GameAction {
 fn restart_game(
     mut commands: Commands,
     mut despawn: ResMut<DespawnSet>,
-    handle: Res<Handles>,
+    game_assets: Res<GameAssets>,
+    level_assets: Res<LevelAssets>,
     entity_query: Query<
         Entity,
         (
@@ -105,8 +124,8 @@ fn restart_game(
         despawn.recursive(entity);
     }
 
-    // Respawn map
-    MapTemplate.spawn(&mut commands, &handle);
+    // Respawn level
+    LevelTemplate.spawn(&mut commands, &level_assets);
 
     // Reset alarm meter shake
     for mut alarm_meter in &mut alarm_meter_query {
@@ -127,5 +146,5 @@ fn restart_game(
     *alarm = default();
 
     // Play restart sound
-    audio.play(handle.audio[&AudioKey::Pop1].clone());
+    audio.play(game_assets.sfx_restart.clone());
 }

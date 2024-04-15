@@ -1,10 +1,9 @@
 use bevy::prelude::*;
 use bevy::ui::Val::*;
+use bevy_asset_loader::prelude::*;
 use rand::thread_rng;
 use rand::Rng;
 
-use crate::common::asset::Handles;
-use crate::common::asset::ImageKey;
 use crate::common::UpdateSet;
 use crate::util::ui::backdrop::BackdropTemplate;
 
@@ -12,11 +11,23 @@ pub struct AlarmPlugin;
 
 impl Plugin for AlarmPlugin {
     fn build(&self, app: &mut App) {
+        app.register_type::<AlarmAssets>()
+            .init_collection::<AlarmAssets>();
+
         app.register_type::<Alarm>().init_resource::<Alarm>();
 
         app.register_type::<AlarmMeter>()
             .add_systems(Update, update_alarm_meter.in_set(UpdateSet::UpdateUi));
     }
+}
+
+#[derive(AssetCollection, Resource, Reflect, Default)]
+#[reflect(Resource)]
+pub struct AlarmAssets {
+    #[asset(path = "image/ui/alarm.png")]
+    alarm: Handle<Image>,
+    #[asset(path = "image/ui/alarm_flash.png")]
+    alarm_flash: Handle<Image>,
 }
 
 #[derive(Resource, Reflect, Default)]
@@ -51,7 +62,7 @@ fn update_alarm_meter(
     backdrop_query: Query<&Parent, Without<AlarmMeter>>,
     mut alarm_icon_query: Query<&mut UiImage>,
     mut container_query: Query<(&mut Style, &Children), Without<AlarmMeter>>,
-    handle: Res<Handles>,
+    alarm_assets: Res<AlarmAssets>,
     alarm: Res<Alarm>,
     time: Res<Time>,
 ) {
@@ -97,12 +108,11 @@ fn update_alarm_meter(
             let shake_flash = meter.shake > 0.05;
             let max_flash = alarm.0 >= 1.0 && t.fract() < 0.25;
             let flash = shake_flash || max_flash;
-            image.texture = handle.image[&if flash {
-                ImageKey::AlarmMeterIconFlash
+            image.texture = if flash {
+                alarm_assets.alarm_flash.clone()
             } else {
-                ImageKey::AlarmMeterIcon
-            }]
-                .clone();
+                alarm_assets.alarm.clone()
+            };
         }
     }
 }
@@ -110,7 +120,7 @@ fn update_alarm_meter(
 pub struct AlarmMeterTemplate;
 
 impl AlarmMeterTemplate {
-    pub fn spawn(self, commands: &mut Commands, handle: &Handles) -> Entity {
+    pub fn spawn(self, commands: &mut Commands, alarm_assets: &AlarmAssets) -> Entity {
         let alarm_meter = commands
             .spawn((
                 Name::new("AlarmMeter"),
@@ -145,7 +155,7 @@ impl AlarmMeterTemplate {
                         height: Percent(100.0),
                         ..default()
                     },
-                    image: UiImage::new(handle.image[&ImageKey::AlarmMeterIcon].clone()),
+                    image: UiImage::new(alarm_assets.alarm.clone()),
                     ..default()
                 },
             ))

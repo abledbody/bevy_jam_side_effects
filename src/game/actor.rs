@@ -5,6 +5,8 @@ pub mod intent;
 pub mod player;
 
 use bevy::prelude::*;
+use bevy_asset_loader::prelude::*;
+use bevy_kira_audio::prelude::*;
 use bevy_rapier2d::prelude::*;
 
 use crate::game::actor::health::Health;
@@ -20,6 +22,9 @@ impl Plugin for ActorPlugin {
     fn build(&self, app: &mut App) {
         app.register_type::<Actor>();
 
+        app.register_type::<ActorAssets>()
+            .init_collection::<ActorAssets>();
+
         app.add_plugins((
             body::BodyPlugin,
             enemy::EnemyPlugin,
@@ -28,6 +33,24 @@ impl Plugin for ActorPlugin {
             player::PlayerPlugin,
         ));
     }
+}
+
+#[derive(AssetCollection, Resource, Reflect, Default)]
+#[reflect(Resource)]
+pub struct ActorAssets {
+    #[asset(path = "image/actor/gnoll_red.png")]
+    pub gnoll_red: Handle<Image>,
+    #[asset(path = "image/actor/gnoll_green.png")]
+    pub gnoll_green: Handle<Image>,
+    #[asset(path = "image/actor/gnoll_blue.png")]
+    pub gnoll_blue: Handle<Image>,
+
+    #[asset(path = "sound/sfx/walk.wav")]
+    step: Handle<AudioSource>,
+    #[asset(path = "sound/sfx/gnoll_hurt.wav")]
+    hurt: Handle<AudioSource>,
+    #[asset(path = "sound/sfx/alert.wav")]
+    alert: Handle<AudioSource>,
 }
 
 #[derive(Component, Reflect)]
