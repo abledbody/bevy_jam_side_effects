@@ -43,9 +43,6 @@ impl Plugin for GameStatePlugin {
             .insert_resource(
                 InputMap::default()
                     .insert(GameAction::Restart, KeyCode::KeyR)
-                    .insert(GameAction::Confirm, KeyCode::Space)
-                    .insert(GameAction::Confirm, KeyCode::Enter)
-                    .insert(GameAction::Confirm, MouseButton::Left)
                     .build(),
             )
             .add_plugins(InputManagerPlugin::<GameAction>::default())
@@ -147,8 +144,6 @@ fn exit_game(
 #[derive(Actionlike, Reflect, Clone, Hash, PartialEq, Eq)]
 pub enum GameAction {
     Restart,
-    // TODO: This should be CutsceneAction::Advance, and a component not a resource
-    Confirm,
 }
 
 fn restart(

@@ -2,7 +2,7 @@ use bevy::prelude::*;
 use bevy::ui::Val::*;
 use bevy_asset_loader::prelude::*;
 use bevy_kira_audio::prelude::*;
-use leafwing_input_manager::common_conditions::action_just_pressed;
+use leafwing_input_manager::prelude::*;
 
 use crate::common::UpdateSet;
 use crate::game::actor::health::Health;
@@ -11,7 +11,6 @@ use crate::game::actor::player::PlayerControl;
 use crate::game::actor::player::Playthrough;
 use crate::game::alarm::Alarm;
 use crate::game::level::victory::Victory;
-use crate::sequence::game::GameAction;
 use crate::util::ui::font::PIXEL_FONT_HANDLE;
 use crate::util::ui::UiRoot;
 use crate::util::DespawnSet;
@@ -27,11 +26,11 @@ impl Plugin for CutscenePlugin {
             Update,
             (
                 update_cutscene.in_set(UpdateSet::Update),
-                advance_cutscene
-                    .run_if(action_just_pressed(GameAction::Confirm))
-                    .in_set(UpdateSet::HandleActions),
+                advance_cutscenes.in_set(UpdateSet::HandleActions),
             ),
         );
+
+        app.add_plugins(InputManagerPlugin::<CutsceneAction>::default());
 
         app.register_type::<Message>()
             .add_systems(Update, (show_death_message, show_victory_message));
@@ -79,12 +78,26 @@ fn update_cutscene(
     }
 }
 
-fn advance_cutscene(
+#[derive(Actionlike, Reflect, Clone, Hash, PartialEq, Eq)]
+pub enum CutsceneAction {
+    Advance,
+}
+
+fn advance_cutscenes(
     mut despawn: ResMut<DespawnSet>,
-    mut cutscene_query: Query<(Entity, &mut Text, &mut Cutscene)>,
+    mut cutscene_query: Query<(
+        Entity,
+        &ActionState<CutsceneAction>,
+        &mut Text,
+        &mut Cutscene,
+    )>,
     audio: Res<Audio>,
 ) {
-    for (entity, mut text, mut cutscene) in &mut cutscene_query {
+    for (entity, action, mut text, mut cutscene) in &mut cutscene_query {
+        if !action.just_pressed(&CutsceneAction::Advance) {
+            continue;
+        }
+
         if cutscene.phase >= NUM_LINES {
             despawn.recursive(entity);
             continue;
@@ -148,6 +161,13 @@ impl CutsceneTemplate {
                         cutscene_assets.sfx_confirm3.clone(),
                     ],
                 },
+                InputManagerBundle::with_map(
+                    InputMap::default()
+                        .insert(CutsceneAction::Advance, KeyCode::Space)
+                        .insert(CutsceneAction::Advance, KeyCode::Enter)
+                        .insert(CutsceneAction::Advance, MouseButton::Left)
+                        .build(),
+                ),
             ))
             .id()
     }
