@@ -1,6 +1,9 @@
+//! Foundational features and cross-cutting concerns
+
 mod audio;
 pub mod camera;
 pub mod config;
+#[cfg(feature = "dev")]
 mod debug;
 mod music;
 mod physics;

@@ -1,3 +1,5 @@
+//! Game mechanics and content
+
 use bevy::prelude::*;
 
 pub mod actor;
