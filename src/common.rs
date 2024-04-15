@@ -1,6 +1,6 @@
 mod audio;
 pub mod camera;
-mod config;
+pub mod config;
 mod debug;
 mod music;
 mod physics;

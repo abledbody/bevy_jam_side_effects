@@ -10,6 +10,9 @@ use bevy::prelude::*;
 use bevy_editor_pls::EditorPlugin;
 use bevy_rapier2d::render::DebugRenderContext;
 use bevy_rapier2d::render::RapierDebugRenderPlugin;
+use strum::IntoEnumIterator;
+
+use crate::sequence::SequenceState;
 
 pub struct DebugPlugin {
     // Diagnostics
@@ -20,7 +23,7 @@ pub struct DebugPlugin {
     // Logging
     pub log_diagnostics: bool,
     pub log_ambiguity_detection: bool,
-    //pub log_sequence_state_transitions: bool,
+    pub log_sequence_state_transitions: bool,
 
     // 3rd-party debug tools
     pub debug_picking: bool,
@@ -28,7 +31,7 @@ pub struct DebugPlugin {
     pub editor: bool,
     //
     // Sequence state
-    //pub start: SequenceState,
+    pub start: SequenceState,
     //pub extend_loading_screen: f32,
 }
 
@@ -41,14 +44,14 @@ impl Default for DebugPlugin {
 
             log_diagnostics: true,
             log_ambiguity_detection: true,
-            //log_sequence_state_transitions: true,
+            log_sequence_state_transitions: true,
             //
             debug_picking: true,
             debug_physics: true,
             editor: true,
             //
             //extend_loading_screen: 0.0,
-            //start: default(),
+            start: default(),
         }
     }
 }
@@ -77,6 +80,18 @@ impl Plugin for DebugPlugin {
                 schedule.set_build_settings(ScheduleBuildSettings {
                     ambiguity_detection: LogLevel::Warn,
                     ..default()
+                });
+            }
+        }
+
+        // Log the sequence state transitions
+        if self.log_sequence_state_transitions {
+            for state in SequenceState::iter() {
+                app.add_systems(OnEnter(state), move |frame: Res<FrameCount>| {
+                    info!("[Frame {}] Entering {state:?}", frame.0)
+                })
+                .add_systems(OnExit(state), move |frame: Res<FrameCount>| {
+                    info!("[Frame {}] Exiting {state:?}", frame.0)
                 });
             }
         }
@@ -139,6 +154,7 @@ impl Plugin for DebugPlugin {
                 ),
             );
         }
+        */
 
         // Skip to custom start state in sequence
         // Setting this at startup instead of right now prevents a plugin ordering requirement
@@ -148,7 +164,6 @@ impl Plugin for DebugPlugin {
                 *state = State::new(start);
             }
         });
-        */
 
         // Temporary ad hoc debugging
         app.add_systems(Update, debug_start);

@@ -11,8 +11,9 @@ use crate::game::actor::player::PlayerControl;
 use crate::game::actor::player::Playthrough;
 use crate::game::alarm::Alarm;
 use crate::game::level::victory::Victory;
-use crate::game::GameAction;
+use crate::sequence::game::GameAction;
 use crate::util::ui::font::PIXEL_FONT_HANDLE;
+use crate::util::ui::UiRoot;
 use crate::util::DespawnSet;
 
 pub struct CutscenePlugin;
@@ -197,6 +198,7 @@ impl MessageTemplate {
 
 fn show_death_message(
     mut commands: Commands,
+    ui_root: Res<UiRoot>,
     message_query: Query<(), With<Message>>,
     player_query: Query<(), (With<PlayerControl>, Without<ActorIntent>)>,
 ) {
@@ -204,21 +206,23 @@ fn show_death_message(
         return;
     }
 
-    MessageTemplate {
+    let message = MessageTemplate {
         title: "You died.".to_string(),
         body: "(press R to restart)".to_string(),
     }
     .spawn(&mut commands);
+    commands.entity(message).set_parent(ui_root.body);
 }
 
 fn show_victory_message(
     mut commands: Commands,
-    message_query: Query<(), With<Message>>,
-    health_query: Query<&Health, With<PlayerControl>>,
+    ui_root: Res<UiRoot>,
     playthrough: Res<Playthrough>,
     victory: Res<Victory>,
     alarm: Res<Alarm>,
     time: Res<Time>,
+    message_query: Query<(), With<Message>>,
+    health_query: Query<&Health, With<PlayerControl>>,
 ) {
     if !victory.0 || !message_query.is_empty() {
         return;
@@ -241,9 +245,10 @@ fn show_victory_message(
 
     let score = alarm_score + health_score + time_score;
 
-    MessageTemplate {
+    let message = MessageTemplate {
             title: "You escaped!".to_string(),
             body: format!("Alarm score: {alarm_score}\n\n\n\n\nHealth score: {health_score}\n\n\n\n\nTime score: {time_score}\n\n\n\n\nTotal score: {score}\n\n\n\n\n(press R to play again)"),
         }
         .spawn(&mut commands);
+    commands.entity(message).set_parent(ui_root.body);
 }
